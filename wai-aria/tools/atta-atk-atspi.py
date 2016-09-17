@@ -32,7 +32,6 @@ class AtkAtspiAtta():
     STATUS_OK = "OK"
     STATUS_READY = "READY"
 
-
     RESULT_PASS = "PASS"
     RESULT_FAIL = "FAIL"
     RESULT_NOT_RUN = "NOTRUN"
@@ -198,7 +197,7 @@ class AtkAtspiAtta():
         method should be called prior to the test document being loaded so
         that we can listen for document:load-complete accessibility events.
         We set this ATTA's ready state to False here, and set it to True once
-        we have received a document:load-complete event for the the next test.
+        we have received a document:load-complete event for the next test.
 
         Arguments:
         - name: A string containing the name of the test. This name is used
@@ -686,7 +685,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
     def send_error(self):
         self.send_response(404)
         self.send_header("Content-Type", "text/plain")
-        add_headers(self)
+        self.add_headers()
         self.wfile.write(bytes("Error: bad request\n", "utf-8"))
 
     @staticmethod

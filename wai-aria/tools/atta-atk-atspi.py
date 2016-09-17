@@ -16,6 +16,7 @@ import gi
 import json
 import os
 import pyatspi
+import re
 import signal
 import subprocess
 import sys
@@ -263,6 +264,9 @@ class AtkAtspiAtta():
 
         if test_type == "object":
             return (self._has_attribute_value, test_value, expected_result), self.SUCCESS
+
+        if test_type == "relation":
+            return (self._has_relation, test_value, expected_result), self.SUCCESS
 
         print("ERROR: Unhandled assertion type: %s" % test_type)
         return None, self.FAILURE_INVALID_REQUEST
@@ -584,6 +588,44 @@ class AtkAtspiAtta():
             return success, self.FAILURE_RESULTS, actual_name
 
         return success, self.SUCCESS, actual_name
+
+    def _has_relation(self, obj, type_string, target_ids, expected_result=True):
+        """Checks if the obj has the specified accessible relation type pointing
+        to the element(s) with the specified id(s). Test writers may provide all
+        of the targets in a single assertion or create multiple assertions, each
+        of which contains a subset of the targets.
+
+        Arguments:
+        - obj: The AtspiAccessible to check
+        - type_string: A string containing the AtspiRelationType being checked
+        - target_ids: A string containing the id(s) of the referenced element(s)
+        - expected_result: A boolean reflecting if the names should match
+
+        Returns:
+        - A boolean reflecting if the actual result is the expected_result
+        - A string indicating success, or the cause of failure
+        - A string containing the id(s) of the target(s)
+        """
+
+        targets = []
+        relations = obj.getRelationSet()
+        for r in relations:
+            string = r.getRelationType().value_name.replace("ATSPI_", "")
+            if string == type_string:
+                targets = [r.getTarget(i) for i in range(r.getNTargets())]
+                break
+
+        desired_ids = re.compile("\W+").split(target_ids)
+        actual_ids = list(map(lambda x: self._get_element_id(x)[0], targets))
+        not_found = list(filter(lambda x: x not in actual_ids, desired_ids))
+
+        result = not not_found
+        success = result == expected_result
+
+        if success == False:
+            return success, self.FAILURE_RESULTS, actual_ids
+
+        return success, self.SUCCESS, actual_ids
 
     def _has_role(self, obj, role_string, expected_result):
         """Checks if the accessible role of obj is role_string.

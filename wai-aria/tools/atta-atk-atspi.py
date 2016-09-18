@@ -47,6 +47,20 @@ class AtkAtspiAtta():
     FAILURE_RESULTS = "Expected result does not match actual result"
     SUCCESS = "Success"
 
+    INTERFACES = ["Action",
+                  "Application",
+                  "Collection",
+                  "Component",
+                  "Document",
+                  "Hyperlink",
+                  "Hypertext",
+                  "Image",
+                  "Selection",
+                  "Table",
+                  "TableCell",
+                  "Text",
+                  "Value"]
+
     def __init__(self, verify_dependencies=True):
         """Initializes this ATTA.
 
@@ -261,6 +275,15 @@ class AtkAtspiAtta():
         # a means to test specific interface calls.
         if test_type == "interface":
             return (self._has_interface, test_value, expected_result), self.SUCCESS
+
+        # TODO: We also need to decide what the asertions for specific interface
+        # calls should look like. In order to get the platform support in place,
+        # for now we'll treat assertions starting with "interface" as the "is it
+        # implemented at all?" test, and assertions starting with a specific
+        # interface (e.g. "Table") as a function call test.
+        if test_type in map(str.lower, self.INTERFACES):
+            function, status = self._get_interface_function(assertion[0], test_value)
+            return (self._has_result, function, expected_result), self.SUCCESS
 
         if test_type == "object":
             return (self._has_attribute_value, test_value, expected_result), self.SUCCESS
@@ -488,6 +511,28 @@ class AtkAtspiAtta():
 
         return obj, self.SUCCESS
 
+    def _get_interface_function(self, interface_string, function_string):
+        """Returns the specified AT-SPI function from the specified interface.
+
+        Arguments:
+        - interface_string: The AT-SPI interface name as a string (e.g. 'Table')
+        - function_string: The AT-SPI function as a string (e.g. 'get_n_rows')
+
+        Returns:
+        - The callable function described, or None if it doesn't exist
+        - A string indicating success, or the cause of failure
+        """
+
+        try:
+            interface = eval("pyatspi.Atspi.%s" % interface_string)
+        except:
+            return None, self.FAILURE_INVALID_REQUEST
+
+        if function_string not in dir(interface):
+            return None, self.FAILURE_INVALID_REQUEST
+
+        return eval("pyatspi.Atspi.%s.%s" % (interface_string, function_string)), self.SUCCESS
+
     def _has_attribute_value(self, obj, name, value, expected_result=True):
         """Checks if obj has an attribute with the specified name and value.
 
@@ -626,6 +671,34 @@ class AtkAtspiAtta():
             return success, self.FAILURE_RESULTS, actual_ids
 
         return success, self.SUCCESS, actual_ids
+
+    def _has_result(self, obj, function, value, expected_result=True):
+        """Checks the result of performing the specified function on obj.
+
+        Arguments:
+        - obj: The AtspiAccessible to check
+        - function: The callable AT-SPI interface function to check
+        - value: The return value of the function to check, written to reflect
+          the expected type (e.g. "2" is a string; 2 is an int)
+        - expected_result: A boolean reflecting if the results should match
+
+        Returns:
+        - A boolean reflecting if the actual result is the expected_result
+        - A string indicating success, or the cause of failure
+        - A string containing the actual return value
+        """
+
+        if function is None:
+            return False, self.FAILURE_INVALID_REQUEST, None
+
+        actual_value = function(obj)
+        result = actual_value == value
+        success = result == expected_result
+
+        if success == False:
+            return success, self.FAILURE_RESULTS, actual_value
+
+        return success, self.SUCCESS, actual_value
 
     def _has_role(self, obj, role_string, expected_result):
         """Checks if the accessible role of obj is role_string.

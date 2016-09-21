@@ -48,11 +48,26 @@ class Assertion():
                   "name",
                   "description",
                   "childCount",
-                  "objectAttributeSet",
-                  "stateSet",
-                  "relationSet",
-                  "interfaceSet",
+                  "objectAttributes",
+                  "states",
+                  "relations",
+                  "interfaces",
                   "parentID"]
+
+    # N.B. These are not all possible interfaces; these are interfaces
+    # with methods test writers may need to include in their assertions
+    # for the purpose of verifying those methods have been correctly
+    # implemented.
+    INTERFACES = ["Component",
+                  "Document",
+                  "Hyperlink",
+                  "Hypertext",
+                  "Image",
+                  "Selection",
+                  "Table",
+                  "TableCell",
+                  "Text",
+                  "Value"]
 
     def __init__(self, obj, assertion):
         self._obj = obj
@@ -114,6 +129,8 @@ class Assertion():
     def _get_interfaces(self, obj):
         interfaces = {}
         for iface in pyatspi.utils.listInterfaces(obj):
+            if iface not in self.INTERFACES:
+                continue
             methods = self._get_interface_methods(iface)
             interfaces[iface] = list(map(self._get_method_details, methods))
 
@@ -168,16 +185,16 @@ class Assertion():
         if prop == "childCount":
             return self._obj.childCount
 
-        if prop == "objectAttributeSet":
+        if prop == "objectAttributes":
             return self._get_object_attributes(self._obj)
 
-        if prop == "interfaceSet":
+        if prop == "interfaces":
             return self._get_interfaces(self._obj)
 
-        if prop == "stateSet":
+        if prop == "states":
             return self._get_states(self._obj)
 
-        if prop == "relationSet":
+        if prop == "relations":
             return self._get_relations(self._obj)
 
         if prop == "parentID":
@@ -289,20 +306,6 @@ class AtkAtspiAtta():
     FAILURE_NOT_IMPLEMENTED = "Not implemented"
     FAILURE_RESULTS = "Expected result does not match actual result"
     SUCCESS = "Success"
-
-    INTERFACES = ["Action",
-                  "Application",
-                  "Collection",
-                  "Component",
-                  "Document",
-                  "Hyperlink",
-                  "Hypertext",
-                  "Image",
-                  "Selection",
-                  "Table",
-                  "TableCell",
-                  "Text",
-                  "Value"]
 
     def __init__(self, verify_dependencies=True, dry_run=False):
         """Initializes this ATTA.

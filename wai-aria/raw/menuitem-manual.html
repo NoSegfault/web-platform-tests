@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+<title>menuitem</title>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/wai-aria/scripts/ATTAcomm.js"></script>
+<script>
+setup({explicit_timeout: true, explicit_done: true });
+
+var theTest = new ATTAcomm(
+    { "title": 'menuitem',
+      "steps": [
+        {
+          "type":  "test",
+          "title": "step 1",
+          "element": "test",
+          "test" : {
+   "IAccessible2" : [
+      [
+         "object",
+         "posinset",
+         "4"
+      ],
+      [
+         "object",
+         "setsize",
+         "8"
+      ],
+      [
+         "groupPosition()",
+         "similarItemsInGroup",
+         "8"
+      ],
+      [
+         "groupPosition()",
+         "positionInGroup",
+         "4"
+      ]
+   ],
+   "ATK" : [
+      [
+         "role",
+         "ROLE_MENU_ITEM",
+         "true"
+      ],
+      [
+         "attribute",
+         "posinset:4",
+         "true"
+      ],
+      [
+         "attribute",
+         "setsize:8",
+         "true"
+      ]
+   ],
+   "UIA" : [
+      [
+         "Control Type",
+         "MenuItem"
+      ],
+      [
+         "AriaProperties",
+         "posinset",
+         "4"
+      ],
+      [
+         "AriaProperties",
+         "setsize",
+         "8"
+      ]
+   ],
+   "AXAPI" : [
+      [
+         "AXRole",
+         "AXMenuItem"
+      ],
+      [
+         "AXSubrole",
+         "<nil>"
+      ],
+      [
+         "AXRoleDescription",
+         "menu item"
+      ],
+      [
+         "AXARIAPosInSet",
+         "4"
+      ],
+      [
+         "AXARIASetSize",
+         "8"
+      ]
+   ],
+   "WAIFAKE" : [
+      [
+         "role",
+         "ROLE_TABLE_CELL"
+      ],
+      [
+         "shouldFail",
+         "nothing"
+      ],
+      [
+         "interface",
+         "TableCell"
+      ]
+   ]
+}
+
+        }
+    ]
+  }
+) ;
+</script>
+</head>
+<body>
+<p>This test examines the ARIA properties for menuitem.</p>
+  <ul role='menu'>Menu
+    <li role='menuitem'> option 1</li>
+    <li role='menuitem' id='test' aria-posinset='4' aria-setsize='8'> option 2</li>
+    <li role='menuitem'> option 3</li>
+  </ul>
+
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+<title>menuitemcheckbox</title>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/wai-aria/scripts/ATTAcomm.js"></script>
+<script>
+setup({explicit_timeout: true, explicit_done: true });
+
+var theTest = new ATTAcomm(
+    { "title": 'menuitemcheckbox',
+      "steps": [
+        {
+          "type":  "test",
+          "title": "step 1",
+          "element": "test",
+          "test" : {
+   "IAccessible2" : [
+      [
+         "IA2_ROLE_CHECK_MENU_ITEM"
+      ],
+      [
+         "object",
+         "checkable",
+         "true"
+      ],
+      [
+         "object",
+         "posinset",
+         "4"
+      ],
+      [
+         "object",
+         "setsize",
+         "8"
+      ],
+      [
+         "groupPosition()",
+         "similarItemsInGroup",
+         "8"
+      ],
+      [
+         "groupPosition()",
+         "positionInGroup",
+         "4"
+      ]
+   ],
+   "ATK" : [
+      [
+         "role",
+         "ROLE_MENU_ITEM",
+         "true"
+      ],
+      [
+         "state",
+         "STATE_CHECKABLE",
+         "true"
+      ],
+      [
+         "state",
+         "STATE_CHECKED",
+         "true"
+      ],
+      [
+         "attribute",
+         "posinset:4",
+         "true"
+      ],
+      [
+         "attribute",
+         "setsize:8",
+         "true"
+      ]
+   ],
+   "UIA" : [
+      [
+         "Control Type",
+         "MenuItem"
+      ],
+      [
+         "Toggle",
+         "ToggleState",
+         "On"
+      ],
+      [
+         "AriaProperties",
+         "posinset",
+         "4"
+      ],
+      [
+         "AriaProperties",
+         "setsize",
+         "8"
+      ]
+   ],
+   "AXAPI" : [
+      [
+         "AXRole",
+         "AXMenuItem"
+      ],
+      [
+         "AXSubrole",
+         "<nil>"
+      ],
+      [
+         "AXRoleDescription",
+         "menu item"
+      ],
+      [
+         "AXValue",
+         "1"
+      ],
+      [
+         "AXARIAPosInSet",
+         "4"
+      ],
+      [
+         "AXARIASetSize",
+         "8"
+      ]
+   ],
+   "WAIFAKE" : [
+      [
+         "role",
+         "ROLE_TABLE_CELL"
+      ],
+      [
+         "shouldFail",
+         "nothing"
+      ],
+      [
+         "interface",
+         "TableCell"
+      ]
+   ]
+}
+
+        }
+    ]
+  }
+) ;
+</script>
+</head>
+<body>
+<p>This test examines the ARIA properties for menuitemcheckbox.</p>
+  <ul role='menu'>Menu
+    <li role='menuitem'> option 1</li>
+    <li role='menuitemcheckbox' id='test' aria-posinset='4' aria-setsize='8' 
+        class='ckbox' aria-checked='true'>panda doodles</li>
+    <li role='menuitem'> option 3</li>
+  </ul>
+
+</body>
+</html>

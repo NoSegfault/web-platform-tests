@@ -26,6 +26,213 @@ import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
+class Assertion():
+
+    PASS = "PASS"
+    FAIL = "FAIL"
+    ERROR = "ERROR"
+
+    EXPECTATION_IS = "is"
+    EXPECTATION_IS_NOT = "isNot"
+    EXPECTATION_CONTAINS = "contains"
+    EXPECTATION_DOES_NOT_CONTAIN = "doesNotContain"
+    EXPECTATION_IS_ANY = "isAny"
+    EXPECTATION_IS_TYPE = "isType"
+
+    TEST_EVENT = "event"
+    TEST_PROPERTY = "property"
+    TEST_RESULT = "result"
+
+    PROPERTIES = ["id",
+                  "role",
+                  "name",
+                  "description",
+                  "childCount",
+                  "objectAttributeSet",
+                  "stateSet",
+                  "relationSet",
+                  "interfaceSet",
+                  "parentID"]
+
+    def __init__(self, obj, assertion):
+        self._obj = obj
+        self._test_string = assertion[1]
+        self._expectation = assertion[2]
+        self._value = assertion[3]
+        self._msgs = []
+
+    @classmethod
+    def get_test_class(cls, assertion):
+        test_class = assertion[0]
+        if test_class == cls.TEST_PROPERTY:
+            return PropertyAssertion
+        if test_class == cls.TEST_EVENT:
+            return EventAssertion
+        if test_class == cls.TEST_RESULT:
+            return ResultAssertion
+
+        print("ERROR: Unhandled test class: %s" % test_class)
+        return None
+
+    @staticmethod
+    def _get_object_attributes(obj):
+        try:
+            attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
+        except:
+            return {}
+
+        return attrs
+
+    def _get_relations(self, obj):
+        relations = {}
+        for r in obj.getRelationSet():
+            relation = r.getRelationType().value_name.replace("ATSPI_", "")
+            targets = [r.getTarget(i) for i in range(r.getNTargets())]
+            relations[relation] = list(map(self._get_id, targets))
+
+        return relations
+
+    @staticmethod
+    def _get_states(obj):
+        states = []
+        for s in obj.getState().getStates():
+            states.append(s.value_name.replace("ATSPI_", ""))
+
+        return states
+
+    @staticmethod
+    def _get_role(obj):
+        role = str(pyatspi.Role(obj.getRole()))
+
+        # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
+        # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
+        return role.replace("STATUS_BAR", "STATUSBAR")
+
+    def _get_id(self, obj):
+        attrs = self._get_object_attributes(obj)
+        return attrs.get("id") or attrs.get("html-id")
+
+    def _get_property(self, prop):
+        if prop not in self.PROPERTIES:
+            print("ERROR: Unknown property: %s" % prop)
+            return None
+
+        if prop == "id":
+            return self._get_id(self._obj)
+
+        if prop == "role":
+            return self._get_role(self._obj)
+
+        if prop == "name":
+            return self._obj.name
+
+        if prop == "description":
+            return self._obj.description
+
+        if prop == "childCount":
+            return self._obj.childCount
+
+        if prop == "objectAttributeSet":
+            return self._get_object_attributes(self._obj)
+
+        if prop == "interfaceSet":
+            return pyatspi.utils.listInterfaces(self._obj)
+
+        if prop == "stateSet":
+            return self._get_states(self._obj)
+
+        if prop == "relationSet":
+            return self._get_relations(self._obj)
+
+        if prop == "parentID":
+            return self._get_id(self._obj.parent)
+
+        print("ERROR: Unhandled property: %s" % prop)
+        return None
+
+    def _get_value(self):
+        pass
+
+    def _get_result(self):
+        value = self._get_value()
+        if self._expectation == self.EXPECTATION_IS:
+            return self._value == value
+        if self._expectation == self.EXPECTATION_IS_NOT:
+            return self._value != value
+        if self._expectation == self.EXPECTATION_CONTAINS:
+            return self._value in value
+        if self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
+            return self._value not in value
+        if self._expectation == self.EXPECTATION_IS_ANY:
+            return value in self._value
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            return type(value).__name__ == self._value
+
+        self._msgs.append("ERROR: Unhandled assertion type: %s" % self._expectation)
+        return False
+
+    def run(self):
+        result, msgs = self._get_result(), "\n".join(self._msgs)
+        if result == True:
+            return self.PASS, msgs
+        if result == False:
+            return self.FAIL, msgs
+        return self.ERROR, msgs
+
+
+class DumpInfoAssertion(Assertion):
+
+    def __init__(self, obj, assertion=None):
+        assertion = [""] * 4
+        super().__init__(obj, assertion)
+
+    def _get_result(self):
+        self._msgs.append("DRY RUN")
+
+        info = {}
+        info["properties"] = {}
+        for prop in self.PROPERTIES:
+            info["properties"][prop] = self._get_property(prop)
+
+        print(json.dumps(info, indent=4, sort_keys=True))
+        return True
+
+
+class PropertyAssertion(Assertion):
+
+    def _get_value(self):
+        return self._get_property(self._test_string)
+
+
+class ResultAssertion(Assertion):
+
+    def _get_value(self):
+        iface_string, callable_string = re.split("\.", self._test_string, maxsplit=1)
+        try:
+            interface = eval("pyatspi.Atspi.%s" % iface_string)
+        except:
+            self._msgs.append("ERROR: Invalid interface: %s" % iface_string)
+            return None
+
+        function_string = re.split("\(", callable_string, maxsplit=1)[0]
+        if function_string not in dir(interface):
+            self._msgs.append("ERROR: %s not in %s" % (function_string, interface))
+            return None
+
+        try:
+            to_call = "pyatspi.Atspi.%s.%s" % (iface_string, callable_string)
+            return eval(to_call)
+        except:
+            self._msgs.append("ERROR: Exception calling %s" % to_call)
+            return None
+
+
+class EventAssertion(Assertion):
+
+    def __init__(self, obj, assertion):
+        pass
+
+
 class AtkAtspiAtta():
     """Accessible Technology Test Adapter using AT-SPI2 to test ATK support."""
 
@@ -61,7 +268,7 @@ class AtkAtspiAtta():
                   "Text",
                   "Value"]
 
-    def __init__(self, verify_dependencies=True):
+    def __init__(self, verify_dependencies=True, dry_run=False):
         """Initializes this ATTA.
 
         Arguments:
@@ -70,6 +277,9 @@ class AtkAtspiAtta():
           test results. Note: If verify_dependencies is False, the installed
           versions of the accessibility libraries will not be obtained and thus
           will not be reported in the results. DEFAULT: True
+        - dry_run: Boolean reflecting we shouldn't actually run the assertions,
+          but just try to find the specified element(s) and dump out everything
+          we know about them. DEFAULT: False
         """
 
         self._atta_name = "WPT ATK/AT-SPI2 ATTA"
@@ -84,6 +294,7 @@ class AtkAtspiAtta():
         self._current_element = None
         self._callbacks = {"document:load-complete": self._on_load_complete}
         self._listener_thread = None
+        self._dry_run = dry_run
 
         if verify_dependencies and not self._check_environment():
             return
@@ -94,6 +305,9 @@ class AtkAtspiAtta():
             print("ERROR: Exception getting accessible desktop from pyatspi")
         else:
             self._enabled = True
+
+        if self._dry_run:
+            print("DRY RUN ONLY: No assertions will be tested.")
 
     def _check_environment(self):
         """Returns True if the client environment has all expected dependencies."""
@@ -225,75 +439,6 @@ class AtkAtspiAtta():
         self._next_test = name, url
         self._ready = False
 
-    def _parse_assertion(self, assertion):
-        """Parses a single test assertion, such as the platform role being
-        ROLE_CHECK_BOX. The conventions established for writing testable
-        ARIA statements for this harness are relied upon to identify what
-        is to be tested.
-
-        Arguments:
-        - assertion: A tokenized list containing the components of the property
-          or other condition being tested. Note that this is a consequence of
-          what we receive from the ARIA test harness and not an indication of
-          what is desired or required by this ATTA.
-
-        Returns:
-        - A (function, value, expected_result) tuple. The ATTA function is
-          specific to what is being tested (role, name, state, etc.). The
-          value and expected result reflect what the test author provided
-          in the testable statement.
-        - A string indicating success, or the cause of failure
-        """
-
-        try:
-            test_type = assertion[0].lower()
-            test_value = assertion[1]
-        except:
-            return None, self.FAILURE_INVALID_REQUEST
-
-        try:
-            expected_result = assertion[2]
-        except IndexError:
-            expected_result = True
-        else:
-            if isinstance(expected_result, str):
-                if expected_result.lower() == "true":
-                    expected_result = True
-                elif expected_result.lower() == "false":
-                    expected_result = False
-
-        if test_type == "name":
-            return (self._has_name, test_value, expected_result), self.SUCCESS
-        if test_type == "description":
-            return (self._has_description, test_value, expected_result), self.SUCCESS
-        if test_type == "role":
-            return (self._has_role, test_value, expected_result), self.SUCCESS
-        if test_type == "state":
-            return (self._has_state, test_value, expected_result), self.SUCCESS
-
-        # TODO: This only covers the "is it implemented at all?" tests. We need
-        # a means to test specific interface calls.
-        if test_type == "interface":
-            return (self._has_interface, test_value, expected_result), self.SUCCESS
-
-        # TODO: We also need to decide what the asertions for specific interface
-        # calls should look like. In order to get the platform support in place,
-        # for now we'll treat assertions starting with "interface" as the "is it
-        # implemented at all?" test, and assertions starting with a specific
-        # interface (e.g. "Table") as a function call test.
-        if test_type in map(str.lower, self.INTERFACES):
-            function, status = self._get_interface_function(assertion[0], test_value)
-            return (self._has_result, function, expected_result), self.SUCCESS
-
-        if test_type == "object":
-            return (self._has_attribute_value, test_value, expected_result), self.SUCCESS
-
-        if test_type == "relation":
-            return (self._has_relation, test_value, expected_result), self.SUCCESS
-
-        print("ERROR: Unhandled assertion type: %s" % test_type)
-        return None, self.FAILURE_INVALID_REQUEST
-
     def _run_test(self, obj, assertion):
         """Runs a single assertion on the specified object.
 
@@ -309,18 +454,13 @@ class AtkAtspiAtta():
           reflecting the status, such as details in the case of failure.
         """
 
-        parsed_assertion, status = self._parse_assertion(assertion)
-        if status != self.SUCCESS:
-            return {"result": self.RESULT_ERROR, "message": status}
+        if self._dry_run:
+            test_class = DumpInfoAssertion
+        else:
+            test_class = Assertion.get_test_class(assertion)
 
-        function, test_value, expected_result = parsed_assertion
-        result, status, actual_result = function(obj, test_value, expected_result)
-        if result == True:
-            result_value = self.RESULT_PASS
-        if result == False:
-            result_value = self.RESULT_FAIL
-        if status == self.FAILURE_RESULTS:
-            status = "(Found: %s)" % actual_result
+        test = test_class(obj, assertion)
+        result_value, status = test.run()
 
         return {"result": result_value, "message": status}
 
@@ -414,24 +554,6 @@ class AtkAtspiAtta():
 
         return True
 
-    def _get_attributes_dict(self, obj):
-        """Returns the accessible object attributes associated with obj.
-
-        Arguments:
-        - obj: The AtspiAccessible whose attributes are sought
-
-        Returns:
-        - A dict of name, value pairs
-        - A string indicating success, or the cause of failure
-        """
-
-        try:
-            attrs = obj.getAttributes()
-        except:
-            return {}, self.FAILURE_EXCEPTION
-
-        return dict([attr.split(':', 1) for attr in attrs]), self.SUCCESS
-
     def _get_document_uri(self, obj):
         """Returns the URI associated with obj.
 
@@ -467,9 +589,10 @@ class AtkAtspiAtta():
         - A string indicating success, or the cause of failure
         """
 
-        attrs, status = self._get_attributes_dict(obj)
-        if status != self.SUCCESS:
-            return "", status
+        try:
+            attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
+        except:
+            return "", self.FAILURE_EXCEPTION
 
         result = attrs.get("id") or attrs.get("html-id")
         if not result:
@@ -510,247 +633,6 @@ class AtkAtspiAtta():
             return None, self.FAILURE_EXCEPTION
 
         return obj, self.SUCCESS
-
-    def _get_interface_function(self, interface_string, function_string):
-        """Returns the specified AT-SPI function from the specified interface.
-
-        Arguments:
-        - interface_string: The AT-SPI interface name as a string (e.g. 'Table')
-        - function_string: The AT-SPI function as a string (e.g. 'get_n_rows')
-
-        Returns:
-        - The callable function described, or None if it doesn't exist
-        - A string indicating success, or the cause of failure
-        """
-
-        try:
-            interface = eval("pyatspi.Atspi.%s" % interface_string)
-        except:
-            return None, self.FAILURE_INVALID_REQUEST
-
-        if function_string not in dir(interface):
-            return None, self.FAILURE_INVALID_REQUEST
-
-        return eval("pyatspi.Atspi.%s.%s" % (interface_string, function_string)), self.SUCCESS
-
-    def _has_attribute_value(self, obj, name, value, expected_result=True):
-        """Checks if obj has an attribute with the specified name and value.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - name: A string containing the attribute name
-        - value: A string containing the attribute value
-        - expected_result: A boolean reflecting if the values should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the actual value
-        """
-
-        attrs, status = self._get_attributes_dict(obj)
-        actual_value = attrs.get(name, "")
-        result = actual_value == value
-        success = result == expected_result
-
-        if not attrs:
-            return success, status, actual_value
-
-        if name not in attrs:
-            return success, self.FAILURE_NOT_FOUND, actual_value
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_value
-
-        return success, self.SUCCESS, actual_value
-
-    def _has_description(self, obj, description_string, expected_result):
-        """Checks if the accessible description of obj is description_string.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - description_string: A string containing the description to compare
-        - expected_result: A boolean reflecting if the descriptions should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the actual description
-        """
-
-        actual_description = obj.description
-        result = actual_description == description_string
-        success = result == expected_result
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_description
-
-        return success, self.SUCCESS, actual_description
-
-    def _has_interface(self, obj, interface_string, expected_result):
-        """Checks if obj implements the specified Atspi interface.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - interface_string: The interface name as a string (e.g. 'TableCell')
-        - expected_result: A boolean reflecting if the interface is expected
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing all interfaces found
-        """
-
-        actual_interfaces = pyatspi.utils.listInterfaces(obj)
-        result = interface_string in actual_interfaces
-        success = result == expected_result
-
-        interfaces_string = ", ".join(actual_interfaces)
-        if success == False:
-            return success, self.FAILURE_RESULTS, interfaces_string
-
-        return success, self.SUCCESS, interfaces_string
-
-    def _has_name(self, obj, name_string, expected_result):
-        """Checks if the accessible name of obj is name_string.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - name_string: A string containing the name to compare
-        - expected_result: A boolean reflecting if the names should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the actual name
-        """
-
-        actual_name = obj.name
-        result = actual_name == name_string
-        success = result == expected_result
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_name
-
-        return success, self.SUCCESS, actual_name
-
-    def _has_relation(self, obj, type_string, target_ids, expected_result=True):
-        """Checks if the obj has the specified accessible relation type pointing
-        to the element(s) with the specified id(s). Test writers may provide all
-        of the targets in a single assertion or create multiple assertions, each
-        of which contains a subset of the targets.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - type_string: A string containing the AtspiRelationType being checked
-        - target_ids: A string containing the id(s) of the referenced element(s)
-        - expected_result: A boolean reflecting if the names should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the id(s) of the target(s)
-        """
-
-        targets = []
-        relations = obj.getRelationSet()
-        for r in relations:
-            string = r.getRelationType().value_name.replace("ATSPI_", "")
-            if string == type_string:
-                targets = [r.getTarget(i) for i in range(r.getNTargets())]
-                break
-
-        desired_ids = re.compile("\W+").split(target_ids)
-        actual_ids = list(map(lambda x: self._get_element_id(x)[0], targets))
-        not_found = list(filter(lambda x: x not in actual_ids, desired_ids))
-
-        result = not not_found
-        success = result == expected_result
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_ids
-
-        return success, self.SUCCESS, actual_ids
-
-    def _has_result(self, obj, function, value, expected_result=True):
-        """Checks the result of performing the specified function on obj.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - function: The callable AT-SPI interface function to check
-        - value: The return value of the function to check, written to reflect
-          the expected type (e.g. "2" is a string; 2 is an int)
-        - expected_result: A boolean reflecting if the results should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the actual return value
-        """
-
-        if function is None:
-            return False, self.FAILURE_INVALID_REQUEST, None
-
-        actual_value = function(obj)
-        result = actual_value == value
-        success = result == expected_result
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_value
-
-        return success, self.SUCCESS, actual_value
-
-    def _has_role(self, obj, role_string, expected_result):
-        """Checks if the accessible role of obj is role_string.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - role_string: A string containing a role constant (e.g. 'ROLE_LIST_BOX')
-        - expected_result: A boolean reflecting if the roles should match
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing the actual role
-        """
-
-        role = obj.getRole()
-        if not isinstance(role, pyatspi.Role):
-            role = pyatspi.Role(role)
-
-        actual_role = str(role)
-        result = actual_role == role_string
-        success = result == expected_result
-
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_role
-
-        return success, self.SUCCESS, actual_role
-
-    def _has_state(self, obj, state_string, expected_result):
-        """Checks if the accessible state set of obj contains the specified state.
-
-        Arguments:
-        - obj: The AtspiAccessible to check
-        - state_string: A string containing a state constant (e.g. 'STATE_CHECKED')
-        - expected_result: A boolean reflecting if the state should be in the set
-
-        Returns:
-        - A boolean reflecting if the actual result is the expected_result
-        - A string indicating success, or the cause of failure
-        - A string containing all states found
-        """
-
-        state_set = obj.getState()
-        state_strings = map(str, state_set.getStates())
-        result = state_string in state_strings
-        success = result == expected_result
-
-        actual_states = ", ".join(state_strings)
-        if success == False:
-            return success, self.FAILURE_RESULTS, actual_states
-
-        return success, self.SUCCESS, actual_states
 
     def _on_load_complete(self, event):
         """Callback for the document:load-complete AtspiEvent. We are interested
@@ -897,6 +779,7 @@ def get_cmdline_options():
     parser.add_argument("--host", action="store")
     parser.add_argument("--port", action="store")
     parser.add_argument("--ignore-dependencies", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
@@ -905,8 +788,9 @@ if __name__ == "__main__":
 
     args = get_cmdline_options()
     verify_dependencies = not args.get("ignore_dependencies")
+    dry_run = args.get("dry_run")
     print("Starting AtkAtspiAtta")
-    atta = AtkAtspiAtta(verify_dependencies)
+    atta = AtkAtspiAtta(verify_dependencies, dry_run)
     atta.start()
 
     host = args.get("host") or "localhost"

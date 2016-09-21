@@ -83,6 +83,42 @@ class Assertion():
 
         return attrs
 
+    def _get_arg_info(self, arg):
+        name = arg.get_name()
+        typeinfo = arg.get_type()
+        typetag = typeinfo.get_tag()
+
+        # TODO: This is private, but I'm not finding API to ask for the type in
+        # the form we want it (e.g. int). And getting the type string ("guint32")
+        # which we convert to the type, while not private, is teh suck. Look for
+        # API to do it right later.
+        argtype = gi._gi.TypeTag(typetag)
+        return "%s %s" % (argtype.__name__, name)
+
+    def _get_method_details(self, method):
+        name = method.get_name()
+        args = list(map(self._get_arg_info, method.get_arguments()))
+        return "%s(%s)" % (name, ", ".join(args))
+
+    def _get_interface_methods(self, interface_name):
+        gir = gi.Repository.get_default()
+
+        try:
+            info = gir.find_by_name("Atspi", interface_name)
+        except:
+            print("ERROR: Unable to get interface info for %s" % interface_name)
+            return []
+
+        return info.get_methods()
+
+    def _get_interfaces(self, obj):
+        interfaces = {}
+        for iface in pyatspi.utils.listInterfaces(obj):
+            methods = self._get_interface_methods(iface)
+            interfaces[iface] = list(map(self._get_method_details, methods))
+
+        return interfaces
+
     def _get_relations(self, obj):
         relations = {}
         for r in obj.getRelationSet():
@@ -136,7 +172,7 @@ class Assertion():
             return self._get_object_attributes(self._obj)
 
         if prop == "interfaceSet":
-            return pyatspi.utils.listInterfaces(self._obj)
+            return self._get_interfaces(self._obj)
 
         if prop == "stateSet":
             return self._get_states(self._obj)

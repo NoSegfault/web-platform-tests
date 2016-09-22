@@ -42,6 +42,7 @@ class Assertion():
     TEST_EVENT = "event"
     TEST_PROPERTY = "property"
     TEST_RESULT = "result"
+    TEST_TBD = "TBD"
 
     PROPERTIES = ["id",
                   "role",
@@ -85,6 +86,8 @@ class Assertion():
             return EventAssertion
         if test_class == cls.TEST_RESULT:
             return ResultAssertion
+        if test_class == cls.TEST_TBD:
+            return DumpInfoAssertion
 
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None

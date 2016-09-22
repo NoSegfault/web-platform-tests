@@ -86,28 +86,17 @@ class Assertion():
         if test_class == cls.TEST_RESULT:
             return ResultAssertion
 
-        print("ERROR: Unhandled test class: %s" % test_class)
+        print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
-    @staticmethod
-    def _get_object_attributes(obj):
-        try:
-            attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
-        except:
-            return {}
-
-        return attrs
+    def _get_arg_type(self, arg):
+        typeinfo = arg.get_type()
+        typetag = typeinfo.get_tag()
+        return gi._gi.TypeTag(typetag)
 
     def _get_arg_info(self, arg):
         name = arg.get_name()
-        typeinfo = arg.get_type()
-        typetag = typeinfo.get_tag()
-
-        # TODO: This is private, but I'm not finding API to ask for the type in
-        # the form we want it (e.g. int). And getting the type string ("guint32")
-        # which we convert to the type, while not private, is teh suck. Look for
-        # API to do it right later.
-        argtype = gi._gi.TypeTag(typetag)
+        argtype = self._get_arg_type(arg)
         return "%s %s" % (argtype.__name__, name)
 
     def _get_method_details(self, method):
@@ -121,20 +110,14 @@ class Assertion():
         try:
             info = gir.find_by_name("Atspi", interface_name)
         except:
-            print("ERROR: Unable to get interface info for %s" % interface_name)
+            self._on_exception()
             return []
 
         return info.get_methods()
 
     def _get_interfaces(self, obj):
-        interfaces = {}
-        for iface in pyatspi.utils.listInterfaces(obj):
-            if iface not in self.INTERFACES:
-                continue
-            methods = self._get_interface_methods(iface)
-            interfaces[iface] = list(map(self._get_method_details, methods))
-
-        return interfaces
+        interfaces = pyatspi.utils.listInterfaces(obj)
+        return list(filter(lambda x: x in self.INTERFACES, interfaces))
 
     def _get_relations(self, obj):
         relations = {}
@@ -161,8 +144,9 @@ class Assertion():
         # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
         return role.replace("STATUS_BAR", "STATUSBAR")
 
-    def _get_id(self, obj):
-        attrs = self._get_object_attributes(obj)
+    @staticmethod
+    def _get_id(obj):
+        attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
         return attrs.get("id") or attrs.get("html-id")
 
     def _get_property(self, prop):
@@ -186,7 +170,7 @@ class Assertion():
             return self._obj.childCount
 
         if prop == "objectAttributes":
-            return self._get_object_attributes(self._obj)
+            return self._obj.getAttributes()
 
         if prop == "interfaces":
             return self._get_interfaces(self._obj)
@@ -208,21 +192,34 @@ class Assertion():
 
     def _get_result(self):
         value = self._get_value()
-        if self._expectation == self.EXPECTATION_IS:
-            return self._value == value
-        if self._expectation == self.EXPECTATION_IS_NOT:
-            return self._value != value
-        if self._expectation == self.EXPECTATION_CONTAINS:
-            return self._value in value
-        if self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            return self._value not in value
-        if self._expectation == self.EXPECTATION_IS_ANY:
-            return value in self._value
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            return type(value).__name__ == self._value
+        if value is None:
+            self._msgs.append("ERROR: Could not get value for assertion")
+            return False
 
-        self._msgs.append("ERROR: Unhandled assertion type: %s" % self._expectation)
-        return False
+        if self._expectation == self.EXPECTATION_IS:
+            result = self._value == value
+        elif self._expectation == self.EXPECTATION_IS_NOT:
+            result = self._value != value
+        elif self._expectation == self.EXPECTATION_CONTAINS:
+            result = self._value in value
+        elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
+            result = self._value not in value
+        elif self._expectation == self.EXPECTATION_IS_ANY:
+            result = value in self._value
+        elif self._expectation == self.EXPECTATION_IS_TYPE:
+            result = type(value).__name__ == self._value
+        else:
+            result = False
+
+        if not result:
+            self._msgs.append("Actual value: %s" % value)
+
+        return result
+
+    def _on_exception(self):
+        etype, evalue, tb = sys.exc_info()
+        error = traceback.format_exc(limit=1, chain=False)
+        self._msgs.append(error)
 
     def run(self):
         result, msgs = self._get_result(), "\n".join(self._msgs)
@@ -238,6 +235,16 @@ class DumpInfoAssertion(Assertion):
     def __init__(self, obj, assertion=None):
         assertion = [""] * 4
         super().__init__(obj, assertion)
+
+    def _get_interfaces(self, obj):
+        interfaces = {}
+        for iface in pyatspi.utils.listInterfaces(obj):
+            if iface not in self.INTERFACES:
+                continue
+            methods = self._get_interface_methods(iface)
+            interfaces[iface] = list(map(self._get_method_details, methods))
+
+        return interfaces
 
     def _get_result(self):
         self._msgs.append("DRY RUN")
@@ -259,25 +266,35 @@ class PropertyAssertion(Assertion):
 
 class ResultAssertion(Assertion):
 
+    def _value_to_harness_string(self, value):
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            return value
+
+        if isinstance(value, bool):
+            return str(value).lower()
+
+        if isinstance(value, (int, float)):
+            return str(value)
+
+        return value
+
     def _get_value(self):
         iface_string, callable_string = re.split("\.", self._test_string, maxsplit=1)
-        try:
-            interface = eval("pyatspi.Atspi.%s" % iface_string)
-        except:
-            self._msgs.append("ERROR: Invalid interface: %s" % iface_string)
-            return None
+        function_string, args_string = re.split("\(", callable_string, maxsplit=1)
+        args_string = args_string[:-1]
 
-        function_string = re.split("\(", callable_string, maxsplit=1)[0]
-        if function_string not in dir(interface):
-            self._msgs.append("ERROR: %s not in %s" % (function_string, interface))
-            return None
+        methods = self._get_interface_methods(iface_string)
+        for method in methods:
+            if method.get_name() != function_string:
+                continue
 
-        try:
-            to_call = "pyatspi.Atspi.%s.%s" % (iface_string, callable_string)
-            return eval(to_call)
-        except:
-            self._msgs.append("ERROR: Exception calling %s" % to_call)
-            return None
+            testargs = list(filter(lambda x: x != "", args_string.split(",")))
+            argtypes = list(map(self._get_arg_type, method.get_arguments()))
+            args = [argtypes[i](arg) for i, arg in enumerate(testargs)]
+            value = method.invoke(self._obj, *args)
+            return self._value_to_harness_string(value)
+
+        return None
 
 
 class EventAssertion(Assertion):
@@ -498,8 +515,12 @@ class AtkAtspiAtta():
         else:
             test_class = Assertion.get_test_class(assertion)
 
-        test = test_class(obj, assertion)
-        result_value, status = test.run()
+        if test_class is None:
+            result_value = Assertion.FAIL
+            status = "ERROR: %s is not a valid assertion" % assertion
+        else:
+            test = test_class(obj, assertion)
+            result_value, status = test.run()
 
         return {"result": result_value, "message": status}
 

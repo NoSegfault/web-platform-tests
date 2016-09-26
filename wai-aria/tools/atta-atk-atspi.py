@@ -327,6 +327,9 @@ class AtkAtspiAtta():
     FAILURE_RESULTS = "Expected result does not match actual result"
     SUCCESS = "Success"
 
+    # Gecko and WebKitGtk respectively
+    UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
+
     def __init__(self, verify_dependencies=True, dry_run=False):
         """Initializes this ATTA.
 
@@ -628,9 +631,13 @@ class AtkAtspiAtta():
         - A string indicating success, or the cause of failure
         """
 
+        uri = None
         try:
             document = obj.queryDocument()
-            uri = document.getAttributeValue("DocURL")
+            for name in self.UA_URI_ATTRIBUTE_NAMES:
+                uri = document.getAttributeValue(name)
+                if uri:
+                    break
         except NotImplementedError:
             return "", self.FAILURE_NOT_IMPLEMENTED
         except:
@@ -708,8 +715,11 @@ class AtkAtspiAtta():
         """
 
         test_name, test_uri = self._next_test
+        if test_name is None:
+            return
+
         uri, status = self._get_document_uri(event.source)
-        self._ready = uri == test_uri
+        self._ready = uri and uri == test_uri
 
         if self._ready:
             print("READY: Next test is '%s' (%s)" % (test_name, test_uri))

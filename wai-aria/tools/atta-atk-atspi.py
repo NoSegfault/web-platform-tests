@@ -804,7 +804,11 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
 
         self.send_response(200)
         self.add_aria_headers()
-        self.wfile.write(bytes(self.dump_json(response), "utf-8"))
+        dump = self.dump_json(response)
+        try:
+            self.wfile.write(bytes(dump, "utf-8"))
+        except BrokenPipeError:
+            print("ERROR: Broken pipe")
 
     def start_test(self):
         print("==================================")

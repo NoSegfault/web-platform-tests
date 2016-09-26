@@ -61,6 +61,7 @@ class Assertion():
     # implemented.
     INTERFACES = ["Component",
                   "Document",
+                  "EditableText",
                   "Hyperlink",
                   "Hypertext",
                   "Image",

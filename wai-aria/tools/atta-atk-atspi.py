@@ -23,6 +23,7 @@ import sys
 import threading
 import traceback
 
+from gi.repository import Gio, GLib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
@@ -358,6 +359,7 @@ class AtkAtspiAtta():
         self._callbacks = {"document:load-complete": self._on_load_complete}
         self._listener_thread = None
         self._dry_run = dry_run
+        self._proxy = None
 
         if verify_dependencies and not self._check_environment():
             return
@@ -371,6 +373,43 @@ class AtkAtspiAtta():
 
         if self._dry_run:
             print("DRY RUN ONLY: No assertions will be tested.")
+
+    def _get_accessibility_enabled(self):
+        """Returns True if accessibility support is enabled on this platform."""
+
+        try:
+            self._proxy = Gio.DBusProxy.new_for_bus_sync(
+                Gio.BusType.SESSION,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                "org.a11y.Bus",
+                "/org/a11y/bus",
+                "org.freedesktop.DBus.Properties",
+                None)
+        except:
+            print("ERROR: Exception calling Gio.DBusProxy.new_for_bus_sync()")
+            return False
+
+        enabled = self._proxy.Get("(ss)", "org.a11y.Status", "IsEnabled")
+        print("Platform accessibility support is enabled: %s" % enabled)
+        return enabled
+
+    def _set_accessibility_enabled(self, enable):
+        """Enables or disables platform accessibility support.
+
+        Arguments:
+        - enable: A boolean indicating if support should be enabled or disabled
+
+        Returns:
+        - A boolean indicating success or failure.
+        """
+
+        if not self._proxy:
+            return False
+
+        vEnable = GLib.Variant("b", enable)
+        self._proxy.Set("(ssv)", "org.a11y.Status", "IsEnabled", vEnable)
+        return self._get_accessibility_enabled() == enable
 
     def _check_environment(self):
         """Returns True if the client environment has all expected dependencies."""
@@ -411,6 +450,12 @@ class AtkAtspiAtta():
         if not sys.version_info[0] == 3:
             print("ERROR: This ATTA requires Python 3.")
             can_enable = False
+
+        if can_enable and not self._get_accessibility_enabled():
+            can_enable = self._set_accessibility_enabled(True)
+            if can_enable:
+                print("IMPORTANT: Accessibility support was just enabled. "\
+                      "Please quit and relaunch the browser being tested.")
 
         return can_enable
 

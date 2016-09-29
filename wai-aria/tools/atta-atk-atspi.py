@@ -387,7 +387,9 @@ class AtkAtspiAtta():
                 "org.freedesktop.DBus.Properties",
                 None)
         except:
-            print("ERROR: Exception calling Gio.DBusProxy.new_for_bus_sync()")
+            etype, evalue, tb = sys.exc_info()
+            error = traceback.format_exc(limit=1, chain=False)
+            print(error)
             return False
 
         enabled = self._proxy.Get("(ss)", "org.a11y.Status", "IsEnabled")
@@ -912,10 +914,13 @@ if __name__ == "__main__":
     args = get_cmdline_options()
     verify_dependencies = not args.get("ignore_dependencies")
     dry_run = args.get("dry_run")
-    print("Starting AtkAtspiAtta")
+    print("Attempting to start AtkAtspiAtta")
     atta = AtkAtspiAtta(verify_dependencies, dry_run)
-    atta.start()
+    if not atta.is_enabled():
+        print("ERROR: Unable to enable ATTA")
+        sys.exit(1)
 
+    atta.start()
     host = args.get("host") or "localhost"
     port = args.get("port") or "4119"
     print("Starting server on http://%s:%s/" % (host, port))

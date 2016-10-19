@@ -60,7 +60,8 @@ class Assertion():
     # with methods test writers may need to include in their assertions
     # for the purpose of verifying those methods have been correctly
     # implemented.
-    INTERFACES = ["Component",
+    INTERFACES = ["Action",
+                  "Component",
                   "Document",
                   "EditableText",
                   "Hyperlink",

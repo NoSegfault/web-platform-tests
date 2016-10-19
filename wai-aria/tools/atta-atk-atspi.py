@@ -221,7 +221,7 @@ class Assertion():
         else:
             result = False
 
-        if not result:
+        if not result or self._verbose:
             self._msgs.append("Actual value: %s" % value)
 
         return result

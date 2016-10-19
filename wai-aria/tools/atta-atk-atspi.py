@@ -95,6 +95,19 @@ class Assertion():
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
+    @staticmethod
+    def _enum_to_string(enum):
+        try:
+            rv = enum.value_name.replace("ATSPI_", "")
+        except:
+            rv = str(enum)
+
+        # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
+        # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
+        rv = rv.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
+
+        return rv
+
     def _get_arg_type(self, arg):
         typeinfo = arg.get_type()
         typetag = typeinfo.get_tag()
@@ -128,27 +141,17 @@ class Assertion():
     def _get_relations(self, obj):
         relations = {}
         for r in obj.getRelationSet():
-            relation = r.getRelationType().value_name.replace("ATSPI_", "")
+            relation = self._enum_to_string(r.getRelationType())
             targets = [r.getTarget(i) for i in range(r.getNTargets())]
             relations[relation] = list(map(self._get_id, targets))
 
         return relations
 
-    @staticmethod
-    def _get_states(obj):
-        states = []
-        for s in obj.getState().getStates():
-            states.append(s.value_name.replace("ATSPI_", ""))
+    def _get_states(self, obj):
+        return [self._enum_to_string(s) for s in obj.getState().getStates()]
 
-        return states
-
-    @staticmethod
-    def _get_role(obj):
-        role = str(pyatspi.Role(obj.getRole()))
-
-        # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
-        # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
-        return role.replace("STATUS_BAR", "STATUSBAR")
+    def _get_role(self, obj):
+        return self._enum_to_string(obj.getRole())
 
     @staticmethod
     def _get_id(obj):

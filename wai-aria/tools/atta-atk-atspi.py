@@ -73,12 +73,13 @@ class Assertion():
                   "Text",
                   "Value"]
 
-    def __init__(self, obj, assertion):
+    def __init__(self, obj, assertion, verbose=False):
         self._obj = obj
         self._test_string = assertion[1]
         self._expectation = assertion[2]
         self._value = assertion[3]
         self._msgs = []
+        self._verbose = verbose
 
     @classmethod
     def get_test_class(cls, assertion):
@@ -241,15 +242,19 @@ class Assertion():
 
 class DumpInfoAssertion(Assertion):
 
-    def __init__(self, obj, assertion=None):
+    def __init__(self, obj, assertion=None, verbose=False):
         assertion = [""] * 4
-        super().__init__(obj, assertion)
+        super().__init__(obj, assertion, verbose)
 
     def _get_interfaces(self, obj):
+        if not self._verbose:
+            return pyatspi.utils.listInterfaces(obj)
+
         interfaces = {}
         for iface in pyatspi.utils.listInterfaces(obj):
             if iface not in self.INTERFACES:
                 continue
+
             methods = self._get_interface_methods(iface)
             interfaces[iface] = list(map(self._get_method_details, methods))
 
@@ -308,7 +313,7 @@ class ResultAssertion(Assertion):
 
 class EventAssertion(Assertion):
 
-    def __init__(self, obj, assertion):
+    def __init__(self, obj, assertion, verbose=False):
         pass
 
 
@@ -336,7 +341,7 @@ class AtkAtspiAtta():
     # Gecko and WebKitGtk respectively
     UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
 
-    def __init__(self, verify_dependencies=True, dry_run=False):
+    def __init__(self, verify_dependencies=True, dry_run=False, verbose=False):
         """Initializes this ATTA.
 
         Arguments:
@@ -348,6 +353,8 @@ class AtkAtspiAtta():
         - dry_run: Boolean reflecting we shouldn't actually run the assertions,
           but just try to find the specified element(s) and dump out everything
           we know about them. DEFAULT: False
+        - verbose: Boolean reflecting whether or not verbose output is desired.
+          DEFAULT: False
         """
 
         self._atta_name = "WPT ATK/AT-SPI2 ATTA"
@@ -363,6 +370,7 @@ class AtkAtspiAtta():
         self._callbacks = {"document:load-complete": self._on_load_complete}
         self._listener_thread = None
         self._dry_run = dry_run
+        self._verbose = verbose
         self._proxy = None
 
         if verify_dependencies and not self._check_environment():
@@ -577,7 +585,7 @@ class AtkAtspiAtta():
             result_value = Assertion.FAIL
             status = "ERROR: %s is not a valid assertion" % assertion
         else:
-            test = test_class(obj, assertion)
+            test = test_class(obj, assertion, verbose=self._verbose)
             result_value, status = test.run()
 
         return {"result": result_value, "message": status}
@@ -909,6 +917,7 @@ def get_cmdline_options():
     parser.add_argument("--port", action="store")
     parser.add_argument("--ignore-dependencies", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
@@ -918,15 +927,18 @@ if __name__ == "__main__":
     args = get_cmdline_options()
     verify_dependencies = not args.get("ignore_dependencies")
     dry_run = args.get("dry_run")
+    verbose = args.get("verbose")
+    host = args.get("host") or "localhost"
+    port = args.get("port") or "4119"
+
     print("Attempting to start AtkAtspiAtta")
-    atta = AtkAtspiAtta(verify_dependencies, dry_run)
+    atta = AtkAtspiAtta(verify_dependencies, dry_run, verbose)
     if not atta.is_enabled():
         print("ERROR: Unable to enable ATTA")
         sys.exit(1)
 
     atta.start()
-    host = args.get("host") or "localhost"
-    port = args.get("port") or "4119"
+
     print("Starting server on http://%s:%s/" % (host, port))
     server = HTTPServer((host, int(port)), AttaRequestHandler)
     server.serve_forever()

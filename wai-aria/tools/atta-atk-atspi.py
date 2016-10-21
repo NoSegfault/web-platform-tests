@@ -32,6 +32,7 @@ class Assertion():
     PASS = "PASS"
     FAIL = "FAIL"
     ERROR = "ERROR"
+    NOT_RUN = "NOT RUN"
 
     EXPECTATION_IS = "is"
     EXPECTATION_IS_NOT = "isNot"
@@ -77,9 +78,18 @@ class Assertion():
         self._obj = obj
         self._test_string = assertion[1]
         self._expectation = assertion[2]
-        self._value = assertion[3]
+        self._expected_value = assertion[3]
+        self._actual_value = None
         self._msgs = []
         self._verbose = verbose
+        self._status = self.NOT_RUN
+
+    def __str__(self):
+        rv = "%s: %s %s %s" % (self._status, self._test_string, self._expectation, self._expected_value)
+        if self._status == self.FAIL or (self._status == self.PASS and self._verbose):
+            rv += " (Got: %s)" % re.sub("[\[\]\"\']", "", str(self._actual_value))
+
+        return rv
 
     @classmethod
     def get_test_class(cls, assertion):
@@ -154,14 +164,17 @@ class Assertion():
     def _get_role(self, obj):
         return self._enum_to_string(obj.getRole())
 
-    @staticmethod
-    def _get_id(obj):
+    def _get_object_attribute(self, obj, attr):
         attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
-        return attrs.get("id") or attrs.get("html-id")
+        return attrs.get(attr)
+
+    def _get_id(self, obj):
+        return self._get_object_attribute(obj, "id") \
+            or self._get_object_attribute(obj, "html-id")
 
     def _get_property(self, prop):
         if prop not in self.PROPERTIES:
-            print("ERROR: Unknown property: %s" % prop)
+            self._msgs.append("ERROR: Unknown property: %s" % prop)
             return None
 
         if prop == "id":
@@ -194,35 +207,38 @@ class Assertion():
         if prop == "parentID":
             return self._get_id(self._obj.parent)
 
-        print("ERROR: Unhandled property: %s" % prop)
+        self._msgs.append("ERROR: Unhandled property: %s" % prop)
         return None
 
     def _get_value(self):
         pass
 
     def _get_result(self):
-        value = self._get_value()
-        if value is None:
+        self._actual_value = self._get_value()
+        if self._actual_value is None:
+            self._status = self.ERROR
             self._msgs.append("ERROR: Could not get value for assertion")
             return False
 
         if self._expectation == self.EXPECTATION_IS:
-            result = self._value == value
+            result = self._expected_value == self._actual_value
         elif self._expectation == self.EXPECTATION_IS_NOT:
-            result = self._value != value
+            result = self._expected_value != self._actual_value
         elif self._expectation == self.EXPECTATION_CONTAINS:
-            result = self._value in value
+            result = self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            result = self._value not in value
+            result = self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
-            result = value in self._value
+            result = self._actual_value in self._expected_value
         elif self._expectation == self.EXPECTATION_IS_TYPE:
-            result = type(value).__name__ == self._value
+            result = type(self._actual_value).__name__ == self._expected_value
         else:
             result = False
 
-        if not result or self._verbose:
-            self._msgs.append("Actual value: %s" % value)
+        if result:
+            self._status = self.PASS
+        else:
+            self._status = self.FAIL
 
         return result
 
@@ -232,12 +248,11 @@ class Assertion():
         self._msgs.append(error)
 
     def run(self):
-        result, msgs = self._get_result(), "\n".join(self._msgs)
-        if result == True:
-            return self.PASS, msgs
-        if result == False:
-            return self.FAIL, msgs
-        return self.ERROR, msgs
+        result = self._get_result()
+        if not result or self._verbose:
+            self._msgs.append(str(self))
+
+        return self._status, "\n".join(self._msgs)
 
 
 class DumpInfoAssertion(Assertion):
@@ -245,6 +260,12 @@ class DumpInfoAssertion(Assertion):
     def __init__(self, obj, assertion=None, verbose=False):
         assertion = [""] * 4
         super().__init__(obj, assertion, verbose)
+
+    def __str__(self):
+        if self._actual_value is None:
+            self._get_result()
+
+        return self._actual_value
 
     def _get_interfaces(self, obj):
         if not self._verbose:
@@ -268,13 +289,19 @@ class DumpInfoAssertion(Assertion):
         for prop in self.PROPERTIES:
             info["properties"][prop] = self._get_property(prop)
 
-        print(json.dumps(info, indent=4, sort_keys=True))
+        self._actual_value = json.dumps(info, indent=4, sort_keys=True)
         return True
 
 
 class PropertyAssertion(Assertion):
 
     def _get_value(self):
+        if self._test_string == "objectAttributes" and self._expected_value.count(":") == 1:
+            attr_name = self._expected_value.split(":")[0]
+            attr_value = self._get_object_attribute(self._obj, attr_name)
+            if attr_value is not None:
+                return "%s:%s" % (attr_name, attr_value)
+
         return self._get_property(self._test_string)
 
 
@@ -572,8 +599,7 @@ class AtkAtspiAtta():
           what is desired or required by this ATTA.
 
         Returns:
-        - A dict containing the result (e.g. "PASS" or "FAIL") and a message
-          reflecting the status, such as details in the case of failure.
+        - A dict containing the result (e.g. "PASS" or "FAIL") and a message log
         """
 
         if self._dry_run:
@@ -583,12 +609,14 @@ class AtkAtspiAtta():
 
         if test_class is None:
             result_value = Assertion.FAIL
-            status = "ERROR: %s is not a valid assertion" % assertion
+            messages = "ERROR: %s is not a valid assertion" % assertion
+            log = messages
         else:
             test = test_class(obj, assertion, verbose=self._verbose)
-            result_value, status = test.run()
+            result_value, messages = test.run()
+            log = "\n%s" % test
 
-        return {"result": result_value, "message": status}
+        return {"result": result_value, "message": str(messages), "log": log}
 
     def run_tests(self, obj_id, assertions):
         """Runs the provided assertions on the object with the specified id.
@@ -614,27 +642,21 @@ class AtkAtspiAtta():
                     "message": self.FAILURE_ATTA_NOT_READY,
                     "results": []}
 
-        obj, status = self._get_element_with_id(self._current_document, obj_id)
+        obj, message = self._get_element_with_id(self._current_document, obj_id)
         if not obj:
             return {"status": self.STATUS_ERROR,
-                    "message": status,
+                    "message": message,
                     "results": []}
 
-        response = {"status": self.STATUS_OK}
-
-        print("RUNNING TESTS: id: '%s' obj: %s" % (obj_id, obj))
-
-        results = []
-        for i, assertion in enumerate(assertions):
-            result = self._run_test(obj, assertion)
-            print("%i. %s %s" % (i, assertion, result))
-            results.append(result)
-
-        response["results"] = results
+        results = [self._run_test(obj, a) for a in assertions]
         if not results:
-            response["status"] = "ERROR"
+            return {"status": self.STATUS_ERROR,
+                    "message": message,
+                    "results": []}
 
-        return response
+        return {"status": self.STATUS_OK,
+                "message": message,
+                "results": results}
 
     def start(self):
         """Starts this ATTA, registering for ATTA-required events, and

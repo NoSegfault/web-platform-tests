@@ -86,8 +86,6 @@ class Assertion():
 
     def __str__(self):
         rv = "%s: %s %s %s" % (self._status, self._test_string, self._expectation, self._expected_value)
-        if self._status == self.FAIL or (self._status == self.PASS and self._verbose):
-            rv += " (Got: %s)" % re.sub("[\[\]\"\']", "", str(self._actual_value))
 
         return rv
 
@@ -248,11 +246,12 @@ class Assertion():
         self._msgs.append(error)
 
     def run(self):
-        result = self._get_result()
+        result, log = self._get_result(), ""
         if not result or self._verbose:
-            self._msgs.append(str(self))
+            log = "(Got: %s)" % re.sub("[\[\]\"\']", "", str(self._actual_value))
+            self._msgs.append(log)
 
-        return self._status, "\n".join(self._msgs)
+        return self._status, "\n".join(self._msgs), log
 
 
 class DumpInfoAssertion(Assertion):
@@ -260,12 +259,6 @@ class DumpInfoAssertion(Assertion):
     def __init__(self, obj, assertion=None, verbose=False):
         assertion = [""] * 4
         super().__init__(obj, assertion, verbose)
-
-    def __str__(self):
-        if self._actual_value is None:
-            self._get_result()
-
-        return self._actual_value
 
     def _get_interfaces(self, obj):
         if not self._verbose:
@@ -281,7 +274,7 @@ class DumpInfoAssertion(Assertion):
 
         return interfaces
 
-    def _get_result(self):
+    def run(self):
         self._msgs.append("DRY RUN")
 
         info = {}
@@ -289,9 +282,8 @@ class DumpInfoAssertion(Assertion):
         for prop in self.PROPERTIES:
             info["properties"][prop] = self._get_property(prop)
 
-        self._actual_value = json.dumps(info, indent=4, sort_keys=True)
-        return True
-
+        log = json.dumps(info, indent=4, sort_keys=True)
+        return True, "\n".join(self._msgs), log
 
 class PropertyAssertion(Assertion):
 
@@ -599,7 +591,8 @@ class AtkAtspiAtta():
           what is desired or required by this ATTA.
 
         Returns:
-        - A dict containing the result (e.g. "PASS" or "FAIL") and a message log
+        - A dict containing the result (e.g. "PASS" or "FAIL"), messages to be
+          displayed by WPT explaining any failures, and logging output.
         """
 
         if self._dry_run:
@@ -613,8 +606,7 @@ class AtkAtspiAtta():
             log = messages
         else:
             test = test_class(obj, assertion, verbose=self._verbose)
-            result_value, messages = test.run()
-            log = "\n%s" % test
+            result_value, messages, log = test.run()
 
         return {"result": result_value, "message": str(messages), "log": log}
 

@@ -323,8 +323,14 @@ class ResultAssertion(Assertion):
 
     def _get_value(self):
         iface_string, callable_string = re.split("\.", self._test_string, maxsplit=1)
-        function_string, args_string = re.split("\(", callable_string, maxsplit=1)
-        args_string = args_string[:-1]
+        callable_string = callable_string.replace("atk_%s_" % iface_string.lower(), "")
+        try:
+            function_string, args_string = re.split("\(", callable_string, maxsplit=1)
+        except ValueError:
+            function_string = callable_string
+            args_string = ""
+        else:
+            args_string = args_string[:-1]
 
         methods = self._get_interface_methods(iface_string)
         for method in methods:
@@ -334,8 +340,14 @@ class ResultAssertion(Assertion):
             testargs = list(filter(lambda x: x != "", args_string.split(",")))
             argtypes = list(map(self._get_arg_type, method.get_arguments()))
             args = [argtypes[i](arg) for i, arg in enumerate(testargs)]
-            value = method.invoke(self._obj, *args)
-            return self._value_to_harness_string(value)
+            try:
+                value = method.invoke(self._obj, *args)
+            except RuntimeError:
+                self._msgs.append("ERROR: Exception calling %s" % method.get_name())
+            except:
+                self._on_exception()
+            else:
+                return self._value_to_harness_string(value)
 
         return None
 

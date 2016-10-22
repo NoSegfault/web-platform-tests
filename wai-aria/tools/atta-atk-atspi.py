@@ -43,6 +43,7 @@ class Assertion():
 
     TEST_EVENT = "event"
     TEST_PROPERTY = "property"
+    TEST_RELATION = "relation"
     TEST_RESULT = "result"
     TEST_TBD = "TBD"
 
@@ -96,6 +97,8 @@ class Assertion():
             return PropertyAssertion
         if test_class == cls.TEST_EVENT:
             return EventAssertion
+        if test_class == cls.TEST_RELATION:
+            return RelationAssertion
         if test_class == cls.TEST_RESULT:
             return ResultAssertion
         if test_class == cls.TEST_TBD:
@@ -295,6 +298,13 @@ class PropertyAssertion(Assertion):
                 return "%s:%s" % (attr_name, attr_value)
 
         return self._get_property(self._test_string)
+
+
+class RelationAssertion(Assertion):
+
+    def _get_value(self):
+        relations = self._get_relations(self._obj)
+        return re.sub("['\s]", "", str(relations.get(self._test_string)))
 
 
 class ResultAssertion(Assertion):

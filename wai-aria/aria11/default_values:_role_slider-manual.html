@@ -1,0 +1,191 @@
+<!doctype html>
+  <html>
+  <head>
+  <title>default values: role="slider"</title>
+  <link rel="stylesheet" href="/resources/testharness.css">
+  <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+  <script>
+  setup({explicit_timeout: true, explicit_done: true });
+
+  var theTest = new ATTAcomm(
+  {
+   "title" : "default values: role=\"slider\"",
+   "steps" : [
+      {
+         "title" : "step 1",
+         "test" : {
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_SLIDER"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "AccessibleValue"
+               ],
+               [
+                  "result",
+                  "AccessibleValue.minimumValue",
+                  "contains",
+                  "0"
+               ],
+               [
+                  "result",
+                  "AccessibleValue.currentValue",
+                  "contains",
+                  "50"
+               ],
+               [
+                  "result",
+                  "AccessibleValue.maximumValue",
+                  "contains",
+                  "100"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SLIDER"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "Value"
+               ],
+               [
+                  "result",
+                  "Value.atk_value_get_minimum_value",
+                  "contains",
+                  "0"
+               ],
+               [
+                  "result",
+                  "Value.atk_value_get_current_value",
+                  "contains",
+                  "50"
+               ],
+               [
+                  "result",
+                  "Value.atk_value_get_maximum_value",
+                  "contains",
+                  "100"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Control Type",
+                  "is",
+                  "slider"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "RangeValue"
+               ],
+               [
+                  "result",
+                  "RangeValue.Minimum",
+                  "contains",
+                  "0"
+               ],
+               [
+                  "result",
+                  "RangeValue.Value",
+                  "contains",
+                  "50"
+               ],
+               [
+                  "result",
+                  "RangeValue.Maximum",
+                  "contains",
+                  "100"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXRole",
+                  "is",
+                  "AXSlider"
+               ],
+               [
+                  "property",
+                  "AXSubrole",
+                  "is",
+                  "<nil>"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "slider"
+               ],
+               [
+                  "property",
+                  "AXMinValue",
+                  "is",
+                  "0"
+               ],
+               [
+                  "property",
+                  "AXValue",
+                  "is",
+                  "50"
+               ],
+               [
+                  "property",
+                  "AXMaxValue",
+                  "is",
+                  "100"
+               ]
+            ]
+         },
+         "type" : "test",
+         "element" : "test"
+      }
+   ]
+}
+
+  ) ;
+  </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for default values: role="slider".</p>
+    <div role="slider" id="test">
+  Go Fish
+  </div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+  </html>
+  

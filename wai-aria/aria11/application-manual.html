@@ -1,0 +1,112 @@
+<!doctype html>
+  <html>
+  <head>
+  <title>application</title>
+  <link rel="stylesheet" href="/resources/testharness.css">
+  <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+  <script>
+  setup({explicit_timeout: true, explicit_done: true });
+
+  var theTest = new ATTAcomm(
+  {
+   "title" : "application",
+   "steps" : [
+      {
+         "type" : "test",
+         "test" : {
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_APPLICATION"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Control Type",
+                  "isNot",
+                  "Pane"
+               ],
+               [
+                  "property",
+                  "Localized Control Type",
+                  "isNot",
+                  "application"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_EMBEDDED"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXRole",
+                  "is",
+                  "AXGroup"
+               ],
+               [
+                  "property",
+                  "AXSubrole",
+                  "is",
+                  "AXWebApplication"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "web application"
+               ],
+               [
+                  "result",
+                  "array",
+                  "isNot",
+                  "true"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "element" : "test"
+      }
+   ]
+}
+
+  ) ;
+  </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for application.</p>
+     <div id='test' role='application' aria-activedescendant='bob'>
+     <div id='bob' tabindex='0' class='bobber'>Hello world</div>
+  </div>
+ then role:application, aria-activedescendant: bob
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+  </html>
+  

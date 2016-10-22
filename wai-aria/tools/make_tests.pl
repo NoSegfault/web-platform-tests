@@ -18,11 +18,14 @@ use Getopt::Long;
 my %specs = (
     "aria11" => {
       title => "ARIA_1.1_Testable_Statements",
-      specURL => "https://www.w3.org/TR/wai-aria11/"
+      specURL => "https://www.w3.org/TR/wai-aria11/",
+      dir => "aria11"
     },
     "svg" => {
       title => "SVG_Accessibility/Testing/Test_Assertions_with_Tables_for_ATTA",
-      specURL => "https://www.w3.org/TR/svg-aam-1.0/"
+      specURL => "https://www.w3.org/TR/svg-aam-1.0/",
+      dir => "svg",
+      fragment => '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">%code%</svg>'
     }
 );
 
@@ -38,16 +41,30 @@ my $file = undef ;
 my $spec = undef ;
 my $wiki_title = undef ;
 my $dir = undef;
+my $theSpecFragment = "%code%";
 
 my $result = GetOptions(
     "f|file=s"   => \$file,
     "w|wiki=s"   => \$wiki_title,
     "s|spec=s"   => \$spec,
-    "d|dir=s"   => \$dir);
+    "d|dir=s"   => \$dir) || usage();
 
 my $wiki_config = {
   "api_url" => "https://www.w3.org/wiki/api.php"
 };
+
+my $io ;
+our $theSpecURL = "";
+
+if ($spec) {
+  print "Processing spec $spec\n";
+  $wiki_title = $specs{$spec}->{title};
+  $theSpecURL = $specs{$spec}->{specURL};
+  if (!$dir) {
+    $dir = "../" . $specs{$spec}->{dir};
+  }
+  $theSpecFragment = $specs{$spec}->{fragment};
+}
 
 if (!$dir) {
   $dir = "../raw";
@@ -58,21 +75,22 @@ if (!-d $dir) {
   exit 1;
 }
 
-my $io ;
-our $theSpecURL = "";
-
-if ($spec) {
-  $wiki_title = $specs{$spec}->{title};
-  $theSpecURL = $specs{$spec}->{specURL};
-}
-
-if ($wiki_title) {
+if ($file) {
+  open($io, "<", $file) || die("Failed to open $file: " . $@);
+} elsif ($wiki_title) {
   my $MW = MediaWiki::API->new( $wiki_config );
+
+  $MW->{config}->{on_error} = \&on_error;
+
+  sub on_error {
+    print "Error code: " . $MW->{error}->{code} . "\n";
+    print $MW->{error}->{stacktrace}."\n";
+    die;
+  }
   my $page = $MW->get_page( { title => $wiki_title } );
   my $theContent = $page->{'*'};
+  print "Loaded " . length($theContent) . " from $wiki_title\n";
   $io = IO::String->new($theContent);
-} elsif ($file) {
-  open($io, "<", $file) || die("Failed to open $file: " . $@);
 } else {
   usage() ;
 }
@@ -97,6 +115,8 @@ my $theType = "";
 my $theName = "";
 my $theRef = "";
 
+our $testNames = {} ;
+
 while (<$io>) {
   # look for state
   if (m/^SpecURL: (.*)$/) {
@@ -104,10 +124,20 @@ while (<$io>) {
     $theSpecURL =~ s/^ *//;
     $theSpecURL =~ s/ *$//;
   }
-  if (m/^=== (.*) ===/) {
+  if ($state == 5 && m/^; \/\/ (.*)/) {
+    # we found another test inside a block
+    # we were in an item; dump it
+    build_test($current, $theAttributes, $theCode, $theAsserts, $theSpecFragment) ;
+    print "Finished $current and new subblock $1\n";
+    $state = 1;
+    $theAttributes = {} ;
+    $theCode = "";
+    $theAsserts = {};
+    $theName = "";
+  } elsif (m/^=== +(.*[^ ]) +===/) {
     if ($state != 0) {
       # we were in an item; dump it
-      build_test($current, $theAttributes, $theCode, $theAsserts) ;
+      build_test($current, $theAttributes, $theCode, $theAsserts, $theSpecFragment) ;
       print "Finished $current\n";
     }
     $state = 1;
@@ -117,6 +147,7 @@ while (<$io>) {
     $theAsserts = {};
     $theName = "";
   }
+
   if ($state == 1) {
     if (m/<pre>/) {
       # we are now in the code block
@@ -134,8 +165,11 @@ while (<$io>) {
       # accumulate whatever was in the block under the data for it
       chomp();
       $theAttributes->{$theName} .= $_;
+    } elsif (m/TODO/) {
+      $state = 0;
     }
   }
+
   if ($state == 2) {
     if (m/<\/pre>/) {
       # we are done with the code block
@@ -154,8 +188,8 @@ while (<$io>) {
   } elsif ($state == 4) {
     if (m/^\|-/) {
       if ($theAPI
-          && exists($theAsserts->{$theAPI}->[$theAssertCount])
-          && scalar(@{$theAsserts->{$theAPI}->[$theAssertCount]})) {
+        && exists($theAsserts->{$theAPI}->[$theAssertCount])
+        && scalar(@{$theAsserts->{$theAPI}->[$theAssertCount]})) {
         $theAssertCount++;
       }
       # start of a table row
@@ -190,8 +224,8 @@ while (<$io>) {
         $typeRows--;
         # populate the first cell
         if ($theAPI
-            && exists($theAsserts->{$theAPI}->[$theAssertCount])
-            && scalar(@{$theAsserts->{$theAPI}->[$theAssertCount]})) {
+          && exists($theAsserts->{$theAPI}->[$theAssertCount])
+          && scalar(@{$theAsserts->{$theAPI}->[$theAssertCount]})) {
           $theAssertCount++;
         }
         $theAsserts->{$theAPI}->[$theAssertCount] = [ $theType ] ;
@@ -213,22 +247,33 @@ while (<$io>) {
 };
 
 if ($state != 0) {
-  build_test($current, $theAttributes, $theCode, $theAsserts) ;
+  build_test($current, $theAttributes, $theCode, $theAsserts, $theSpecFragment) ;
   print "Finished $current\n";
 }
 
 exit 0;
 
+# build_test
+#
+# create a test file
+#
+# attempts to create unique test names
 
 sub build_test() {
   my $title = shift ;
   my $attrs = shift ;
   my $code = shift ;
   my $asserts = shift;
+  my $frag = shift ;
 
   if ($title eq "") {
     print "No name provided!";
     return;
+  }
+
+  if ($frag ne "") {
+    $frag =~ s/%code%/$code/;
+    $code = $frag;
   }
 
   my $title_reference = $title;
@@ -237,7 +282,6 @@ sub build_test() {
     print "No code for $title; skipping.\n";
     return;
   }
-
   if ( $asserts eq {}) {
     print "No code or assertions for $title; skipping.\n";
     return;
@@ -278,7 +322,7 @@ sub build_test() {
         $val =~ s/"//g;
         $new[1] = $conditions[$i]->[1] . ":" . $val;
         if ($conditions[$i]->[3] eq "not exposed"
-            || $conditions[$i]->[3] eq "false") {
+          || $conditions[$i]->[3] eq "false") {
           $new[2] = "false";
         } else {
           $new[2] = "true";
@@ -312,14 +356,14 @@ sub build_test() {
 
 
   my $testDef =
-    { "title" => $title,
-      "steps" => [
-        {
-          "type"=>  "test",
-          "title"=> "step 1",
-          "element"=> "test",
-          "test" => $asserts
-        }
+  { "title" => $title,
+    "steps" => [
+      {
+        "type"=>  "test",
+        "title"=> "step 1",
+        "element"=> "test",
+        "test" => $asserts
+      }
     ]
   };
 
@@ -338,43 +382,54 @@ sub build_test() {
 
   my $fileName = $title;
   $fileName =~ s/\s*$//;
-  $fileName =~ s/"//g;
   $fileName =~ s/\///g;
   $fileName =~ s/\s+/_/g;
-  $fileName =~ s/=/_/g;
+  $fileName =~ s/[",=]/_/g;
+
+  my $count = 2;
+  if ($testNames->{$fileName}) {
+    while (exists $testNames->{$fileName . "_$count"}) {
+      $count++;
+    }
+    $fileName .= "_$count";
+  }
+
+  $testNames->{$fileName} = 1;
+
   $fileName .= $theSuffix;
 
   my $template = qq(<!doctype html>
 <html>
-<head>
-<title>$title</title>
-<link rel="stylesheet" href="/resources/testharness.css">
-<link rel="stylesheet" href="/wai-aria/scripts/manual.css">
-<script src="/resources/testharness.js"></script>
-<script src="/resources/testharnessreport.js"></script>
-<script src="/wai-aria/scripts/ATTAcomm.js"></script>
-<script>
-setup({explicit_timeout: true, explicit_done: true });
+  <head>
+    <title>$title</title>
+    <link rel="stylesheet" href="/resources/testharness.css">
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
 
-var theTest = new ATTAcomm(
-$testDef_json
-) ;
-</script>
-</head>
-<body>
-<p>This test examines the ARIA properties for $title_reference.</p>
-$code
-<div id="manualMode"></div>
-<div id="log"></div>
-<div id="ATTAmessages"></div>
-</body>
+    var theTest = new ATTAcomm(
+    $testDef_json
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for $title_reference.</p>
+  $code
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
 </html>
-);
+  );
 
   my $file ;
 
   if (open($file, ">", "$dir/$fileName")) {
     print $file $template;
+    print $file "\n";
     close $file;
   } else {
     print qq(Failed to create file "$dir/$fileName" $!\n);

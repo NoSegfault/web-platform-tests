@@ -40,6 +40,7 @@ class Assertion():
     EXPECTATION_DOES_NOT_CONTAIN = "doesNotContain"
     EXPECTATION_IS_ANY = "isAny"
     EXPECTATION_IS_TYPE = "isType"
+    EXPECTATION_EXISTS = "exists"
 
     TEST_EVENT = "event"
     TEST_PROPERTY = "property"
@@ -47,7 +48,8 @@ class Assertion():
     TEST_RESULT = "result"
     TEST_TBD = "TBD"
 
-    PROPERTIES = ["id",
+    PROPERTIES = ["accessible",
+                  "id",
                   "role",
                   "name",
                   "description",
@@ -178,6 +180,13 @@ class Assertion():
             self._msgs.append("ERROR: Unknown property: %s" % prop)
             return None
 
+        if prop == "accessible":
+            return bool(self._obj)
+
+        if not self._obj:
+            self._msgs.append("ERROR: Accessible not found")
+            return None
+
         if prop == "id":
             return self._get_id(self._obj)
 
@@ -211,28 +220,39 @@ class Assertion():
         self._msgs.append("ERROR: Unhandled property: %s" % prop)
         return None
 
+    def _value_to_harness_string(self, value):
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            return value
+
+        if isinstance(value, bool):
+            return str(value).lower()
+
+        if isinstance(value, (int, float)):
+            return str(value)
+
+        return value
+
     def _get_value(self):
         pass
 
     def _get_result(self):
         self._actual_value = self._get_value()
-        if self._actual_value is None:
-            self._status = self.ERROR
-            self._msgs.append("ERROR: Could not get value for assertion")
-            return False
-
         if self._expectation == self.EXPECTATION_IS:
             result = self._expected_value == self._actual_value
         elif self._expectation == self.EXPECTATION_IS_NOT:
             result = self._expected_value != self._actual_value
         elif self._expectation == self.EXPECTATION_CONTAINS:
-            result = self._expected_value in self._actual_value
+            result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
             result = self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
             result = self._actual_value in self._expected_value
         elif self._expectation == self.EXPECTATION_IS_TYPE:
             result = type(self._actual_value).__name__ == self._expected_value
+        elif self._expectation == self.EXPECTATION_EXISTS:
+            # TODO - JD: This sanity check may be needed elsewhere.
+            actual = self._value_to_harness_string(self._actual_value)
+            result = self._expected_value == actual
         else:
             result = False
 
@@ -308,18 +328,6 @@ class RelationAssertion(Assertion):
 
 
 class ResultAssertion(Assertion):
-
-    def _value_to_harness_string(self, value):
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            return value
-
-        if isinstance(value, bool):
-            return str(value).lower()
-
-        if isinstance(value, (int, float)):
-            return str(value)
-
-        return value
 
     def _get_value(self):
         iface_string, callable_string = re.split("\.", self._test_string, maxsplit=1)
@@ -657,11 +665,6 @@ class AtkAtspiAtta():
                     "results": []}
 
         obj, message = self._get_element_with_id(self._current_document, obj_id)
-        if not obj:
-            return {"status": self.STATUS_ERROR,
-                    "message": message,
-                    "results": []}
-
         results = [self._run_test(obj, a) for a in assertions]
         if not results:
             return {"status": self.STATUS_ERROR,

@@ -18,12 +18,13 @@ import os
 import pyatspi
 import re
 import signal
-import subprocess
 import sys
 import threading
 import traceback
 
-from gi.repository import Gio, GLib
+gi.require_version("Atk", "1.0")
+
+from gi.repository import Atk, Gio, GLib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
@@ -410,7 +411,7 @@ class AtkAtspiAtta():
         self._atta_version = "0.1"
         self._api_name = "ATK"
         self._api_version = ""
-        self._minimum_api_version = "2.20"
+        self._minimum_api_version = "2.20.0"
         self._enabled = False
         self._ready = False
         self._next_test = None, ""
@@ -477,31 +478,18 @@ class AtkAtspiAtta():
     def _check_environment(self):
         """Returns True if the client environment has all expected dependencies."""
 
-        can_enable = True
-
-        atk_version, has_error = self._check_version("atk")
-        if has_error:
+        try:
+            self._api_version = Atk.get_version()
+            print("INFO: Installed ATK version: %s" % self._api_version)
+        except:
+            print("ERROR: Could not get version of ATK")
             can_enable = False
-
-        bridge_version, has_error = self._check_version("atk-bridge-2.0")
-        if has_error:
-            can_enable = False
-
-        atspi_version, has_error = self._check_version("atspi-2")
-        if has_error:
-            can_enable = False
-
-        # For now, don't spit up on this. Just discourage it.
-        if atk_version != bridge_version != atspi_version:
-            print("WARNING: A11y libraries are from different release cycles." \
-                  "\natk: %s, at-spi2-atk: %s, at-spi2-core: %s" % \
-                  (atk_version, bridge_version, atspi_version))
         else:
-            self._api_version = atk_version
-
-        pygobject_version, has_error = self._check_version("pygobject-3.0", "3.10")
-        if has_error:
-            can_enable = False
+            minimum = list(map(int, self._minimum_api_version.split(".")))
+            actual = list(map(int, self._api_version.split(".")))
+            can_enable = actual >= minimum
+            if not can_enable:
+                print("ERROR: Minimum ATK version: %s" % self._minimum_api_version)
 
         # GNOME migrated to Python 3 several years ago. AT-SPI2-based ATs and
         # testing tools, as well as the Python bindings for AT-SPI2, now expect
@@ -521,36 +509,6 @@ class AtkAtspiAtta():
                       "Please quit and relaunch the browser being tested.")
 
         return can_enable
-
-    def _check_version(self, module, minimum_version=None):
-        """Checks that the version of module is at least the specified version.
-
-        Arguments:
-        - module: A string containing the pkg-config-style module name
-        - minimum_version: A string containing the mimimum required version.
-          If minimum_version is None, use the class' _minimum_api_version.
-
-        Returns: A (string, bool) tuple with the actual version and result.
-        The actual version is reported in terms of the stable release cycle,
-        with the micro version removed so that this information can be used
-        to verify and report the library's API version.
-        """
-
-        if minimum_version is None:
-            minimum_version = self._minimum_api_version
-
-        get_version = "pkg-config %s --modversion --silence-errors"
-        version = subprocess.getoutput(get_version % module) or "0.0.0"
-        major, minor = list(map(int, version.split(".")))[:-1]
-        minor += (minor & 1)
-        api_version = "%i.%i" % (major, minor)
-
-        check_version = "pkg-config %s --atleast-version=%s --print-errors"
-        error = subprocess.getoutput(check_version % (module, minimum_version))
-        if error:
-            print("ERROR: %s" % error)
-
-        return api_version, bool(error)
 
     def _register_listener(self, event_type, callback):
         """Registers an accessible-event listener with the ATSPI2 registry.

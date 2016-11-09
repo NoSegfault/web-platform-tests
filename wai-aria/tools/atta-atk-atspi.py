@@ -364,7 +364,7 @@ class ResultAssertion(Assertion):
 class EventAssertion(Assertion):
 
     def __init__(self, obj, assertion, verbose=False):
-        pass
+        super().__init__(obj, assertion, verbose)
 
 
 class AtkAtspiAtta():

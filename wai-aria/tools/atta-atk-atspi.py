@@ -742,9 +742,6 @@ class AtkAtspiAtta():
         if not element_id:
             return None, self.FAILURE_INVALID_REQUEST
 
-        for child in root:
-            self._get_element_id(child)
-
         pred = lambda x: self._get_element_id(x)[0] == element_id
         obj = pyatspi.utils.findDescendant(root, pred)
         if not obj:

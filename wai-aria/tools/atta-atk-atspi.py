@@ -381,10 +381,8 @@ class AtkAtspiAtta():
 
     FAILURE_ATTA_NOT_ENABLED = "ATTA not enabled"
     FAILURE_ATTA_NOT_READY = "ATTA not ready"
-    FAILURE_EXCEPTION = "Exception"
     FAILURE_INVALID_REQUEST = "Invalid request"
     FAILURE_NOT_FOUND = "Not found"
-    FAILURE_NOT_IMPLEMENTED = "Not implemented"
     FAILURE_RESULTS = "Expected result does not match actual result"
     SUCCESS = "Success"
 
@@ -429,12 +427,23 @@ class AtkAtspiAtta():
         try:
             desktop = pyatspi.Registry.getDesktop(0)
         except:
-            print("ERROR: Exception getting accessible desktop from pyatspi")
+            print(self._on_exception())
         else:
             self._enabled = True
 
         if self._dry_run:
             print("DRY RUN ONLY: No assertions will be tested.")
+
+    def _on_exception(self):
+        """Handles exceptions encountered by this ATTA.
+
+        Returns:
+        - A string containing the exception.
+        """
+
+        etype, evalue, tb = sys.exc_info()
+        error = "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
+        return error
 
     def _get_accessibility_enabled(self):
         """Returns True if accessibility support is enabled on this platform."""
@@ -449,9 +458,7 @@ class AtkAtspiAtta():
                 "org.freedesktop.DBus.Properties",
                 None)
         except:
-            etype, evalue, tb = sys.exc_info()
-            error = traceback.format_exc(limit=1, chain=False)
-            print(error)
+            print(self._on_exception())
             return False
 
         enabled = self._proxy.Get("(ss)", "org.a11y.Status", "IsEnabled")
@@ -482,7 +489,7 @@ class AtkAtspiAtta():
             self._api_version = Atk.get_version()
             print("INFO: Installed ATK version: %s" % self._api_version)
         except:
-            print("ERROR: Could not get version of ATK")
+            print(self._on_exception())
             can_enable = False
         else:
             minimum = list(map(int, self._minimum_api_version.split(".")))
@@ -695,10 +702,8 @@ class AtkAtspiAtta():
                 uri = document.getAttributeValue(name)
                 if uri:
                     break
-        except NotImplementedError:
-            return "", self.FAILURE_NOT_IMPLEMENTED
         except:
-            return "", self.FAILURE_EXCEPTION
+            return "", self._on_exception()
 
         if not uri:
             return "", self.FAILURE_NOT_FOUND
@@ -719,7 +724,7 @@ class AtkAtspiAtta():
         try:
             attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
         except:
-            return "", self.FAILURE_EXCEPTION
+            return "", self._on_exception()
 
         result = attrs.get("id") or attrs.get("html-id")
         if not result:
@@ -743,7 +748,11 @@ class AtkAtspiAtta():
             return None, self.FAILURE_INVALID_REQUEST
 
         pred = lambda x: self._get_element_id(x)[0] == element_id
-        obj = pyatspi.utils.findDescendant(root, pred)
+        try:
+            obj = pyatspi.utils.findDescendant(root, pred)
+        except:
+            return None, self._on_exception()
+
         if not obj:
             return None, self.FAILURE_NOT_FOUND
 
@@ -754,7 +763,7 @@ class AtkAtspiAtta():
         try:
             name = obj.name
         except:
-            return None, self.FAILURE_EXCEPTION
+            return None, self._on_exception()
 
         return obj, self.SUCCESS
 

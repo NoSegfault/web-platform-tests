@@ -414,7 +414,6 @@ class AtkAtspiAtta():
         self._ready = False
         self._next_test = None, ""
         self._current_document = None
-        self._current_element = None
         self._callbacks = {"document:load-complete": self._on_load_complete}
         self._listener_thread = None
         self._dry_run = dry_run

@@ -363,8 +363,61 @@ class ResultAssertion(Assertion):
 
 class EventAssertion(Assertion):
 
-    def __init__(self, obj, assertion, verbose=False):
+    def __init__(self, obj, assertion, verbose=False, events=[]):
         super().__init__(obj, assertion, verbose)
+        self._events = events
+        self._obj_events = list(filter(lambda x: x.source == obj, events))
+        self._matching_events = []
+
+        e_type = self._expected_value.get("type")
+        if e_type is not None:
+            matches = filter(lambda x: x.type == e_type, self._events)
+
+        detail1 = self._expected_value.get("detail1")
+        if detail1 is not None:
+            matches = filter(lambda x: x.detail1 == int(detail1), matches)
+
+        detail2 = self._expected_value.get("detail2")
+        if detail2 is not None:
+            matches = filter(lambda x: x.detail2 == int(detail2), matches)
+
+        any_data = self._expected_value.get("any_data")
+        if any_data is not None:
+            # TODO: We need to know any_data's type and adjust accordingly
+            matches = filter(lambda x: x.any_data == any_data, matches)
+
+        self._matching_events = list(matches)
+
+    def _event_to_string(self, event):
+        return "%s (%i, %i, %s) from %s with id: %s" % \
+            (event.type,
+             event.detail1,
+             event.detail2,
+             event.any_data,
+             self._get_role(event.source),
+             self._get_id(event.source))
+
+    def _get_result(self):
+        # At the moment, the assumption is that we are only testing that
+        # we have an event which matches the asserted event properties.
+        if self._matching_events:
+            self._status = self.PASS
+            return True
+
+        if self._verbose:
+            self._actual_value = self._events
+        else:
+            self._actual_value = self._obj_events
+        self._status = self.FAIL
+        return False
+
+    def run(self):
+        result, log = self._get_result(), ""
+        if not result or self._verbose:
+            log = "(Got: %s)\n" % "\n".join(map(self._event_to_string, self._actual_value))
+            self._msgs.append(log)
+
+        return self._status, "\n".join(self._msgs), log
 
 
 class AtkAtspiAtta():
@@ -414,7 +467,10 @@ class AtkAtspiAtta():
         self._ready = False
         self._next_test = None, ""
         self._current_document = None
+        self._current_application = None
         self._callbacks = {"document:load-complete": self._on_load_complete}
+        self._monitored_event_types = []
+        self._event_history = []
         self._listener_thread = None
         self._dry_run = dry_run
         self._verbose = verbose
@@ -574,6 +630,26 @@ class AtkAtspiAtta():
         self._next_test = name, url
         self._ready = False
 
+    def monitor_events(self, event_types):
+        """Registers an accessible-event listener with the ATSPI2 registry.
+
+        Arguments:
+        - event_types: a list or tuple of AtspiEvent types
+        """
+
+        for e in event_types:
+            self._register_listener(e, self._on_test_event)
+            self._monitored_event_types.append(e)
+
+    def stop_event_monitoring(self):
+        """De-registers the test-specific listeners from the ATSPI2 registry."""
+
+        for e in self._monitored_event_types:
+            self._deregister_listener(e, self._on_test_event)
+
+        self._monitored_event_types = []
+        self._event_history = []
+
     def _run_test(self, obj, assertion):
         """Runs a single assertion on the specified object.
 
@@ -598,11 +674,49 @@ class AtkAtspiAtta():
             result_value = Assertion.FAIL
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
+        elif test_class == EventAssertion:
+            test = test_class(obj, assertion, self._verbose, self._event_history)
+            result_value, messages, log = test.run()
         else:
             test = test_class(obj, assertion, verbose=self._verbose)
             result_value, messages, log = test.run()
 
         return {"result": result_value, "message": str(messages), "log": log}
+
+    def _create_platform_assertions(self, assertions):
+        """Converts a list of assertions received from the test harness into
+        a list of assertions the platform can handle.
+
+        Arguments:
+        - assertions: A list of [Test Class, Test Type, Assertion Type, Value]
+          assertion lists as received from the harness
+
+        Returns:
+        - A list of [Test Class, Test Type, Assertion Type, Value] assertions
+          which are ready to be run by this ATTA.
+        - A boolean reflecting if the conversion was successfully performed.
+        - A string indicating the error if conversion failed.
+        """
+
+        is_event = lambda x: x and x[0] == "event"
+        event_assertions = list(filter(is_event, assertions))
+        if not event_assertions:
+            return assertions, True, ""
+
+        if event_assertions != assertions:
+            items = list(set(assertions) - set(event_assertions))
+            return [], False, "Unexpected assertions found: %s" % items
+
+        # The properties associated with accessible events are currently given to
+        # us as individual subtests. Unlike other assertions, event properties are
+        # not independent of one another. Because these should be tested as an all-
+        # or-nothing assertion, we'll combine the subtest values into a dictionary
+        # passed along with each subtest.
+        properties = {}
+        for test, name, verb, value in event_assertions:
+            properties[name] = value
+
+        return [["event", "event", "contains", properties]], True, ""
 
     def run_tests(self, obj_id, assertions):
         """Runs the provided assertions on the object with the specified id.
@@ -610,9 +724,7 @@ class AtkAtspiAtta():
         Arguments:
         - obj_id: A string containing the id of the host-language element
         - assertions: A list of tokenized lists containing the components of
-          the property or other condition being tested. Note that this is a
-          consequence of what we receive from the ARIA test harness and not
-          an indication of what is desired or required by this ATTA.
+          the property or other condition being tested.
 
         Returns:
         - A dict containing the response
@@ -628,8 +740,19 @@ class AtkAtspiAtta():
                     "message": self.FAILURE_ATTA_NOT_READY,
                     "results": []}
 
+        to_run, success, message = self._create_platform_assertions(assertions)
+        if not success:
+            return {"status": self.STATUS_ERROR,
+                    "message": message,
+                    "results": []}
+
         obj, message = self._get_element_with_id(self._current_document, obj_id)
-        results = [self._run_test(obj, a) for a in assertions]
+        if not obj:
+            return {"status": self.STATUS_ERROR,
+                    "message": message,
+                    "results": []}
+
+        results = [self._run_test(obj, a) for a in to_run]
         if not results:
             return {"status": self.STATUS_ERROR,
                     "message": message,
@@ -638,6 +761,12 @@ class AtkAtspiAtta():
         return {"status": self.STATUS_OK,
                 "message": message,
                 "results": results}
+
+    def end_test_run(self):
+        """Cleans up cached information at the end of a test run."""
+
+        self.stop_event_monitoring()
+        self._current_document = None
 
     def start(self):
         """Starts this ATTA, registering for ATTA-required events, and
@@ -752,19 +881,47 @@ class AtkAtspiAtta():
         except:
             return None, self._on_exception()
 
-        if not obj:
+        if not self._is_valid_object(obj):
             return None, self.FAILURE_NOT_FOUND
 
-        # Quick-and-dirty trick: AT-SPI2 tends to raise an exception if you
-        # ask for the name of a defunct, invalid, or otherwise bogus object.
-        # Checking the element to be tested here means we shouldn't have to
-        # add sanity checks in all of the other methods used during testing.
+        return obj, self.SUCCESS
+
+    def _in_current_document(self, obj):
+        """Returns True if obj is, or is a descendant of, the current document."""
+
+        if not self._current_document:
+            return False
+
+        if not self._is_valid_object(obj):
+            return False
+
+        if obj.getApplication() != self._current_application:
+            return False
+
+        is_document = lambda x: x == self._current_document
+        if is_document(obj):
+            return True
+
+        return pyatspi.utils.findAncestor(obj, is_document) is not None
+
+    def _is_valid_object(self, obj):
+        """Performs a quick-and-dirty sanity check on obj, taking advantage
+        of the fact that AT-SPI2 tends to raise an exception if you ask for
+        the name of a defunct, invalid, or otherwise bogus object.
+
+        Arguments:
+        - obj: The AtspiAccessible being tested
+
+        Returns:
+        - A boolean indicating whether obj is believed to be a valid object
+        """
+
         try:
             name = obj.name
         except:
-            return None, self._on_exception()
+            return False
 
-        return obj, self.SUCCESS
+        return True
 
     def _on_load_complete(self, event):
         """Callback for the document:load-complete AtspiEvent. We are interested
@@ -786,11 +943,23 @@ class AtkAtspiAtta():
         if self._ready:
             print("READY: Next test is '%s' (%s)" % (test_name, test_uri))
             self._current_document = event.source
+            self._current_application = event.host_application
             return
 
         if not uri:
             print("ERROR: No URI for %s (%s)" % (event.source, status))
             return
+
+    def _on_test_event(self, event):
+        """Generic callback for a variety of object: AtspiEvent types. It caches
+        the event for later examination when evaluating assertion results.
+
+        Arguments:
+        - event: The AtspiEvent which was emitted
+        """
+
+        if self._in_current_document(event.source):
+            self._event_history.append(event)
 
 
 # TODO: The code in this class was largely lifted from atta-example.py.
@@ -811,6 +980,8 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self.end_test()
         elif self.path.endswith("test"):
             self.run_tests()
+        elif self.path.endswith("listen"):
+            self.listen()
         else:
             self.send_error()
 
@@ -892,6 +1063,19 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         response["status"] = "READY"
         self._send_response(response)
 
+    def listen(self):
+        params = self.get_params("events")
+        error = params.get("error")
+        if error:
+            response["status"] = "ERROR"
+            response["statusText"] = error
+            self._send_response(response)
+            return
+
+        atta.monitor_events(params.get("events"))
+        response = {"status": "READY"}
+        self._send_response(response)
+
     def run_tests(self):
         params = self.get_params("title", "id", "data")
         response = atta.run_tests(params.get("id"), params.get("data", {}))
@@ -901,6 +1085,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         self._send_response(response)
 
     def end_test(self):
+        atta.end_test_run()
         response = {"status": "DONE"}
         self._send_response(response)
 

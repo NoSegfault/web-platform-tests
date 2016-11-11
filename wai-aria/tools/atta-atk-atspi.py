@@ -937,6 +937,15 @@ class AtkAtspiAtta():
         if test_name is None:
             return
 
+        # There appears to be a to-be-debugged race condition in either Firefox
+        # or AT-SPI2 in which the object emitting document:load-complete is not
+        # always valid at the time the event is emitted. When this error occurs,
+        # clearing AT-SPI2's cache for the user agent seems to fix it.
+        if not self._is_valid_object(event.source):
+            print("ERROR: load-complete from invalid source %s." % event.source)
+            event.host_application.clearCache()
+            print("INFO: AT-SPI2 cached cleared. Source is %s." % event.source)
+
         uri, status = self._get_document_uri(event.source)
         self._ready = uri and uri == test_uri
 

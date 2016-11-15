@@ -12,32 +12,13 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Elements role is presentation",
    "steps" : [
       {
+         "title" : "step 1",
+         "type" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -53,7 +34,29 @@
                   "false"
                ]
             ],
-            "UIA" : [
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -62,12 +65,9 @@
                ]
             ]
          },
-         "type" : "test",
-         "title" : "step 1",
          "element" : "test"
       }
-   ],
-   "title" : "Elements role is presentation"
+   ]
 }
 
     ) ;

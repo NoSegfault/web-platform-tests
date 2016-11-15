@@ -12,12 +12,32 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Empty aria-describedby testable statements",
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
          "type" : "test",
          "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -32,23 +52,6 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "FullDescription",
-                  "isNot",
-                  "<empty>"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "<empty>"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
             "AXAPI" : [
                [
                   "property",
@@ -56,11 +59,27 @@
                   "is",
                   "<empty>"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "empty",
+                  "true"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "FullDescription",
+                  "isNot",
+                  "<empty>"
+               ]
             ]
-         }
+         },
+         "element" : "test"
       }
-   ],
-   "title" : "Empty aria-describedby testable statements"
+   ]
 }
 
     ) ;

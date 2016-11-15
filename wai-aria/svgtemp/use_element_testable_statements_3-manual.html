@@ -15,35 +15,12 @@
    "title" : "use element testable statements",
    "steps" : [
       {
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "pebble"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "pebble"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
                   "name",
-                  "is",
-                  "pebble"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
                   "is",
                   "pebble"
                ]
@@ -61,11 +38,34 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "pebble"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "pebble"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "pebble"
+               ]
             ]
          },
          "type" : "test",
-         "title" : "step 1",
-         "element" : "test"
+         "title" : "step 1"
       }
    ]
 }

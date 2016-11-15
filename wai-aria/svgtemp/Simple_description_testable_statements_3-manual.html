@@ -12,11 +12,17 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Simple description testable statements",
    "steps" : [
       {
-         "type" : "test",
          "test" : {
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "end"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -31,29 +37,24 @@
                   "TableCell"
                ]
             ],
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_DESCRIBED_BY",
-                  "is",
-                  "<not empty>"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXHelp",
-                  "is",
-                  "end"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
             "ATK" : [
                [
+                  "property",
                   "description",
+                  "is",
                   "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
                ]
             ],
             "UIA" : [
@@ -69,12 +70,30 @@
                   "isNot",
                   "<not empty>"
                ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_DESCRIBED_BY",
+                  "is",
+                  "<not empty>"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "end"
+               ]
             ]
          },
+         "element" : "test",
          "title" : "step 1",
-         "element" : "test"
+         "type" : "test"
       }
-   ]
+   ],
+   "title" : "Simple description testable statements"
 }
 
     ) ;

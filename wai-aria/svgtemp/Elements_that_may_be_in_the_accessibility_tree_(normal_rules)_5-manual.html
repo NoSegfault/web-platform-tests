@@ -15,12 +15,14 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
+         "type" : "test",
          "test" : {
-            "ATK" : [
+            "UIA" : [
                [
-                  "xml-roles",
-                  "ROLE_IMAGE"
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
                ]
             ],
             "MSAA" : [
@@ -51,14 +53,6 @@
                   "image"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
-               ]
-            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -72,9 +66,17 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_IMAGE"
+               ]
             ]
          },
-         "type" : "test"
+         "element" : "test"
       }
    ],
    "title" : "Elements that may be in the accessibility tree (normal rules)"

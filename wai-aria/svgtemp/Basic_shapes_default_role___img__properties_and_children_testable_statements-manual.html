@@ -12,10 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Basic shapes default role = img, properties and children testable statements",
    "steps" : [
       {
          "element" : "test",
-         "title" : "step 1",
          "test" : {
             "UIA" : [
                [
@@ -23,6 +23,28 @@
                   "control type",
                   "isNot",
                   "Image"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GRAPHIC"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -47,37 +69,17 @@
             ],
             "ATK" : [
                [
-                  "xml-roles",
+                  "property",
+                  "role",
+                  "is",
                   "ROLE_IMAGE"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_GRAPHIC"
-               ]
-            ],
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
                ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
-   ],
-   "title" : "Basic shapes default role = img, properties and children testable statements"
+   ]
 }
 
     ) ;

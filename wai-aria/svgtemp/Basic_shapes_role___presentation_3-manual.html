@@ -15,24 +15,8 @@
    "title" : "Basic shapes role = presentation",
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
             "UIA" : [
                [
                   "property",
@@ -49,12 +33,18 @@
                   "false"
                ]
             ],
-            "ATK" : [
+            "WAIFAKE" : [
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -64,8 +54,18 @@
                   "exists",
                   "false"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
-         }
+         },
+         "type" : "test",
+         "title" : "step 1"
       }
    ]
 }

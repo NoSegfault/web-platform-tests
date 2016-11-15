@@ -12,20 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Empty aria-labelledby testable statements",
    "steps" : [
       {
          "element" : "test",
-         "title" : "step 1",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "bob"
-               ]
-            ],
             "MSAA" : [
                [
                   "property",
@@ -34,18 +24,18 @@
                   "bob"
                ]
             ],
-            "ATK" : [
+            "UIA" : [
                [
                   "property",
-                  "name",
+                  "Name",
                   "is",
                   "bob"
                ]
             ],
-            "AXAPI" : [
+            "ATK" : [
                [
                   "property",
-                  "AXDescription",
+                  "name",
                   "is",
                   "bob"
                ]
@@ -63,11 +53,21 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "bob"
+               ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Empty aria-labelledby testable statements"
 }
 
     ) ;

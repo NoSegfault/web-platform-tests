@@ -12,30 +12,35 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Empty aria-describedby testable statements",
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
-            "ATK" : [
+            "WAIFAKE" : [
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "MSAA" : [
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -51,23 +56,18 @@
                   "false"
                ]
             ],
-            "WAIFAKE" : [
+            "MSAA" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "accessible",
+                  "exists",
+                  "false"
                ]
             ]
          }
       }
-   ]
+   ],
+   "title" : "Empty aria-describedby testable statements"
 }
 
     ) ;

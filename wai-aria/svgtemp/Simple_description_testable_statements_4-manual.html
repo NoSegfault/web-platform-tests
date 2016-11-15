@@ -12,12 +12,20 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Simple description testable statements",
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
          "test" : {
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "end"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -32,29 +40,24 @@
                   "TableCell"
                ]
             ],
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_DESCRIBED_BY",
-                  "is",
-                  "<not empty>"
-               ]
-            ],
             "ATK" : [
                [
-                  "description",
-                  "end"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
-            "AXAPI" : [
-               [
                   "property",
-                  "AXHelp",
+                  "description",
                   "is",
                   "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
                ]
             ],
             "UIA" : [
@@ -70,11 +73,27 @@
                   "isNot",
                   "<not empty>"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "end"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_DESCRIBED_BY",
+                  "is",
+                  "<not empty>"
+               ]
             ]
-         },
-         "type" : "test"
+         }
       }
-   ]
+   ],
+   "title" : "Simple description testable statements"
 }
 
     ) ;

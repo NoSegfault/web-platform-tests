@@ -12,13 +12,18 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Empty or all whitespace title/desc",
    "steps" : [
       {
          "element" : "test",
-         "title" : "step 1",
-         "type" : "test",
          "test" : {
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "<empty>"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -33,41 +38,36 @@
                   "TableCell"
                ]
             ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "<empty>"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
                   "name",
-                  "is",
-                  "<empty>"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "<empty>"
+                  "empty",
+                  "true"
                ]
             ],
             "UIA" : [
                [
                   "property",
                   "Name",
-                  "is",
-                  "<empty>"
+                  "empty",
+                  "true"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "empty",
+                  "true"
                ]
             ]
-         }
+         },
+         "type" : "test",
+         "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Empty or all whitespace title/desc"
 }
 
     ) ;

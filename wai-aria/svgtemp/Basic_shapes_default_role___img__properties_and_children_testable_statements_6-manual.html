@@ -15,26 +15,14 @@
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
-               ]
-            ],
-            "MSAA" : [
+            "ATK" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GRAPHIC"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "xml-roles",
                   "ROLE_IMAGE"
                ]
             ],
@@ -71,10 +59,24 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GRAPHIC"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
+               ]
             ]
-         },
-         "element" : "test",
-         "title" : "step 1"
+         }
       }
    ],
    "title" : "Basic shapes default role = img, properties and children testable statements"

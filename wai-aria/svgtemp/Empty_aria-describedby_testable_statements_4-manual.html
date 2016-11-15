@@ -12,34 +12,16 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Empty aria-describedby testable statements",
    "steps" : [
       {
          "element" : "test",
-         "title" : "step 1",
-         "type" : "test",
          "test" : {
-            "MSAA" : [
-               []
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "<empty>"
-               ]
-            ],
             "AXAPI" : [
                [
                   "property",
                   "AXHelp",
                   "is",
-                  "<empty>"
-               ]
-            ],
-            "UIA" : [
-               [
-                  "property",
-                  "FullDescription",
-                  "isNot",
                   "<empty>"
                ]
             ],
@@ -56,11 +38,48 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "FullDescription",
+                  "isNot",
+                  "<empty>"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "empty",
+                  "true"
+               ]
             ]
-         }
+         },
+         "type" : "test",
+         "title" : "step 1"
       }
-   ],
-   "title" : "Empty aria-describedby testable statements"
+   ]
 }
 
     ) ;

@@ -14,24 +14,9 @@
     {
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "ATK" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -55,7 +40,21 @@
                   "false"
                ]
             ],
-            "UIA" : [
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -64,7 +63,8 @@
                ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
    ],
    "title" : "Basic shapes role is none"

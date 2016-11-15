@@ -14,23 +14,14 @@
     {
    "steps" : [
       {
-         "type" : "test",
+         "element" : "test",
          "test" : {
-            "ATK" : [
-               [
-                  "description",
-                  "<empty>"
-               ]
-            ],
             "MSAA" : [
-               []
-            ],
-            "AXAPI" : [
                [
                   "property",
-                  "AXHelp",
-                  "is",
-                  "<empty>"
+                  "accDescription",
+                  "empty",
+                  "true"
                ]
             ],
             "UIA" : [
@@ -39,6 +30,26 @@
                   "",
                   "",
                   ""
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
                ]
             ],
             "WAIFAKE" : [
@@ -54,9 +65,17 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "<empty>"
+               ]
             ]
          },
-         "element" : "test",
+         "type" : "test",
          "title" : "step 1"
       }
    ],

@@ -15,7 +15,26 @@
    "title" : "Text elements",
    "steps" : [
       {
+         "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "group"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GROUPING"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -28,20 +47,6 @@
                   "interfaces",
                   "contains",
                   "TableCell"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_GROUPING"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "xml-roles",
-                  "ROLE_PANEL"
                ]
             ],
             "AXAPI" : [
@@ -64,18 +69,15 @@
                   "graphics object"
                ]
             ],
-            "UIA" : [
+            "ATK" : [
                [
                   "property",
-                  "control type",
-                  "isNot",
-                  "group"
+                  "role",
+                  "is",
+                  "ROLE_PANEL"
                ]
             ]
-         },
-         "type" : "test",
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
    ]
 }

@@ -12,31 +12,19 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Path default role = img, properties and children testable statements",
    "steps" : [
       {
-         "element" : "test",
+         "type" : "test",
          "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
-               ]
-            ],
             "ATK" : [
-               [
-                  "xml-roles",
-                  "ROLE_IMAGE"
-               ]
-            ],
-            "MSAA" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GRAPHIC"
+                  "ROLE_IMAGE"
                ]
             ],
             "AXAPI" : [
@@ -72,12 +60,26 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GRAPHIC"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
+               ]
             ]
-         },
-         "type" : "test"
+         }
       }
-   ],
-   "title" : "Path default role = img, properties and children testable statements"
+   ]
 }
 
     ) ;

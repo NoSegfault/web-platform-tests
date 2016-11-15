@@ -14,37 +14,14 @@
     {
    "steps" : [
       {
-         "element" : "test",
+         "type" : "test",
          "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "bob"
-               ]
-            ],
             "AXAPI" : [
                [
                   "property",
                   "AXDescription",
-                  "is",
-                  "bob"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "name",
-                  "is",
-                  "bob"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
                   "is",
                   "bob"
                ]
@@ -62,9 +39,32 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "bob"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "bob"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "bob"
+               ]
             ]
-         },
-         "type" : "test"
+         }
       }
    ],
    "title" : "Empty aria-labelledby testable statements"

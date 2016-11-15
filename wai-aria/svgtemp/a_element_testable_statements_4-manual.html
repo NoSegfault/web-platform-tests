@@ -12,24 +12,24 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "a element testable statements",
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
          "type" : "test",
          "test" : {
-            "UIA" : [
+            "MSAA" : [
                [
                   "property",
-                  "Name",
+                  "accName",
                   "is",
                   "counter"
                ]
             ],
-            "AXAPI" : [
+            "UIA" : [
                [
                   "property",
-                  "AXDescription",
+                  "Name",
                   "is",
                   "counter"
                ]
@@ -42,10 +42,10 @@
                   "counter"
                ]
             ],
-            "MSAA" : [
+            "AXAPI" : [
                [
                   "property",
-                  "accName",
+                  "AXDescription",
                   "is",
                   "counter"
                ]
@@ -64,10 +64,10 @@
                   "TableCell"
                ]
             ]
-         }
+         },
+         "element" : "test"
       }
-   ],
-   "title" : "a element testable statements"
+   ]
 }
 
     ) ;

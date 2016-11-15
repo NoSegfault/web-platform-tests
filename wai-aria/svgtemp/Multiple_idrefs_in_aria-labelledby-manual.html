@@ -15,30 +15,8 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
+         "type" : "test",
          "test" : {
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_LABELLED_BY",
-                  "is",
-                  "[t1,t2]"
-               ]
-            ],
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
             "UIA" : [
                [
                   "property",
@@ -61,6 +39,36 @@
                   "the end"
                ]
             ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_LABELLED_BY",
+                  "is",
+                  "[t1,t2]"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "the end"
+               ]
+            ],
             "ATK" : [
                [
                   "property",
@@ -74,17 +82,9 @@
                   "is",
                   "[t1,t2]"
                ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "the end"
-               ]
             ]
          },
-         "type" : "test"
+         "element" : "test"
       }
    ],
    "title" : "Multiple idrefs in aria-labelledby"

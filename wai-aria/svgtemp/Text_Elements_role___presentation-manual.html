@@ -12,25 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Text Elements role = presentation",
    "steps" : [
       {
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -60,14 +45,29 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
          },
-         "type" : "test",
+         "element" : "test",
          "title" : "step 1",
-         "element" : "test"
+         "type" : "test"
       }
-   ],
-   "title" : "Text Elements role = presentation"
+   ]
 }
 
     ) ;

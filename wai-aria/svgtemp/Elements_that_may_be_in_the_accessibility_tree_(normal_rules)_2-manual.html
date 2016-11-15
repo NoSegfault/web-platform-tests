@@ -12,8 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Elements that may be in the accessibility tree (normal rules)",
    "steps" : [
       {
+         "element" : "test",
          "test" : {
             "UIA" : [
                [
@@ -31,10 +33,18 @@
                   "ROLE_SYSTEM_GROUPING"
                ]
             ],
-            "ATK" : [
+            "WAIFAKE" : [
                [
-                  "xml-roles",
-                  "ROLE_PANEL"
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -57,27 +67,19 @@
                   "graphics object"
                ]
             ],
-            "WAIFAKE" : [
+            "ATK" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "ROLE_PANEL"
                ]
             ]
          },
          "type" : "test",
-         "element" : "test",
          "title" : "step 1"
       }
-   ],
-   "title" : "Elements that may be in the accessibility tree (normal rules)"
+   ]
 }
 
     ) ;

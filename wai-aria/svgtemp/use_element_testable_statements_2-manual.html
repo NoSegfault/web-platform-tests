@@ -12,11 +12,27 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "use element testable statements",
    "steps" : [
       {
          "element" : "test",
-         "title" : "step 1",
          "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "stone"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "stone"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -31,22 +47,6 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "stone"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "stone"
-               ]
-            ],
             "MSAA" : [
                [
                   "property",
@@ -55,19 +55,19 @@
                   "stone"
                ]
             ],
-            "ATK" : [
+            "UIA" : [
                [
                   "property",
-                  "name",
+                  "Name",
                   "is",
                   "stone"
                ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
-   ],
-   "title" : "use element testable statements"
+   ]
 }
 
     ) ;

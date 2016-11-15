@@ -12,17 +12,37 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Multiple idrefs in aria-describedby",
    "steps" : [
       {
-         "type" : "test",
          "test" : {
+            "UIA" : [
+               [
+                  "TBD",
+                  "",
+                  "",
+                  ""
+               ],
+               [
+                  "property",
+                  "DescribedBy",
+                  "isNot",
+                  "<not empty>"
+               ]
+            ],
             "IAccessible2" : [
                [
                   "relation",
                   "IA2_RELATION_DESCRIBED_BY",
                   "is",
                   "<not empty>"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "the end"
                ]
             ],
             "WAIFAKE" : [
@@ -39,29 +59,6 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "TBD",
-                  "",
-                  "",
-                  ""
-               ],
-               [
-                  "property",
-                  "DescribedBy",
-                  "isNot",
-                  "<not empty>"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "the end"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
             "AXAPI" : [
                [
                   "property",
@@ -69,12 +66,34 @@
                   "is",
                   "the end"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "the end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "the end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
             ]
          },
          "element" : "test",
-         "title" : "step 1"
+         "title" : "step 1",
+         "type" : "test"
       }
-   ]
+   ],
+   "title" : "Multiple idrefs in aria-describedby"
 }
 
     ) ;

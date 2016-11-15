@@ -14,7 +14,18 @@
     {
    "steps" : [
       {
+         "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
+            "MSAA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
             "UIA" : [
                [
                   "property",
@@ -23,23 +34,7 @@
                   "false"
                ]
             ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "ATK" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "MSAA" : [
                [
                   "property",
                   "accessible",
@@ -60,11 +55,16 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
-         },
-         "type" : "test",
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
    ],
    "title" : "Elements role is presentation"

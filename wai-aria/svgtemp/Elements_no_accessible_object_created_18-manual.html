@@ -12,44 +12,11 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Elements no accessible object created",
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "MSAA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "AXAPI" : [
                [
                   "property",
                   "accessible",
@@ -64,10 +31,43 @@
                   "exists",
                   "false"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
-         }
+         },
+         "type" : "test",
+         "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Elements no accessible object created"
 }
 
     ) ;

@@ -12,18 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Elements role is none",
    "steps" : [
       {
+         "element" : "test",
          "test" : {
-            "MSAA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -33,14 +25,6 @@
                ]
             ],
             "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -61,13 +45,29 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
          },
          "type" : "test",
-         "element" : "test",
          "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Elements role is none"
 }
 
     ) ;

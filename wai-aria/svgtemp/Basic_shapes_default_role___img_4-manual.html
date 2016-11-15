@@ -12,11 +12,26 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Basic shapes default role = img",
    "steps" : [
       {
-         "element" : "test",
          "title" : "step 1",
+         "type" : "test",
          "test" : {
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
             "AXAPI" : [
                [
                   "property",
@@ -39,16 +54,10 @@
             ],
             "ATK" : [
                [
-                  "xml-roles",
-                  "ROLE_IMAGE"
-               ]
-            ],
-            "MSAA" : [
-               [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GRAPHIC"
+                  "ROLE_IMAGE"
                ]
             ],
             "UIA" : [
@@ -59,25 +68,18 @@
                   "Image"
                ]
             ],
-            "WAIFAKE" : [
+            "MSAA" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "ROLE_SYSTEM_GRAPHIC"
                ]
             ]
          },
-         "type" : "test"
+         "element" : "test"
       }
-   ],
-   "title" : "Basic shapes default role = img"
+   ]
 }
 
     ) ;

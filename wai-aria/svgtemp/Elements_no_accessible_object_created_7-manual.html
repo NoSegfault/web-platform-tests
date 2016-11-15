@@ -15,10 +15,19 @@
    "title" : "Elements no accessible object created",
    "steps" : [
       {
-         "element" : "test",
+         "type" : "test",
          "title" : "step 1",
+         "element" : "test",
          "test" : {
             "MSAA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -42,14 +51,6 @@
                   "false"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -64,8 +65,7 @@
                   "TableCell"
                ]
             ]
-         },
-         "type" : "test"
+         }
       }
    ]
 }

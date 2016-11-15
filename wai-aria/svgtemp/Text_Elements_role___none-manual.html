@@ -12,11 +12,26 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Text Elements role = none",
    "steps" : [
       {
-         "title" : "step 1",
-         "element" : "test",
          "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -29,22 +44,6 @@
                   "interfaces",
                   "contains",
                   "TableCell"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
                ]
             ],
             "MSAA" : [
@@ -64,10 +63,11 @@
                ]
             ]
          },
+         "element" : "test",
+         "title" : "step 1",
          "type" : "test"
       }
-   ],
-   "title" : "Text Elements role = none"
+   ]
 }
 
     ) ;

@@ -12,9 +12,48 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Title is same as accessible name",
    "steps" : [
       {
+         "title" : "step 1",
+         "type" : "test",
          "test" : {
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "empty",
+                  "true"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "TBD",
+                  "",
+                  "",
+                  ""
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "<empty>"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -36,31 +75,11 @@
                   "is",
                   "<empty>"
                ]
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "<empty>"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
-            "UIA" : [
-               [
-                  "TBD",
-                  "",
-                  "",
-                  ""
-               ]
             ]
          },
-         "type" : "test",
-         "title" : "step 1",
          "element" : "test"
       }
-   ],
-   "title" : "Title is same as accessible name"
+   ]
 }
 
     ) ;

@@ -14,10 +14,18 @@
     {
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -32,14 +40,6 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -48,7 +48,7 @@
                   "false"
                ]
             ],
-            "MSAA" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -56,7 +56,7 @@
                   "false"
                ]
             ],
-            "AXAPI" : [
+            "MSAA" : [
                [
                   "property",
                   "accessible",

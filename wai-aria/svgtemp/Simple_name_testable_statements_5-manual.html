@@ -14,21 +14,14 @@
     {
    "steps" : [
       {
-         "element" : "test",
+         "type" : "test",
          "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "AXAPI" : [
+            "UIA" : [
                [
                   "property",
-                  "AXDescription",
-                  "is",
-                  "hello"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "name",
+                  "Name",
                   "is",
                   "hello"
                ]
@@ -41,10 +34,10 @@
                   "hello"
                ]
             ],
-            "UIA" : [
+            "AXAPI" : [
                [
                   "property",
-                  "Name",
+                  "AXDescription",
                   "is",
                   "hello"
                ]
@@ -62,9 +55,16 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "hello"
+               ]
             ]
-         },
-         "type" : "test"
+         }
       }
    ],
    "title" : "Simple name testable statements"

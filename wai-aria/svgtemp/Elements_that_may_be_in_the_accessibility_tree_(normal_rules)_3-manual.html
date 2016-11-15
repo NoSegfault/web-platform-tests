@@ -16,6 +16,8 @@
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
             "MSAA" : [
                [
@@ -25,9 +27,19 @@
                   "ROLE_SYSTEM_GRAPHIC"
                ]
             ],
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
+               ]
+            ],
             "ATK" : [
                [
-                  "xml-roles",
+                  "property",
+                  "role",
+                  "is",
                   "ROLE_IMAGE"
                ]
             ],
@@ -51,14 +63,6 @@
                   "image"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
-               ]
-            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -73,9 +77,7 @@
                   "TableCell"
                ]
             ]
-         },
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
    ]
 }

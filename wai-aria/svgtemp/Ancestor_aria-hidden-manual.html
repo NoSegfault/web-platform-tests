@@ -12,11 +12,14 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Ancestor aria-hidden",
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "AXAPI" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -32,15 +35,7 @@
                   "false"
                ]
             ],
-            "ATK" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "UIA" : [
+            "AXAPI" : [
                [
                   "property",
                   "accessible",
@@ -61,13 +56,18 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
-         },
-         "element" : "test",
-         "title" : "step 1"
+         }
       }
-   ],
-   "title" : "Ancestor aria-hidden"
+   ]
 }
 
     ) ;

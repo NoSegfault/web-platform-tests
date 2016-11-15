@@ -15,9 +15,24 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
          "type" : "test",
          "test" : {
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GRAPHIC"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -30,14 +45,6 @@
                   "interfaces",
                   "contains",
                   "TableCell"
-               ]
-            ],
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
                ]
             ],
             "AXAPI" : [
@@ -60,21 +67,16 @@
                   "image"
                ]
             ],
-            "MSAA" : [
+            "ATK" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GRAPHIC"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "xml-roles",
                   "ROLE_IMAGE"
                ]
             ]
-         }
+         },
+         "element" : "test"
       }
    ],
    "title" : "Path default role = img, properties and children testable statements"

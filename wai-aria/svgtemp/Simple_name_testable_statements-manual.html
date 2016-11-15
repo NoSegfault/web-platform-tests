@@ -14,31 +14,10 @@
     {
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "end"
-               ],
-               [
-                  "property",
-                  "LabeledBy",
-                  "is",
-                  "[t1]"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "end"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -51,6 +30,20 @@
                   "RELATION_LABELLED_BY",
                   "is",
                   "[t1]"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -69,22 +62,29 @@
                   "[t1]"
                ]
             ],
-            "WAIFAKE" : [
+            "MSAA" : [
                [
                   "property",
-                  "role",
+                  "accName",
                   "is",
-                  "ROLE_TABLE_CELL"
+                  "end"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "end"
                ],
                [
                   "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "LabeledBy",
+                  "is",
+                  "[t1]"
                ]
             ]
-         },
-         "type" : "test"
+         }
       }
    ],
    "title" : "Simple name testable statements"

@@ -12,25 +12,30 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Text Elements role = none",
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "WAIFAKE" : [
+            "MSAA" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "accessible",
+                  "exists",
+                  "false"
                ]
             ],
             "UIA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -46,28 +51,23 @@
                   "false"
                ]
             ],
-            "MSAA" : [
+            "WAIFAKE" : [
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ]
-         },
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
-   ],
-   "title" : "Text Elements role = none"
+   ]
 }
 
     ) ;

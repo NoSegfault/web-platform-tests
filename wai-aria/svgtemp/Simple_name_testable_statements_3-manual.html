@@ -12,24 +12,13 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Simple name testable statements",
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "end"
-               ],
-               [
-                  "property",
-                  "LabeledBy",
-                  "is",
-                  "[t1]"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -44,28 +33,12 @@
                   "[t1]"
                ]
             ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "end"
-               ]
-            ],
             "AXAPI" : [
                [
                   "property",
                   "AXDescription",
                   "is",
                   "end"
-               ]
-            ],
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_LABELLED_BY",
-                  "is",
-                  "[t1]"
                ]
             ],
             "WAIFAKE" : [
@@ -81,13 +54,40 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "end"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_LABELLED_BY",
+                  "is",
+                  "[t1]"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "end"
+               ],
+               [
+                  "property",
+                  "LabeledBy",
+                  "is",
+                  "[t1]"
+               ]
             ]
-         },
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
-   ],
-   "title" : "Simple name testable statements"
+   ]
 }
 
     ) ;

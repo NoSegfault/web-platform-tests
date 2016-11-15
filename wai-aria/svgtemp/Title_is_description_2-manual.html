@@ -14,7 +14,45 @@
     {
    "steps" : [
       {
+         "title" : "step 1",
+         "type" : "test",
          "test" : {
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "abc"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "TBD",
+                  "",
+                  "",
+                  ""
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "abc"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "abc"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -29,23 +67,6 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "TBD",
-                  "",
-                  "",
-                  ""
-               ]
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "abc"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
             "AXAPI" : [
                [
                   "property",
@@ -55,8 +76,6 @@
                ]
             ]
          },
-         "type" : "test",
-         "title" : "step 1",
          "element" : "test"
       }
    ],

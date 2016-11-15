@@ -12,28 +12,11 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Element display none",
    "steps" : [
       {
-         "element" : "test",
-         "title" : "step 1",
          "test" : {
             "UIA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -62,12 +45,29 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
          },
+         "element" : "test",
+         "title" : "step 1",
          "type" : "test"
       }
-   ],
-   "title" : "Element display none"
+   ]
 }
 
     ) ;

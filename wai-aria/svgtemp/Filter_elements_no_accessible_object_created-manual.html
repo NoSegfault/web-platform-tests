@@ -12,25 +12,11 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Filter elements no accessible object created",
    "steps" : [
       {
+         "element" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "UIA" : [
+            "MSAA" : [
                [
                   "property",
                   "accessible",
@@ -38,7 +24,7 @@
                   "false"
                ]
             ],
-            "MSAA" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -54,6 +40,20 @@
                   "false"
                ]
             ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
             "AXAPI" : [
                [
                   "property",
@@ -64,10 +64,10 @@
             ]
          },
          "type" : "test",
-         "element" : "test",
          "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Filter elements no accessible object created"
 }
 
     ) ;

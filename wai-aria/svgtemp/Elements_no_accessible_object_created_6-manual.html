@@ -12,25 +12,13 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Elements no accessible object created",
    "steps" : [
       {
+         "title" : "step 1",
          "type" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "ATK" : [
+            "MSAA" : [
                [
                   "property",
                   "accessible",
@@ -38,7 +26,15 @@
                   "false"
                ]
             ],
-            "MSAA" : [
+            "UIA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -54,20 +50,24 @@
                   "false"
                ]
             ],
-            "UIA" : [
+            "WAIFAKE" : [
                [
                   "property",
-                  "accessible",
-                  "exists",
-                  "false"
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ]
          },
-         "title" : "step 1",
          "element" : "test"
       }
-   ],
-   "title" : "Elements no accessible object created"
+   ]
 }
 
     ) ;

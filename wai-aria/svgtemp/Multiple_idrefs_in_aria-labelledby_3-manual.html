@@ -15,8 +15,30 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
+         "type" : "test",
          "test" : {
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "big finish"
+               ]
+            ],
             "ATK" : [
                [
                   "property",
@@ -29,22 +51,6 @@
                   "RELATION_LABELLED_BY",
                   "is",
                   "[t1,t2]"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "big finish"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "big finish"
                ]
             ],
             "UIA" : [
@@ -61,18 +67,12 @@
                   "[t1,t2]"
                ]
             ],
-            "WAIFAKE" : [
+            "MSAA" : [
                [
                   "property",
-                  "role",
+                  "accName",
                   "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
+                  "big finish"
                ]
             ],
             "IAccessible2" : [
@@ -84,7 +84,7 @@
                ]
             ]
          },
-         "type" : "test"
+         "element" : "test"
       }
    ],
    "title" : "Multiple idrefs in aria-labelledby"

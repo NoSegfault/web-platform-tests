@@ -15,16 +15,11 @@
    "title" : "Basic shapes role = presentation",
    "steps" : [
       {
+         "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
             "UIA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -61,11 +56,16 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
-         },
-         "type" : "test",
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
    ]
 }

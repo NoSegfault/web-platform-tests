@@ -15,9 +15,40 @@
    "title" : "Multiple idrefs in aria-labelledby",
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
          "test" : {
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "end"
+               ],
+               [
+                  "property",
+                  "LabelledBy",
+                  "isNot",
+                  "[t2]"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "end"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_LABELLED_BY",
+                  "is",
+                  "[t2]"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -32,18 +63,10 @@
                   "TableCell"
                ]
             ],
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_LABELLED_BY",
-                  "is",
-                  "[t2]"
-               ]
-            ],
-            "MSAA" : [
+            "AXAPI" : [
                [
                   "property",
-                  "accName",
+                  "AXDescription",
                   "is",
                   "end"
                ]
@@ -61,31 +84,8 @@
                   "is",
                   "[t2]"
                ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "end"
-               ]
-            ],
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "end"
-               ],
-               [
-                  "property",
-                  "LabelledBy",
-                  "isNot",
-                  "[t2]"
-               ]
             ]
-         },
-         "type" : "test"
+         }
       }
    ]
 }

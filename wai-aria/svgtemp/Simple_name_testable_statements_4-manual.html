@@ -14,9 +14,9 @@
     {
    "steps" : [
       {
+         "type" : "test",
          "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
             "WAIFAKE" : [
                [
@@ -32,12 +32,12 @@
                   "TableCell"
                ]
             ],
-            "IAccessible2" : [
+            "AXAPI" : [
                [
-                  "relation",
-                  "IA2_RELATION_LABELLED_BY",
+                  "property",
+                  "AXDescription",
                   "is",
-                  "[t1]"
+                  "end"
                ]
             ],
             "ATK" : [
@@ -54,22 +54,6 @@
                   "[t1]"
                ]
             ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "end"
-               ]
-            ],
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "end"
-               ]
-            ],
             "UIA" : [
                [
                   "property",
@@ -82,6 +66,22 @@
                   "LabeledBy",
                   "is",
                   "[t1]"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_LABELLED_BY",
+                  "is",
+                  "[t1]"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "end"
                ]
             ]
          }

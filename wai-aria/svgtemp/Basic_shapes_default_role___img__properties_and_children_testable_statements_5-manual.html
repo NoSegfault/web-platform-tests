@@ -14,6 +14,7 @@
     {
    "steps" : [
       {
+         "element" : "test",
          "test" : {
             "WAIFAKE" : [
                [
@@ -27,20 +28,6 @@
                   "interfaces",
                   "contains",
                   "TableCell"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "xml-roles",
-                  "ROLE_IMAGE"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_GRAPHIC"
                ]
             ],
             "AXAPI" : [
@@ -63,6 +50,14 @@
                   "image"
                ]
             ],
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_IMAGE"
+               ]
+            ],
             "UIA" : [
                [
                   "property",
@@ -70,10 +65,17 @@
                   "isNot",
                   "Image"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_GRAPHIC"
+               ]
             ]
          },
          "type" : "test",
-         "element" : "test",
          "title" : "step 1"
       }
    ],

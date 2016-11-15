@@ -12,13 +12,18 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Elements no accessible object created",
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
-         "type" : "test",
          "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -34,14 +39,6 @@
                ]
             ],
             "AXAPI" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -65,9 +62,12 @@
                   "false"
                ]
             ]
-         }
+         },
+         "type" : "test",
+         "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Elements no accessible object created"
 }
 
     ) ;

@@ -15,39 +15,30 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
          "type" : "test",
          "test" : {
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "<empty>"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "name",
-                  "is",
-                  "<empty>"
-               ]
-            ],
             "MSAA" : [
                [
                   "property",
                   "accName",
-                  "is",
-                  "<empty>"
+                  "empty",
+                  "true"
                ]
             ],
             "UIA" : [
                [
                   "property",
                   "Name",
-                  "is",
-                  "<empty>"
+                  "empty",
+                  "true"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "empty",
+                  "true"
                ]
             ],
             "WAIFAKE" : [
@@ -63,8 +54,17 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "<empty>"
+               ]
             ]
-         }
+         },
+         "element" : "test"
       }
    ],
    "title" : "Empty or all whitespace title/desc"

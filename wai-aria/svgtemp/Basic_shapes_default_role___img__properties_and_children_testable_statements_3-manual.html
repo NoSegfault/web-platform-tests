@@ -12,18 +12,10 @@
 
     var theTest = new ATTAcomm(
     {
-   "title" : "Basic shapes default role = img, properties and children testable statements",
    "steps" : [
       {
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "control type",
-                  "isNot",
-                  "Image"
-               ]
-            ],
             "MSAA" : [
                [
                   "property",
@@ -32,10 +24,34 @@
                   "ROLE_SYSTEM_GRAPHIC"
                ]
             ],
+            "UIA" : [
+               [
+                  "property",
+                  "control type",
+                  "isNot",
+                  "Image"
+               ]
+            ],
             "ATK" : [
                [
-                  "xml-roles",
+                  "property",
+                  "role",
+                  "is",
                   "ROLE_IMAGE"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -57,27 +73,13 @@
                   "is",
                   "image"
                ]
-            ],
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
             ]
          },
          "type" : "test",
-         "element" : "test",
          "title" : "step 1"
       }
-   ]
+   ],
+   "title" : "Basic shapes default role = img, properties and children testable statements"
 }
 
     ) ;

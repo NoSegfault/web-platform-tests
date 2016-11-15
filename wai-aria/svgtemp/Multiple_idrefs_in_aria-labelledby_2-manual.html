@@ -12,18 +12,13 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Multiple idrefs in aria-labelledby",
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "AXAPI" : [
-               [
-                  "property",
-                  "AXDescription",
-                  "is",
-                  "big end"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -35,28 +30,6 @@
                   "relation",
                   "RELATION_LABELLED_BY",
                   "is",
-                  "[t1,t2]"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "big end"
-               ]
-            ],
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "big end"
-               ],
-               [
-                  "property",
-                  "LabelledBy",
-                  "isNot",
                   "[t1,t2]"
                ]
             ],
@@ -74,6 +47,22 @@
                   "TableCell"
                ]
             ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "big end"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "big end"
+               ]
+            ],
             "IAccessible2" : [
                [
                   "relation",
@@ -81,13 +70,24 @@
                   "is",
                   "[t1,t2]"
                ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "big end"
+               ],
+               [
+                  "property",
+                  "LabelledBy",
+                  "isNot",
+                  "[t1,t2]"
+               ]
             ]
-         },
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
-   ],
-   "title" : "Multiple idrefs in aria-labelledby"
+   ]
 }
 
     ) ;

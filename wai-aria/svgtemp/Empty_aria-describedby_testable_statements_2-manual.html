@@ -14,9 +14,16 @@
     {
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
          "test" : {
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "12"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -31,6 +38,26 @@
                   "TableCell"
                ]
             ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "12"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "12"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
             "UIA" : [
                [
                   "property",
@@ -40,24 +67,16 @@
                ]
             ],
             "MSAA" : [
-               []
-            ],
-            "ATK" : [
-               [
-                  "description",
-                  "12"
-               ]
-            ],
-            "AXAPI" : [
                [
                   "property",
-                  "AXHelp",
+                  "accDescription",
                   "is",
                   "12"
                ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
    ],
    "title" : "Empty aria-describedby testable statements"

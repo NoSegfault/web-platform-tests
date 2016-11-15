@@ -16,29 +16,15 @@
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "UIA" : [
-               [
-                  "property",
-                  "Name",
-                  "is",
-                  "<empty>"
-               ]
-            ],
-            "MSAA" : [
-               [
-                  "property",
-                  "accName",
-                  "is",
-                  "<empty>"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
                   "name",
-                  "is",
-                  "<empty>"
+                  "empty",
+                  "true"
                ]
             ],
             "AXAPI" : [
@@ -62,10 +48,24 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "empty",
+                  "true"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "empty",
+                  "true"
+               ]
             ]
-         },
-         "element" : "test",
-         "title" : "step 1"
+         }
       }
    ]
 }

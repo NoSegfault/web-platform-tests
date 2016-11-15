@@ -12,9 +12,9 @@
 
     var theTest = new ATTAcomm(
     {
+   "title" : "Element aria-hidden",
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
          "test" : {
             "UIA" : [
@@ -26,22 +26,6 @@
                ]
             ],
             "MSAA" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "ATK" : [
-               [
-                  "property",
-                  "accessible",
-                  "exists",
-                  "false"
-               ]
-            ],
-            "AXAPI" : [
                [
                   "property",
                   "accessible",
@@ -62,12 +46,28 @@
                   "contains",
                   "TableCell"
                ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
-   ],
-   "title" : "Element aria-hidden"
+   ]
 }
 
     ) ;

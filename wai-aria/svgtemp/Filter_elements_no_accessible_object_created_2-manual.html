@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Filter elements no accessible object created</title>
+    <link rel="stylesheet" href="/resources/testharness.css">
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "title" : "Filter elements no accessible object created",
+   "steps" : [
+      {
+         "test" : {
+            "UIA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ],
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
+               [
+                  "property",
+                  "accessible",
+                  "exists",
+                  "false"
+               ]
+            ]
+         },
+         "element" : "test",
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ]
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Filter elements no accessible object created.</p>
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">  <defs>
+        <filter id="screen" filterUnits="userSpaceOnUse"
+         x="0" y="0" width="1200" height="400">
+                <feOffset dx="-400" in="SourceGraphic" result="g" width="400" height="400"/>
+                <feOffset dx="-800" in="SourceGraphic" result="b" width="400" height="400"/>
+                <feBlend id='test' in="SourceGraphic" in2="g" mode="screen"/>
+                <feBlend in2="b" mode="screen"/>
+        </filter>
+    </defs>
+
+ <g filter="url(#screen)">
+  <circle cx="24" cy="50" r="14"/>
+ </g>
+</svg>
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>
+

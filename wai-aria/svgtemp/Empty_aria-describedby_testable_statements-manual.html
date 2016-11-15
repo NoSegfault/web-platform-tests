@@ -15,7 +15,33 @@
    "title" : "Empty aria-describedby testable statements",
    "steps" : [
       {
+         "title" : "step 1",
+         "type" : "test",
          "test" : {
+            "UIA" : [
+               [
+                  "property",
+                  "FullDescription",
+                  "isNot",
+                  "123"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accDescription",
+                  "is",
+                  "123"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXHelp",
+                  "is",
+                  "123"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -30,35 +56,28 @@
                   "TableCell"
                ]
             ],
-            "UIA" : [
-               [
-                  "property",
-                  "FullDescription",
-                  "isNot",
-                  "123"
-               ]
-            ],
             "ATK" : [
                [
-                  "description",
-                  "123"
-               ]
-            ],
-            "MSAA" : [
-               []
-            ],
-            "AXAPI" : [
-               [
                   "property",
-                  "AXHelp",
+                  "description",
                   "is",
                   "123"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "123"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
                ]
             ]
          },
-         "type" : "test",
-         "element" : "test",
-         "title" : "step 1"
+         "element" : "test"
       }
    ]
 }

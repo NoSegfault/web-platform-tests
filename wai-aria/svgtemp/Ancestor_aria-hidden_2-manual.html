@@ -16,24 +16,9 @@
    "steps" : [
       {
          "title" : "step 1",
-         "element" : "test",
          "type" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "AXAPI" : [
+            "UIA" : [
                [
                   "property",
                   "accessible",
@@ -49,7 +34,7 @@
                   "false"
                ]
             ],
-            "ATK" : [
+            "AXAPI" : [
                [
                   "property",
                   "accessible",
@@ -57,7 +42,21 @@
                   "false"
                ]
             ],
-            "UIA" : [
+            "WAIFAKE" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
+               ]
+            ],
+            "ATK" : [
                [
                   "property",
                   "accessible",
@@ -65,7 +64,8 @@
                   "false"
                ]
             ]
-         }
+         },
+         "element" : "test"
       }
    ]
 }

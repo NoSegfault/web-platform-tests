@@ -16,29 +16,9 @@
    "steps" : [
       {
          "type" : "test",
+         "title" : "step 1",
+         "element" : "test",
          "test" : {
-            "WAIFAKE" : [
-               [
-                  "property",
-                  "role",
-                  "is",
-                  "ROLE_TABLE_CELL"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "TableCell"
-               ]
-            ],
-            "IAccessible2" : [
-               [
-                  "relation",
-                  "IA2_RELATION_LABELLED_BY",
-                  "is",
-                  "[t1]"
-               ]
-            ],
             "ATK" : [
                [
                   "property",
@@ -53,12 +33,18 @@
                   "[t1]"
                ]
             ],
-            "MSAA" : [
+            "WAIFAKE" : [
                [
                   "property",
-                  "accName",
+                  "role",
                   "is",
-                  "end"
+                  "ROLE_TABLE_CELL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "TableCell"
                ]
             ],
             "AXAPI" : [
@@ -67,6 +53,22 @@
                   "AXDescription",
                   "is",
                   "end"
+               ]
+            ],
+            "MSAA" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "end"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "relation",
+                  "IA2_RELATION_LABELLED_BY",
+                  "is",
+                  "[t1]"
                ]
             ],
             "UIA" : [
@@ -83,9 +85,7 @@
                   "[t1]"
                ]
             ]
-         },
-         "title" : "step 1",
-         "element" : "test"
+         }
       }
    ]
 }

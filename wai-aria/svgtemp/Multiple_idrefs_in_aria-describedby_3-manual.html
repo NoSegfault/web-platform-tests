@@ -14,24 +14,22 @@
     {
    "steps" : [
       {
-         "title" : "step 1",
          "element" : "test",
          "test" : {
             "MSAA" : [
-               []
-            ],
-            "ATK" : [
                [
-                  "description",
+                  "property",
+                  "accDescription",
+                  "is",
                   "end"
                ]
             ],
-            "AXAPI" : [
+            "IAccessible2" : [
                [
-                  "property",
-                  "AXHelp",
+                  "relation",
+                  "IA2_RELATION_DESCRIBED_BY",
                   "is",
-                  "end"
+                  "<not empty>"
                ]
             ],
             "UIA" : [
@@ -48,6 +46,26 @@
                   "<not empty>"
                ]
             ],
+            "ATK" : [
+               [
+                  "property",
+                  "description",
+                  "is",
+                  "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIBED_BY",
+                  "is",
+                  "end"
+               ],
+               [
+                  "relation",
+                  "RELATION_DESCRIPTION_FOR",
+                  "is",
+                  "test"
+               ]
+            ],
             "WAIFAKE" : [
                [
                   "property",
@@ -62,16 +80,17 @@
                   "TableCell"
                ]
             ],
-            "IAccessible2" : [
+            "AXAPI" : [
                [
-                  "relation",
-                  "IA2_RELATION_DESCRIBED_BY",
+                  "property",
+                  "AXHelp",
                   "is",
-                  "<not empty>"
+                  "end"
                ]
             ]
          },
-         "type" : "test"
+         "type" : "test",
+         "title" : "step 1"
       }
    ],
    "title" : "Multiple idrefs in aria-describedby"

@@ -747,11 +747,6 @@ class AtkAtspiAtta():
                     "results": []}
 
         obj, message = self._get_element_with_id(self._current_document, obj_id)
-        if not obj:
-            return {"status": self.STATUS_ERROR,
-                    "message": message,
-                    "results": []}
-
         results = [self._run_test(obj, a) for a in to_run]
         if not results:
             return {"status": self.STATUS_ERROR,

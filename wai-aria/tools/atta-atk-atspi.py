@@ -20,6 +20,7 @@ import re
 import signal
 import sys
 import threading
+import time
 import traceback
 
 gi.require_version("Atk", "1.0")
@@ -150,12 +151,29 @@ class Assertion():
         return info.get_methods()
 
     def _get_interfaces(self, obj):
-        interfaces = pyatspi.utils.listInterfaces(obj)
+        if not obj:
+            return []
+
+        try:
+            interfaces = pyatspi.utils.listInterfaces(obj)
+        except:
+            self._on_exception()
+            return []
+
         return list(filter(lambda x: x in self.INTERFACES, interfaces))
 
     def _get_relations(self, obj):
+        if not obj:
+            return {}
+
+        try:
+            relation_set = obj.getRelationSet()
+        except:
+            self._on_exception()
+            return {}
+
         relations = {}
-        for r in obj.getRelationSet():
+        for r in relation_set:
             relation = self._enum_to_string(r.getRelationType())
             targets = [r.getTarget(i) for i in range(r.getNTargets())]
             relations[relation] = list(map(self._get_id, targets))
@@ -163,13 +181,40 @@ class Assertion():
         return relations
 
     def _get_states(self, obj):
-        return [self._enum_to_string(s) for s in obj.getState().getStates()]
+        if not obj:
+            return []
+
+        try:
+            states = obj.getState().getStates()
+        except:
+            self._on_exception()
+            return []
+
+        return [self._enum_to_string(s) for s in states]
 
     def _get_role(self, obj):
-        return self._enum_to_string(obj.getRole())
+        if not obj:
+            return None
+
+        try:
+            role = obj.getRole()
+        except:
+            self._on_exception()
+            return None
+
+        return self._enum_to_string(role)
 
     def _get_object_attribute(self, obj, attr):
-        attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
+        if not obj:
+            return None
+
+        try:
+            obj.clearCache()
+            attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
+        except:
+            self._on_exception()
+            return None
+
         return attrs.get(attr)
 
     def _get_id(self, obj):
@@ -187,6 +232,11 @@ class Assertion():
         if not self._obj:
             self._msgs.append("ERROR: Accessible not found")
             return None
+
+        try:
+            self._obj.clearCache()
+        except:
+            self._on_exception()
 
         if prop == "id":
             return self._get_id(self._obj)
@@ -245,6 +295,8 @@ class Assertion():
         elif self._expectation == self.EXPECTATION_CONTAINS:
             result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
+            if self._actual_value is None:
+                self._actual_value = []
             result = self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
             result = self._actual_value in self._expected_value
@@ -466,6 +518,7 @@ class AtkAtspiAtta():
         self._enabled = False
         self._ready = False
         self._next_test = None, ""
+        self._current_element = None
         self._current_document = None
         self._current_application = None
         self._callbacks = {"document:load-complete": self._on_load_complete}
@@ -675,6 +728,7 @@ class AtkAtspiAtta():
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
         elif test_class == EventAssertion:
+            time.sleep(0.5)
             test = test_class(obj, assertion, self._verbose, self._event_history)
             result_value, messages, log = test.run()
         else:
@@ -855,31 +909,49 @@ class AtkAtspiAtta():
 
         return result, self.SUCCESS
 
-    def _get_element_with_id(self, root, element_id):
+    def _get_element_with_id(self, root, element_id, timeout=5):
         """Returns the descendent of root which has the specified id.
 
         Arguments:
         - root: An AtspiAccessible, typically a document object
-        - element_id: A string containing the id to look for.
+        - element_id: A string containing the id to look for
+        - timeout: Time in seconds before giving up
 
         Returns:
         - The AtspiAccessible if found and valid or None upon failure
         - A string indicating success, or the cause of failure
         """
 
+        self._current_element = None
         if not element_id:
             return None, self.FAILURE_INVALID_REQUEST
 
+        def _on_timeout(root, pred):
+            try:
+                obj = pyatspi.utils.findDescendant(root, pred)
+            except:
+                self._on_exception()
+            else:
+                if self._is_valid_object(obj):
+                    self._current_element = obj
+                    return False
+
+            return True
+
+        timestamp = time.time()
         pred = lambda x: self._get_element_id(x)[0] == element_id
-        try:
-            obj = pyatspi.utils.findDescendant(root, pred)
-        except:
-            return None, self._on_exception()
+        callback_id = GLib.timeout_add(100, _on_timeout, root, pred)
 
-        if not self._is_valid_object(obj):
-            return None, self.FAILURE_NOT_FOUND
+        msg = self.FAILURE_NOT_FOUND
+        while int(time.time() - timestamp) < timeout:
+            if self._current_element:
+                msg = self.SUCCESS
+                break
 
-        return obj, self.SUCCESS
+        if not self._current_element:
+            GLib.source_remove(callback_id)
+
+        return self._current_element, msg
 
     def _in_current_document(self, obj):
         """Returns True if obj is, or is a descendant of, the current document."""

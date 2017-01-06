@@ -148,6 +148,9 @@ class Assertion():
             self._on_exception()
             return []
 
+        if not info:
+            return []
+
         return info.get_methods()
 
     def _get_interfaces(self, obj):
@@ -382,35 +385,72 @@ class RelationAssertion(Assertion):
 
 class ResultAssertion(Assertion):
 
-    def _get_value(self):
-        iface_string, callable_string = re.split("\.", self._test_string, maxsplit=1)
-        callable_string = callable_string.replace("atk_%s_" % iface_string.lower(), "")
+    def __init__(self, obj, assertion, verbose=False):
+        super().__init__(obj, assertion, verbose)
+        self._errors = []
+        self._method = None
+        self._args = []
+
+        iface, call = re.split("\.", self._test_string, maxsplit=1)
+        call = call.replace("atk_%s_" % iface.lower(), "")
         try:
-            function_string, args_string = re.split("\(", callable_string, maxsplit=1)
+            function, args = re.split("\(", call, maxsplit=1)
+            args = args[:-1]
         except ValueError:
-            function_string = callable_string
-            args_string = ""
-        else:
-            args_string = args_string[:-1]
+            function = call
+            args = ""
 
-        methods = self._get_interface_methods(iface_string)
-        for method in methods:
-            if method.get_name() != function_string:
-                continue
+        methods = self._get_interface_methods(iface)
+        if not methods:
+            self._errors.append("ERROR: '%s' interface not found." % iface)
+            self._errors.append("INTERFACES: %s\n" % ", ".join(self.INTERFACES))
+            return
 
-            testargs = list(filter(lambda x: x != "", args_string.split(",")))
-            argtypes = list(map(self._get_arg_type, method.get_arguments()))
-            args = [argtypes[i](arg) for i, arg in enumerate(testargs)]
+        names = list(map(lambda x: x.get_name(), methods))
+        if names and function not in names:
+            self._errors.append("ERROR: '%s' method not found." % function)
+            self._errors.append("METHODS: %s\n" % ", ".join(names))
+            return
+
+        self._method = list(filter(lambda x: x.get_name() == function, methods))[0]
+
+        expectedargs = self._method.get_arguments()
+        actualargs = list(filter(lambda x: x != "", args.split(",")))
+        argtypes = list(map(self._get_arg_type, expectedargs))
+        for i, argtype in enumerate(argtypes):
+            arg = actualargs[i]
             try:
-                value = method.invoke(self._obj, *args)
-            except RuntimeError:
-                self._msgs.append("ERROR: Exception calling %s" % method.get_name())
+                self._args.append(argtype(arg))
             except:
-                self._on_exception()
-            else:
-                return self._value_to_harness_string(value)
+                info = self._get_arg_info(expectedargs[i])
+                self._errors.append("ERROR: Argument %i should be %s (got: %s)\n" % (i, info, arg))
+
+        return
+
+    def _get_value(self):
+        if self._errors:
+            return None
+
+        try:
+            value = self._method.invoke(self._obj, *self._args)
+        except RuntimeError:
+            self._errors.append("ERROR: Exception calling %s\n" % self._test_method.get_name())
+        except:
+            self._on_exception()
+        else:
+            return self._value_to_harness_string(value)
 
         return None
+
+    def run(self):
+        result, log = self._get_result(), ""
+        if not result or self._verbose:
+            log = "(Got: %s)\n" % str(self._actual_value)
+            self._msgs.append(log)
+            log += "\n".join(self._errors)
+            self._msgs.extend(self._errors)
+
+        return self._status, "\n".join(self._msgs), log
 
 
 class EventAssertion(Assertion):

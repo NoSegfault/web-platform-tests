@@ -324,7 +324,7 @@ class Assertion():
     def run(self):
         result, log = self._get_result(), ""
         if not result or self._verbose:
-            log = "(Got: %s)" % re.sub("[\[\]\"\']", "", str(self._actual_value))
+            log = "(Got: %s)\n" % re.sub("[\[\]\"\']", "", str(self._actual_value))
             self._msgs.append(log)
 
         return self._status, "\n".join(self._msgs), log

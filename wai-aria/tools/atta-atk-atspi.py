@@ -450,16 +450,17 @@ class EventAssertion(Assertion):
              self._get_id(event.source))
 
     def _get_result(self):
+        if self._verbose:
+            self._actual_value = self._events
+        else:
+            self._actual_value = self._obj_events
+
         # At the moment, the assumption is that we are only testing that
         # we have an event which matches the asserted event properties.
         if self._matching_events:
             self._status = self.PASS
             return True
 
-        if self._verbose:
-            self._actual_value = self._events
-        else:
-            self._actual_value = self._obj_events
         self._status = self.FAIL
         return False
 

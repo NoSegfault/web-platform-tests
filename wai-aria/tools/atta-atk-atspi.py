@@ -284,6 +284,9 @@ class Assertion():
         if isinstance(value, (int, float)):
             return str(value)
 
+        if isinstance(value, (pyatspi.Accessible, pyatspi.Atspi.Accessible)):
+            return self._get_id(value)
+
         return value
 
     def _get_value(self):

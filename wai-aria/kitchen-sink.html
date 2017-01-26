@@ -1,0 +1,744 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Kitchen sink</title>
+    <link rel="stylesheet" href="/resources/testharness.css">
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "title" : "Get starting values for elements",
+   "steps" : [
+      {
+         "type" : "test",
+         "title" : "Listbox - starting values",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_LIST_BOX"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:listbox"
+               ],
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Choose one"
+               ],
+               [
+                  "property",
+                  "childCount",
+                  "is",
+                  2
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_FOCUSABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_FOCUSED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_MULTISELECTABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SELECTABLE"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "Selection"
+               ],
+               [
+                  "result",
+                  "Selection.get_n_selected_children()",
+                  "is",
+                  "0"
+               ],
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Item 1 - starting values",
+         "element" : "item1",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_LIST_ITEM"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:option"
+               ],
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "First"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "posinset:1"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "setsize:2"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SELECTABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SELECTED"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Item 2 - starting values",
+         "element" : "item2",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_LIST_ITEM"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:option"
+               ],
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Second"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "posinset:2"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "setsize:2"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SELECTABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SELECTED"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "script",
+         "title" : "Add aria-selected property to item1 with value of true",
+         "script": "{ var el = document.getElementById('item1'); \
+                      if (el) { el.setAttribute('aria-selected', true); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify selection-changed event emitted by listbox as a result of aria-selected change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:selection-changed"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify state-changed event emitted by item1 as a result of aria-selected change",
+         "element" : "item1",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:selected"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "1"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_SELECTED exposed on item1 now that aria-selected is true",
+         "element" : "item1",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SELECTED"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "test",
+         "title" : "Verify listbox now reports 1 selected child, with index 0, corresponding to item1",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "result",
+                  "Selection.get_n_selected_children()",
+                  "is",
+                  "1"
+               ],
+               [
+                  "result",
+                  "Selection.is_child_selected(0)",
+                  "is",
+                  "true"
+               ],
+               [
+                  "result",
+                  "Selection.is_child_selected(1)",
+                  "is",
+                  "false"
+               ],
+               [
+                  "result",
+                  "Selection.get_selected_child(0)",
+                  "is",
+                  "item1"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "script",
+         "title" : "Change aria-selected property on item2 to true",
+         "script": "{ var el = document.getElementById('item2'); \
+                      if (el) { el.setAttribute('aria-selected', true); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify selection-changed event emitted by listbox as a result of aria-selected change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:selection-changed"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify state-changed event emitted by item2 as a result of aria-selected change",
+         "element" : "item2",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:selected"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "1"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_SELECTED exposed on item2 now that aria-selected is true",
+         "element" : "item2",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SELECTED"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "test",
+         "title" : "Verify listbox now reports 2 selected children",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+
+               [
+                  "result",
+                  "Selection.get_n_selected_children()",
+                  "is",
+                  "2"
+               ],
+               [
+                  "result",
+                  "Selection.is_child_selected(0)",
+                  "is",
+                  "true"
+               ],
+               [
+                  "result",
+                  "Selection.is_child_selected(1)",
+                  "is",
+                  "true"
+               ],
+               [
+                  "result",
+                  "Selection.get_selected_child(0)",
+                  "is",
+                  "item1"
+               ],
+               [
+                  "result",
+                  "Selection.get_selected_child(1)",
+                  "is",
+                  "item2"
+               ],
+            ]
+         }
+      },
+      {
+         "type" : "script",
+         "title" : "Change aria-selected property on item1 to false and remove property from item2",
+         "script": "{ var el1 = document.getElementById('item1'); \
+                      if (el1) { el1.setAttribute('aria-selected', false); } \
+                      var el2 = document.getElementById('item2'); \
+                      if (el2) { el2.removeAttribute('aria-selected'); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify selection-changed event emitted by listbox as a result of aria-selected change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:selection-changed"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify state-changed event emitted by item1 as a result of aria-selected change",
+         "element" : "item1",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:selected"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "0"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify state-changed event emitted by item2 as a result of aria-selected change",
+         "element" : "item2",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:selected"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "0"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_SELECTED not exposed on item1 now that aria-selected is false",
+         "element" : "item1",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SELECTED"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_SELECTED not exposed on item2 having removed aria-selected",
+         "element" : "item2",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SELECTED"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "test",
+         "title" : "Verify listbox now reports 0 selected children",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+
+               [
+                  "result",
+                  "Selection.get_n_selected_children()",
+                  "is",
+                  "0"
+               ]
+            ]
+         }
+      },
+      {
+         "type" : "script",
+         "title" : "Change aria-multiselectable property on listbox to false",
+         "script": "{ var el = document.getElementById('test'); \
+                      if (el) { el.setAttribute('aria-multiselectable', false); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_MULTISELECTABLE not exposed on listbox now that aria-multiselectable is false",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_MULTISELECTABLE"
+               ],
+            ]
+         }
+      },
+      {
+         "type" : "script",
+         "title" : "Change aria-multiselectable property on listbox to true",
+         "script": "{ var el = document.getElementById('test'); \
+                      if (el) { el.setAttribute('aria-multiselectable', true); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_MULTISELECTABLE is exposed on listbox now that aria-multiselectable is true",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_MULTISELECTABLE"
+               ],
+            ]
+         }
+      },
+      {
+         "type" : "event",
+         "element" : "test",
+         "event" : "focus",
+         "title": "Put focus on the listbox",
+      },
+      {
+         "type" : "test",
+         "title" : "Verify focus event emitted as a result of focus grab on listbox",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:focused"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "1"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_FOCUSED is exposed on listbox after focus grab",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_FOCUSED"
+               ],
+            ]
+         }
+      },
+      {
+         "type" : "event",
+         "element" : "other",
+         "event" : "focus",
+         "title": "Remove focus from the listbox by focus grab on other element",
+      },
+      {
+         "type" : "test",
+         "title" : "Verify focus event emitted as a result of focus grab on other element",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:focused"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "0"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify STATE_FOCUSED is not exposed on listbox after focus grab on other element",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_FOCUSED"
+               ],
+            ]
+         }
+      },
+      {
+         "type" : "test",
+         "title" : "Verify there is no labelled-by reference on the listbox",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "doesNotContain",
+                  "RELATION_LABELLED_BY"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify there is no label-for reference on the element with id of 'label'",
+         "element" : "label",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "doesNotContain",
+                  "RELATION_LABEL_FOR"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "script",
+         "title" : "Add aria-labelledby property to listbox pointing to element with id of 'label'",
+         "script": "{ var el = document.getElementById('test'); \
+                      if (el) { el.setAttribute('aria-labelledby', 'label'); } }"
+      },
+      {
+         "type" : "test",
+         "title" : "Verify name-changed event emitted by listbox as a result of aria-labelledby change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:property-change:accessible-name"
+               ],
+               [
+                  "event",
+                  "any_data",
+                  "is",
+                  "Make a selection:"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify listbox has new name as a result of aria-labelledby change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Make a selection:"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify labelled-by relation exists as a result of aria-labelledby change",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABELLED_BY"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABELLED_BY",
+                  "is",
+                  "[label]"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify label-for relation exists as a result of aria-labelledby change",
+         "element" : "label",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABEL_FOR"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABEL_FOR",
+                  "is",
+                  "[test]"
+               ]
+            ]
+         },
+      },
+   ]
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test demonstrates results of setting properties.</p>
+  <div id="label">Make a selection:</div>
+  <div id="test" role="listbox" aria-label="Choose one" aria-multiselectable="true" tabindex="0">
+    <div id="item1" role="option">First</div>
+    <div id="item2" role="option" aria-selected="false">Second</div>
+  </div>
+  <div id="other" tabindex="0">Focusable element for testing</div>
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

@@ -1162,6 +1162,8 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(bytes(dump, "utf-8"))
         except BrokenPipeError:
             print("ERROR: Broken pipe")
+            self.wfile._wbuf = []
+            self.wfile._wbuf_len = 0
 
     def start_test(self):
         print("==================================")

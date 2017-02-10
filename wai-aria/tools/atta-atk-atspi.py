@@ -437,7 +437,7 @@ class ResultAssertion(Assertion):
         try:
             value = self._method.invoke(self._obj, *self._args)
         except RuntimeError:
-            self._errors.append("ERROR: Exception calling %s\n" % self._test_method.get_name())
+            self._errors.append("ERROR: Exception calling %s\n" % self._method.get_name())
         except:
             self._on_exception()
         else:

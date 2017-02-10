@@ -801,9 +801,7 @@ class AtkAtspiAtta():
         if not event_assertions:
             return assertions, True, ""
 
-        if event_assertions != assertions:
-            items = list(set(assertions) - set(event_assertions))
-            return [], False, "Unexpected assertions found: %s" % items
+        platform_assertions = list(filter(lambda x: x not in event_assertions, assertions))
 
         # The properties associated with accessible events are currently given to
         # us as individual subtests. Unlike other assertions, event properties are
@@ -814,7 +812,9 @@ class AtkAtspiAtta():
         for test, name, verb, value in event_assertions:
             properties[name] = value
 
-        return [["event", "event", "contains", properties]], True, ""
+        combined_event_assertions = ["event", "event", "contains", properties]
+        platform_assertions.append(combined_event_assertions)
+        return platform_assertions, True, ""
 
     def run_tests(self, obj_id, assertions):
         """Runs the provided assertions on the object with the specified id.
@@ -1188,6 +1188,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
     def listen(self):
         params = self.get_params("events")
         error = params.get("error")
+        response = {}
         if error:
             response["status"] = "ERROR"
             response["statusText"] = error

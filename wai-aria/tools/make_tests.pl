@@ -42,9 +42,11 @@ my $spec = undef ;
 my $wiki_title = undef ;
 my $dir = undef;
 my $theSpecFragment = "%code%";
+my $preserveWiki = "";
 
 my $result = GetOptions(
     "f|file=s"   => \$file,
+    "p=s" => \$preserveWiki,
     "w|wiki=s"   => \$wiki_title,
     "s|spec=s"   => \$spec,
     "d|dir=s"   => \$dir) || usage();
@@ -90,10 +92,23 @@ if ($file) {
   my $page = $MW->get_page( { title => $wiki_title } );
   my $theContent = $page->{'*'};
   print "Loaded " . length($theContent) . " from $wiki_title\n";
+  if ($preserveWiki) {
+    if (open(OUTPUT, ">$preserveWiki")) {
+      print OUTPUT $theContent;
+      close OUTPUT;
+      print "Wiki preserved in $preserveWiki\n";
+      exit 0;
+    } else {
+      print "Failed to create $preserveWiki. Terminating.\n";
+      exit 1;
+    }
+  }
   $io = IO::String->new($theContent);
 } else {
   usage() ;
 }
+
+
 
 # Now let's walk through the content and build a test page for every item
 #
@@ -127,10 +142,14 @@ my $theType = "";
 my $theName = "";
 my $theRef = "";
 my $lineCounter = 0;
+my $skipping = 0;
 
 our $testNames = {} ;
 
 while (<$io>) {
+  if (m/<!-- END OF TESTS -->/) {
+    last;
+  }
   $lineCounter++;
   # look for state
   if (m/^SpecURL: (.*)$/) {
@@ -145,15 +164,20 @@ while (<$io>) {
     # print "Finished $current and new subblock $1\n";
     $state = 1;
     $theAttributes = {} ;
+    $theAPI = "";
     @steps = ();
     $theCode = "";
     $theAsserts = undef;
     $theName = "";
   } elsif (m/^=== +(.*[^ ]) +===/) {
     if ($state != 0) {
-      # we were in an item; dump it
-      build_test($current, $theAttributes, $theCode, \@steps, $theSpecFragment) ;
-      # print "Finished $current\n";
+      if ($skipping) {
+        print STDERR "Flag on assertion $current; skipping\n";
+      } else {
+        # we were in an item; dump it
+        build_test($current, $theAttributes, $theCode, \@steps, $theSpecFragment) ;
+        # print "Finished $current\n";
+      }
     }
     $state = 1;
     $current = $1;
@@ -161,7 +185,14 @@ while (<$io>) {
     @steps = ();
     $theCode = "";
     $theAsserts = undef;
+    $theAPI = "";
     $theName = "";
+    if ($current =~ m/\(/) {
+      # there is a paren in the name -skip it
+      $skipping = 1;
+    } else {
+      $skipping = 0;
+    }
   }
 
   if ($state == 1) {
@@ -487,6 +518,8 @@ sub build_test() {
     }
     $fileName .= "_$count";
   }
+
+  $fileName = lc($fileName);
 
   $testNames->{$fileName} = 1;
 

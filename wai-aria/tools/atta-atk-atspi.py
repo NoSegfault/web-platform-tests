@@ -1100,9 +1100,12 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self.end_test()
         elif self.path.endswith("test"):
             self.run_tests()
-        elif self.path.endswith("listen"):
-            self.listen()
+        elif self.path.endswith("startlisten"):
+            self.start_listen()
+        elif self.path.endswith("stoplisten"):
+            self.stop_listen()
         else:
+            print("UNHANDLED PATH: %s" % self.path)
             self.send_error()
 
     def send_error(self):
@@ -1185,7 +1188,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         response["status"] = "READY"
         self._send_response(response)
 
-    def listen(self):
+    def start_listen(self):
         params = self.get_params("events")
         error = params.get("error")
         response = {}
@@ -1196,6 +1199,11 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             return
 
         atta.monitor_events(params.get("events"))
+        response = {"status": "READY"}
+        self._send_response(response)
+
+    def stop_listen(self):
+        atta.stop_event_monitoring()
         response = {"status": "READY"}
         self._send_response(response)
 

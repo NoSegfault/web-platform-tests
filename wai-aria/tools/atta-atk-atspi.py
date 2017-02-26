@@ -1087,6 +1087,12 @@ class AtkAtspiAtta():
 # API (e.g. to verify the ATTA is ready to proceed with a test run).
 class AttaRequestHandler(BaseHTTPRequestHandler):
 
+    _atta = None
+
+    @classmethod
+    def set_atta(self, atta):
+        self._atta = atta
+
     def do_GET(self):
         self.dispatch()
 
@@ -1170,7 +1176,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
 
     def start_test(self):
         print("==================================")
-        response = atta.get_info()
+        response = {}
         params = self.get_params("test", "url")
         error = params.get("error")
         if error:
@@ -1179,11 +1185,13 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self._send_response(response)
             return
 
-        # HACK to give us sufficient time to receive the document:load-complete
-        # accessibility event and compare it to the URL we set above.
-        atta.set_next_test(name=params.get("test"), url=params.get("url"))
-        while not atta.is_ready():
-            pass
+        if self._atta is None:
+            print("RUNNING ATTA NOT FOUND. TEST MUST BE RUN MANUALLY.")
+        else:
+            response.update(self._atta.get_info())
+            self._atta.set_next_test(name=params.get("test"), url=params.get("url"))
+            while not self._atta.is_ready():
+                pass
 
         response["status"] = "READY"
         self._send_response(response)
@@ -1198,25 +1206,35 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self._send_response(response)
             return
 
-        atta.monitor_events(params.get("events"))
-        response = {"status": "READY"}
+        if self._atta is None:
+            print("AUTOMATIC EVENT MONITORING NOT POSSIBLE WITHOUT RUNNING ATTA.")
+        else:
+            self._atta.monitor_events(params.get("events"))
+
+        response["status"] = "READY"
         self._send_response(response)
 
     def stop_listen(self):
-        atta.stop_event_monitoring()
+        if self._atta is not None:
+            self._atta.stop_event_monitoring()
+
         response = {"status": "READY"}
         self._send_response(response)
 
     def run_tests(self):
         params = self.get_params("title", "id", "data")
-        response = atta.run_tests(params.get("id"), params.get("data", {}))
+        response = {}
+        if self._atta is not None:
+            result = self._atta.run_tests(params.get("id"), params.get("data", {}))
+            response.update(result)
+
         if not response.get("results"):
             response["statusText"] = params.get("error")
 
         self._send_response(response)
 
     def end_test(self):
-        atta.end_test_run()
+        self._atta.end_test_run()
         response = {"status": "DONE"}
         self._send_response(response)
 
@@ -1259,4 +1277,5 @@ if __name__ == "__main__":
 
     print("Starting server on http://%s:%s/" % (host, port))
     server = HTTPServer((host, int(port)), AttaRequestHandler)
+    AttaRequestHandler.set_atta(atta)
     server.serve_forever()

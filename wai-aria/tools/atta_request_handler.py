@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Sharable Request Handler for Accessible Technology Test Adapters
 #

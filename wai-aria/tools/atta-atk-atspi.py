@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # atta-atk-atspi
 #
@@ -1085,7 +1085,14 @@ class AtkAtspiAtta():
 
 
 def shutdown(signum, frame):
-    print("\nShutting down on signal %s" % signal.Signals(signum).name)
+    # The 'Signals' enum was introduced to signal module in 3.5.
+    try:
+        signal_string = signal.Signals(signum).name
+    except:
+        signal_string = str(signum)
+
+    print("\nShutting down on signal %s" % signal_string)
+
     if atta is not None:
         atta.stop()
 

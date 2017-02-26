@@ -540,7 +540,7 @@ class AtkAtspiAtta():
     # Gecko and WebKitGtk respectively
     UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
 
-    def __init__(self, verify_dependencies=True, dry_run=False, verbose=False):
+    def __init__(self, host, port, verify_dependencies=True, dry_run=False, verbose=False):
         """Initializes this ATTA.
 
         Arguments:
@@ -556,6 +556,8 @@ class AtkAtspiAtta():
           DEFAULT: False
         """
 
+        self._host = host
+        self._port = int(port)
         self._atta_name = "WPT ATK/AT-SPI2 ATTA"
         self._atta_version = "0.1"
         self._api_name = "ATK"
@@ -872,7 +874,7 @@ class AtkAtspiAtta():
         """
 
         if not self._enabled:
-            return False
+            print("START FAILED: ATTA is not enabled.")
 
         for event_type, callback in self._callbacks.items():
             self._register_listener(event_type, callback)
@@ -883,9 +885,12 @@ class AtkAtspiAtta():
             self._listener_thread.setName("ATSPI2 Client")
             self._listener_thread.start()
 
-        return True
+        print("Starting server on http://%s:%s/" % (self._host, self._port))
+        self._server = HTTPServer((self._host, self._port), AttaRequestHandler)
+        AttaRequestHandler.set_atta(self)
+        self._server.serve_forever()
 
-    def stop(self):
+    def stop(self, signum=None, frame=None):
         """Stops this ATTA, notifying the AT-SPI2 registry.
 
         Returns:
@@ -897,6 +902,14 @@ class AtkAtspiAtta():
 
         self._ready = False
 
+        if signum is not None:
+            # The 'Signals' enum was introduced to signal module in 3.5.
+            try:
+                signal_string = signal.Signals(signum).name
+            except:
+                signal_string = str(signum)
+            print("\nShutting down on signal %s" % signal_string)
+
         for event_type, callback in self._callbacks.items():
             self._deregister_listener(event_type, callback)
 
@@ -904,6 +917,10 @@ class AtkAtspiAtta():
             pyatspi.Registry.stop()
             self._listener_thread.join()
             self._listener_thread = None
+
+        if self._server is not None:
+            thread = threading.Thread(target=self._server.shutdown)
+            thread.start()
 
         return True
 
@@ -1084,22 +1101,6 @@ class AtkAtspiAtta():
             self._event_history.append(event)
 
 
-def shutdown(signum, frame):
-    # The 'Signals' enum was introduced to signal module in 3.5.
-    try:
-        signal_string = signal.Signals(signum).name
-    except:
-        signal_string = str(signum)
-
-    print("\nShutting down on signal %s" % signal_string)
-
-    if atta is not None:
-        atta.stop()
-
-    if server is not None:
-        thread = threading.Thread(target=server.shutdown)
-        thread.start()
-
 def get_cmdline_options():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", action="store")
@@ -1110,9 +1111,6 @@ def get_cmdline_options():
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, shutdown)
-    signal.signal(signal.SIGTERM, shutdown)
-
     args = get_cmdline_options()
     verify_dependencies = not args.get("ignore_dependencies")
     dry_run = args.get("dry_run")
@@ -1121,14 +1119,13 @@ if __name__ == "__main__":
     port = args.get("port") or "4119"
 
     print("Attempting to start AtkAtspiAtta")
-    atta = AtkAtspiAtta(verify_dependencies, dry_run, verbose)
+    atta = AtkAtspiAtta(host, port, verify_dependencies, dry_run, verbose)
     if not atta.is_enabled():
         print("ERROR: Unable to enable ATTA")
         sys.exit(1)
 
+    signal.signal(signal.SIGINT, atta.stop)
+    signal.signal(signal.SIGTERM, atta.stop)
+
     atta.start()
 
-    print("Starting server on http://%s:%s/" % (host, port))
-    server = HTTPServer((host, int(port)), AttaRequestHandler)
-    AttaRequestHandler.set_atta(atta)
-    server.serve_forever()

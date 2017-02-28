@@ -29,143 +29,160 @@ from gi.repository import Atk, Gio, GLib
 from http.server import HTTPServer
 
 from atta_request_handler import AttaRequestHandler
+from atta_assertion import *
 
 
-class Assertion():
+class Assertion(AttaAssertion):
 
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT RUN"
-
-    EXPECTATION_IS = "is"
-    EXPECTATION_IS_NOT = "isNot"
-    EXPECTATION_CONTAINS = "contains"
-    EXPECTATION_DOES_NOT_CONTAIN = "doesNotContain"
-    EXPECTATION_IS_ANY = "isAny"
-    EXPECTATION_IS_TYPE = "isType"
-    EXPECTATION_EXISTS = "exists"
-
-    TEST_EVENT = "event"
-    TEST_PROPERTY = "property"
-    TEST_RELATION = "relation"
-    TEST_RESULT = "result"
-    TEST_TBD = "TBD"
-
-    PROPERTIES = ["accessible",
-                  "id",
-                  "role",
-                  "name",
-                  "description",
-                  "childCount",
-                  "objectAttributes",
-                  "states",
-                  "relations",
-                  "interfaces",
-                  "parentID"]
-
-    # N.B. These are not all possible interfaces; these are interfaces
-    # with methods test writers may need to include in their assertions
-    # for the purpose of verifying those methods have been correctly
-    # implemented.
-    INTERFACES = ["Action",
-                  "Component",
-                  "Document",
-                  "EditableText",
-                  "Hyperlink",
-                  "Hypertext",
-                  "Image",
-                  "Selection",
-                  "Table",
-                  "TableCell",
-                  "Text",
-                  "Value"]
-
-    def __init__(self, obj, assertion, verbose=False):
-        self._obj = obj
-        self._test_string = assertion[1]
-        self._expectation = assertion[2]
-        self._expected_value = assertion[3]
-        self._actual_value = None
-        self._msgs = []
-        self._verbose = verbose
-        self._status = self.NOT_RUN
-
-    def __str__(self):
-        rv = "%s: %s %s %s" % (self._status, self._test_string, self._expectation, self._expected_value)
-
-        return rv
+    def __init__(self, obj, assertion):
+        super().__init__(obj, assertion)
 
     @classmethod
     def get_test_class(cls, assertion):
         test_class = assertion[0]
-        if test_class == cls.TEST_PROPERTY:
+        if test_class == cls.CLASS_PROPERTY:
             return PropertyAssertion
-        if test_class == cls.TEST_EVENT:
+        if test_class == cls.CLASS_EVENT:
             return EventAssertion
-        if test_class == cls.TEST_RELATION:
+        if test_class == cls.CLASS_RELATION:
             return RelationAssertion
-        if test_class == cls.TEST_RESULT:
+        if test_class == cls.CLASS_RESULT:
             return ResultAssertion
-        if test_class == cls.TEST_TBD:
+        if test_class == cls.CLASS_TBD:
             return DumpInfoAssertion
 
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
     @staticmethod
-    def _enum_to_string(enum):
+    def _get_object_attribute(obj, attr):
+        if not obj:
+            return None
+
         try:
-            rv = enum.value_name.replace("ATSPI_", "")
+            attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
         except:
-            rv = str(enum)
+            return None
+
+        return attrs.get(attr)
+
+    def _get_id(self, obj):
+        return self._get_object_attribute(obj, "id") \
+            or self._get_object_attribute(obj, "html-id")
+
+    def _value_to_harness_string(self, value):
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            return type(value).__name__
+
+        value_type = type(value)
+        if value_type is bool:
+            return str(value).lower()
+
+        if value_type in (int, float):
+            return str(value)
+
+        if value_type in (pyatspi.Accessible, pyatspi.Atspi.Accessible):
+            return self._get_id(value)
+
+        if value_type in (tuple, list):
+            return value_type(map(self._value_to_harness_string, value))
+
+        if value_type is dict:
+            return {self._value_to_harness_string(k): self._value_to_harness_string(v) for k, v in value.items()}
+
+        try:
+            value_name = value.value_name.replace("ATSPI_", "")
+        except:
+            value_name = str(value)
 
         # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
         # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
-        rv = rv.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
+        value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
 
-        return rv
+        return value_name
 
-    def _get_arg_type(self, arg):
-        typeinfo = arg.get_type()
-        typetag = typeinfo.get_tag()
-        return gi._gi.TypeTag(typetag)
+    def _get_value(self):
+        pass
 
-    def _get_arg_info(self, arg):
-        name = arg.get_name()
-        argtype = self._get_arg_type(arg)
-        return "%s %s" % (argtype.__name__, name)
+    def _get_result(self):
+        self._actual_value = self._get_value()
+        actual_value = self._value_to_harness_string(self._actual_value)
 
-    def _get_method_details(self, method):
-        name = method.get_name()
-        args = list(map(self._get_arg_info, method.get_arguments()))
-        return "%s(%s)" % (name, ", ".join(args))
+        if self._expectation == self.EXPECTATION_IS:
+            result = self._expected_value == actual_value
+        elif self._expectation == self.EXPECTATION_IS_NOT:
+            result = self._expected_value != actual_value
+        elif self._expectation == self.EXPECTATION_CONTAINS:
+            result = actual_value and self._expected_value in actual_value
+        elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
+            result = actual_value is not None and self._expected_value not in actual_value
+        elif self._expectation == self.EXPECTATION_IS_ANY:
+            result = actual_value in self._expected_value
+        elif self._expectation == self.EXPECTATION_IS_TYPE:
+            result = actual_value == self._expected_value
+        elif self._expectation == self.EXPECTATION_EXISTS:
+            result = self._expected_value == actual_value
+        else:
+            result = False
 
-    def _get_interface_methods(self, interface_name):
-        gir = gi.Repository.get_default()
+        if result:
+            self._status = self.PASS
+        else:
+            self._status = self.FAIL
 
+        return result
+
+    def run(self):
+        result, log = self._get_result(), ""
+        if not result:
+            value = self._value_to_harness_string(self._actual_value)
+            log = "(Got: %s)\n" % re.sub("[\[\]\"\']", "", str(value))
+            self._msgs.append(log)
+
+        return self._status, "\n".join(self._msgs), log
+
+
+class PropertyAssertion(Assertion, AttaPropertyAssertion):
+
+    GETTERS = {
+        "accessible": lambda x: bool(x),
+        "childCount": lambda x: x.childCount if x else None,
+        "description": lambda x: x.description if x else None,
+        "name": lambda x: x.name if x else None,
+        "interfaces": lambda x: pyatspi.utils.listInterfaces(x) if x else [],
+        "parent": lambda x: x.parent if x else None,
+        "relations": lambda x: [r.getRelationType() for r in x.getRelationSet()] if x else [],
+        "role": lambda x: x.getRole() if x else None,
+        "states": lambda x: x.getState().getStates() if x else None,
+    }
+
+    def get_property_value(self, prop):
         try:
-            info = gir.find_by_name("Atspi", interface_name)
+            self._obj.clearCache()
         except:
             self._on_exception()
-            return []
 
-        if not info:
-            return []
+        getter = self.GETTERS.get(prop)
+        if getter:
+            return getter(self._obj)
 
-        return info.get_methods()
+        if prop == "objectAttributes":
+            if self._expected_value.count(":") != 1:
+                return self._obj.getAttributes()
 
-    def _get_interfaces(self, obj):
-        if not obj:
-            return []
+            attr_name = self._expected_value.split(":")[0]
+            attr_value = self._get_object_attribute(self._obj, attr_name)
+            if attr_value is not None:
+                return "%s:%s" % (attr_name, attr_value)
 
-        try:
-            interfaces = pyatspi.utils.listInterfaces(obj)
-        except:
-            self._on_exception()
-            return []
+        self._msgs.append("ERROR: Unhandled property: %s" % prop)
+        return None
 
-        return list(filter(lambda x: x in self.INTERFACES, interfaces))
+    def _get_value(self):
+        return self.get_property_value(self._test_string)
+
+
+class RelationAssertion(Assertion):
 
     def _get_relations(self, obj):
         if not obj:
@@ -179,209 +196,11 @@ class Assertion():
 
         relations = {}
         for r in relation_set:
-            relation = self._enum_to_string(r.getRelationType())
+            relation = self._value_to_harness_string(r.getRelationType())
             targets = [r.getTarget(i) for i in range(r.getNTargets())]
             relations[relation] = list(map(self._get_id, targets))
 
         return relations
-
-    def _get_states(self, obj):
-        if not obj:
-            return []
-
-        try:
-            states = obj.getState().getStates()
-        except:
-            self._on_exception()
-            return []
-
-        return [self._enum_to_string(s) for s in states]
-
-    def _get_role(self, obj):
-        if not obj:
-            return None
-
-        try:
-            role = obj.getRole()
-        except:
-            self._on_exception()
-            return None
-
-        return self._enum_to_string(role)
-
-    def _get_object_attribute(self, obj, attr):
-        if not obj:
-            return None
-
-        try:
-            obj.clearCache()
-            attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
-        except:
-            self._on_exception()
-            return None
-
-        return attrs.get(attr)
-
-    def _get_id(self, obj):
-        return self._get_object_attribute(obj, "id") \
-            or self._get_object_attribute(obj, "html-id")
-
-    def _get_property(self, prop):
-        if prop not in self.PROPERTIES:
-            self._msgs.append("ERROR: Unknown property: %s" % prop)
-            return None
-
-        if prop == "accessible":
-            return bool(self._obj)
-
-        if not self._obj:
-            self._msgs.append("ERROR: Accessible not found")
-            return None
-
-        try:
-            self._obj.clearCache()
-        except:
-            self._on_exception()
-
-        if prop == "id":
-            return self._get_id(self._obj)
-
-        if prop == "role":
-            return self._get_role(self._obj)
-
-        if prop == "name":
-            return self._obj.name
-
-        if prop == "description":
-            return self._obj.description
-
-        if prop == "childCount":
-            return self._obj.childCount
-
-        if prop == "objectAttributes":
-            return self._obj.getAttributes()
-
-        if prop == "interfaces":
-            return self._get_interfaces(self._obj)
-
-        if prop == "states":
-            return self._get_states(self._obj)
-
-        if prop == "relations":
-            return self._get_relations(self._obj)
-
-        if prop == "parentID":
-            return self._get_id(self._obj.parent)
-
-        self._msgs.append("ERROR: Unhandled property: %s" % prop)
-        return None
-
-    def _value_to_harness_string(self, value):
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            return value
-
-        if isinstance(value, bool):
-            return str(value).lower()
-
-        if isinstance(value, (int, float)):
-            return str(value)
-
-        if isinstance(value, (pyatspi.Accessible, pyatspi.Atspi.Accessible)):
-            return self._get_id(value)
-
-        return value
-
-    def _get_value(self):
-        pass
-
-    def _get_result(self):
-        self._actual_value = self._get_value()
-        if self._expectation == self.EXPECTATION_IS:
-            result = self._expected_value == self._actual_value
-        elif self._expectation == self.EXPECTATION_IS_NOT:
-            result = self._expected_value != self._actual_value
-        elif self._expectation == self.EXPECTATION_CONTAINS:
-            result = self._actual_value and self._expected_value in self._actual_value
-        elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            if self._actual_value is None:
-                self._actual_value = []
-            result = self._expected_value not in self._actual_value
-        elif self._expectation == self.EXPECTATION_IS_ANY:
-            result = self._actual_value in self._expected_value
-        elif self._expectation == self.EXPECTATION_IS_TYPE:
-            result = type(self._actual_value).__name__ == self._expected_value
-        elif self._expectation == self.EXPECTATION_EXISTS:
-            # TODO - JD: This sanity check may be needed elsewhere.
-            actual = self._value_to_harness_string(self._actual_value)
-            result = self._expected_value == actual
-        else:
-            result = False
-
-        if result:
-            self._status = self.PASS
-        else:
-            self._status = self.FAIL
-
-        return result
-
-    def _on_exception(self):
-        etype, evalue, tb = sys.exc_info()
-        error = traceback.format_exc(limit=1, chain=False)
-        self._msgs.append(error)
-
-    def run(self):
-        result, log = self._get_result(), ""
-        if not result or self._verbose:
-            log = "(Got: %s)\n" % re.sub("[\[\]\"\']", "", str(self._actual_value))
-            self._msgs.append(log)
-
-        return self._status, "\n".join(self._msgs), log
-
-
-class DumpInfoAssertion(Assertion):
-
-    def __init__(self, obj, assertion=None, verbose=False):
-        assertion = [""] * 4
-        super().__init__(obj, assertion, verbose)
-
-    def _get_interfaces(self, obj):
-        if not self._verbose:
-            return pyatspi.utils.listInterfaces(obj)
-
-        interfaces = {}
-        for iface in pyatspi.utils.listInterfaces(obj):
-            if iface not in self.INTERFACES:
-                continue
-
-            methods = self._get_interface_methods(iface)
-            interfaces[iface] = list(map(self._get_method_details, methods))
-
-        return interfaces
-
-    def run(self):
-        self._msgs.append("DRY RUN")
-
-        info = {}
-        info["properties"] = {}
-        for prop in self.PROPERTIES:
-            info["properties"][prop] = self._get_property(prop)
-
-        log = json.dumps(info, indent=4, sort_keys=True)
-        return True, "\n".join(self._msgs), log
-
-class PropertyAssertion(Assertion):
-
-    def _get_value(self):
-        if self._test_string == "objectAttributes" and self._expected_value.count(":") == 1:
-            attr_name = self._expected_value.split(":")[0]
-            attr_value = self._get_object_attribute(self._obj, attr_name)
-            if attr_value is not None:
-                return "%s:%s" % (attr_name, attr_value)
-
-        return self._get_property(self._test_string)
-
-
-class RelationAssertion(Assertion):
 
     def _get_value(self):
         relations = self._get_relations(self._obj)
@@ -390,8 +209,8 @@ class RelationAssertion(Assertion):
 
 class ResultAssertion(Assertion):
 
-    def __init__(self, obj, assertion, verbose=False):
-        super().__init__(obj, assertion, verbose)
+    def __init__(self, obj, assertion):
+        super().__init__(obj, assertion)
         self._errors = []
         self._method = None
         self._args = []
@@ -405,7 +224,7 @@ class ResultAssertion(Assertion):
             function = call
             args = ""
 
-        methods = self._get_interface_methods(iface)
+        methods = self.get_interface_methods(iface)
         if not methods:
             self._errors.append("ERROR: '%s' interface not found." % iface)
             self._errors.append("INTERFACES: %s\n" % ", ".join(self.INTERFACES))
@@ -432,6 +251,43 @@ class ResultAssertion(Assertion):
 
         return
 
+    @classmethod
+    def _get_arg_type(cls, arg):
+        typeinfo = arg.get_type()
+        typetag = typeinfo.get_tag()
+        return gi._gi.TypeTag(typetag)
+
+    @classmethod
+    def _get_arg_info(cls, arg):
+        name = arg.get_name()
+        argtype = cls._get_arg_type(arg)
+        return "%s %s" % (argtype.__name__, name)
+
+    @classmethod
+    def get_method_details(cls, method):
+        name = method.get_name()
+        args = list(map(cls._get_arg_info, method.get_arguments()))
+        return "%s(%s)" % (name, ", ".join(args))
+
+    @staticmethod
+    def get_interface_methods(interface_name):
+        gir = gi.Repository.get_default()
+
+        try:
+            atspi_info = gir.find_by_name("Atspi", interface_name)
+            atk_info = gir.find_by_name("Atk", interface_name)
+        except:
+            return []
+
+        # If an interface is in AT-SPI2 but not ATK, it's a utility which user
+        # agent implementors do not implement. If it's in ATK, but not AT-SPI2,
+        # implementors implement it, but we cannot directly call the implemented
+        # methods via an AT-SPI2 interface.
+        if not (atspi_info and atk_info):
+            return []
+
+        return atspi_info.get_methods()
+
     def _get_value(self):
         if self._errors:
             return None
@@ -449,8 +305,8 @@ class ResultAssertion(Assertion):
 
     def run(self):
         result, log = self._get_result(), ""
-        if not result or self._verbose:
-            log = "(Got: %s)\n" % str(self._actual_value)
+        if not result:
+            log = "(Got: %s)\n" % self._value_to_harness_string(self._actual_value)
             self._msgs.append(log)
             log += "\n".join(self._errors)
             self._msgs.extend(self._errors)
@@ -460,8 +316,8 @@ class ResultAssertion(Assertion):
 
 class EventAssertion(Assertion):
 
-    def __init__(self, obj, assertion, verbose=False, events=[]):
-        super().__init__(obj, assertion, verbose)
+    def __init__(self, obj, assertion, events=[]):
+        super().__init__(obj, assertion)
         self._events = events
         self._obj_events = list(filter(lambda x: x.source == obj, events))
         self._matching_events = []
@@ -491,14 +347,11 @@ class EventAssertion(Assertion):
              event.detail1,
              event.detail2,
              event.any_data,
-             self._get_role(event.source),
+             event.source.getRole(),
              self._get_id(event.source))
 
     def _get_result(self):
-        if self._verbose:
-            self._actual_value = self._events
-        else:
-            self._actual_value = self._obj_events
+        self._actual_value = self._obj_events or self._events
 
         # At the moment, the assumption is that we are only testing that
         # we have an event which matches the asserted event properties.
@@ -511,11 +364,36 @@ class EventAssertion(Assertion):
 
     def run(self):
         result, log = self._get_result(), ""
-        if not result or self._verbose:
+        if not result:
             log = "(Got: %s)\n" % "\n".join(map(self._event_to_string, self._actual_value))
             self._msgs.append(log)
 
         return self._status, "\n".join(self._msgs), log
+
+
+class DumpInfoAssertion(Assertion):
+
+    def __init__(self, obj, assertion=None):
+        assertion = [""] * 4
+        super().__init__(obj, assertion)
+
+    def run(self):
+        info = {}
+        info["PropertyAssertion Candidates"] = {}
+        for prop, getter in PropertyAssertion.GETTERS.items():
+            info["PropertyAssertion Candidates"][prop] = getter(self._obj)
+
+        methods = []
+        ifaces = dict.fromkeys(info["PropertyAssertion Candidates"].get("interfaces", []))
+        for iface in ifaces:
+            iface_methods = ResultAssertion.get_interface_methods(iface)
+            details = map(ResultAssertion.get_method_details, iface_methods)
+            methods.extend(list(map(lambda x: "%s.%s" % (iface, x), details)))
+        info["ResultAssertion Candidate Methods"] = sorted(methods)
+
+        info = self._value_to_harness_string(info)
+        log = json.dumps(info, indent=4, sort_keys=True)
+        return True, "\n".join(self._msgs), log
 
 
 class AtkAtspiAtta():
@@ -540,7 +418,7 @@ class AtkAtspiAtta():
     # Gecko and WebKitGtk respectively
     UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
 
-    def __init__(self, host, port, verify_dependencies=True, dry_run=False, verbose=False):
+    def __init__(self, host, port, verify_dependencies=True):
         """Initializes this ATTA.
 
         Arguments:
@@ -549,15 +427,11 @@ class AtkAtspiAtta():
           test results. Note: If verify_dependencies is False, the installed
           versions of the accessibility libraries will not be obtained and thus
           will not be reported in the results. DEFAULT: True
-        - dry_run: Boolean reflecting we shouldn't actually run the assertions,
-          but just try to find the specified element(s) and dump out everything
-          we know about them. DEFAULT: False
-        - verbose: Boolean reflecting whether or not verbose output is desired.
-          DEFAULT: False
         """
 
         self._host = host
         self._port = int(port)
+        self._server = None
         self._atta_name = "WPT ATK/AT-SPI2 ATTA"
         self._atta_version = "0.1"
         self._api_name = "ATK"
@@ -573,8 +447,6 @@ class AtkAtspiAtta():
         self._monitored_event_types = []
         self._event_history = []
         self._listener_thread = None
-        self._dry_run = dry_run
-        self._verbose = verbose
         self._proxy = None
 
         if verify_dependencies and not self._check_environment():
@@ -586,9 +458,6 @@ class AtkAtspiAtta():
             print(self._on_exception())
         else:
             self._enabled = True
-
-        if self._dry_run:
-            print("DRY RUN ONLY: No assertions will be tested.")
 
     def _on_exception(self):
         """Handles exceptions encountered by this ATTA.
@@ -766,10 +635,7 @@ class AtkAtspiAtta():
           displayed by WPT explaining any failures, and logging output.
         """
 
-        if self._dry_run:
-            test_class = DumpInfoAssertion
-        else:
-            test_class = Assertion.get_test_class(assertion)
+        test_class = Assertion.get_test_class(assertion)
 
         if test_class is None:
             result_value = Assertion.FAIL
@@ -777,10 +643,10 @@ class AtkAtspiAtta():
             log = messages
         elif test_class == EventAssertion:
             time.sleep(0.5)
-            test = test_class(obj, assertion, self._verbose, self._event_history)
+            test = test_class(obj, assertion, self._event_history)
             result_value, messages, log = test.run()
         else:
-            test = test_class(obj, assertion, verbose=self._verbose)
+            test = test_class(obj, assertion)
             result_value, messages, log = test.run()
 
         return {"result": result_value, "message": str(messages), "log": log}
@@ -1106,20 +972,16 @@ def get_cmdline_options():
     parser.add_argument("--host", action="store")
     parser.add_argument("--port", action="store")
     parser.add_argument("--ignore-dependencies", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
     args = get_cmdline_options()
     verify_dependencies = not args.get("ignore_dependencies")
-    dry_run = args.get("dry_run")
-    verbose = args.get("verbose")
     host = args.get("host") or "localhost"
     port = args.get("port") or "4119"
 
     print("Attempting to start AtkAtspiAtta")
-    atta = AtkAtspiAtta(host, port, verify_dependencies, dry_run, verbose)
+    atta = AtkAtspiAtta(host, port, verify_dependencies)
     if not atta.is_enabled():
         print("ERROR: Unable to enable ATTA")
         sys.exit(1)
@@ -1128,4 +990,3 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, atta.stop)
 
     atta.start()
-

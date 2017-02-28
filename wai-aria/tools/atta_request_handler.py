@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-# Sharable Request Handler for Accessible Technology Test Adapters
+# atta_request_handler
+# Shareable Request Handler for Accessible Technology Test Adapters
 #
 # Developed by Joanmarie Diggs (@joanmarie)
 # Copyright (c) 2016-2017 Igalia, S.L.

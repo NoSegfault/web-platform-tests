@@ -54,21 +54,16 @@ class Assertion(AttaAssertion):
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
-    @staticmethod
-    def _get_object_attribute(obj, attr):
+    def _get_id(self, obj):
         if not obj:
             return None
 
         try:
             attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
         except:
-            return None
+            attrs = {}
 
-        return attrs.get(attr)
-
-    def _get_id(self, obj):
-        return self._get_object_attribute(obj, "id") \
-            or self._get_object_attribute(obj, "html-id")
+        return attrs.get("id") or attrs.get("html-id")
 
     def _value_to_harness_string(self, value):
         if self._expectation == self.EXPECTATION_IS_TYPE:
@@ -150,6 +145,7 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         "description": lambda x: x.description if x else None,
         "name": lambda x: x.name if x else None,
         "interfaces": lambda x: pyatspi.utils.listInterfaces(x) if x else [],
+        "objectAttributes": lambda x: x.getAttributes() if x else [],
         "parent": lambda x: x.parent if x else None,
         "relations": lambda x: [r.getRelationType() for r in x.getRelationSet()] if x else [],
         "role": lambda x: x.getRole() if x else None,
@@ -165,15 +161,6 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         getter = self.GETTERS.get(prop)
         if getter:
             return getter(self._obj)
-
-        if prop == "objectAttributes":
-            if self._expected_value.count(":") != 1:
-                return self._obj.getAttributes()
-
-            attr_name = self._expected_value.split(":")[0]
-            attr_value = self._get_object_attribute(self._obj, attr_name)
-            if attr_value is not None:
-                return "%s:%s" % (attr_name, attr_value)
 
         self._msgs.append("ERROR: Unhandled property: %s" % prop)
         return None

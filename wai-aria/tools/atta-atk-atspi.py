@@ -144,10 +144,8 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         super().__init__(obj, assertion)
 
     def get_property_value(self):
-        try:
+        if self._obj:
             self._obj.clearCache()
-        except:
-            self._on_exception()
 
         getter = self.GETTERS.get(self._test_string)
         if getter:

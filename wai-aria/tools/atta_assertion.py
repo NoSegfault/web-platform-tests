@@ -75,7 +75,7 @@ class AttaAssertion:
     def _on_exception(self):
         etype, evalue, tb = sys.exc_info()
         error = traceback.format_exc(limit=1, chain=False)
-        self._messages.append(error)
+        self._messages.append(re.sub("\s+", " ", error))
 
 
 class AttaEventAssertion(AttaAssertion):

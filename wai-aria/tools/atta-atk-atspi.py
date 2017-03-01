@@ -54,17 +54,6 @@ class Assertion(AttaAssertion):
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
-    def _get_id(self, obj):
-        if not obj:
-            return None
-
-        try:
-            attrs = dict([a.split(':', 1) for a in obj.getAttributes()])
-        except:
-            attrs = {}
-
-        return attrs.get("id") or attrs.get("html-id")
-
     def _value_to_harness_string(self, value):
         if self._expectation == self.EXPECTATION_IS_TYPE:
             return type(value).__name__
@@ -77,7 +66,11 @@ class Assertion(AttaAssertion):
             return str(value)
 
         if value_type in (pyatspi.Accessible, pyatspi.Atspi.Accessible):
-            return self._get_id(value)
+            try:
+                attrs = dict([a.split(':', 1) for a in value.getAttributes()])
+                return attrs.get("id") or attrs.get("html-id")
+            except:
+                return None
 
         if value_type in (tuple, list):
             return value_type(map(self._value_to_harness_string, value))
@@ -181,7 +174,7 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
         for r in relation_set:
             relation = self._value_to_harness_string(r.getRelationType())
             targets = [r.getTarget(i) for i in range(r.getNTargets())]
-            relations[relation] = list(map(self._get_id, targets))
+            relations[relation] = list(map(self._value_to_harness_string, targets))
 
         return relations
 
@@ -325,7 +318,7 @@ class EventAssertion(Assertion):
         string = "%s (%i,%i,%s) from %s (id: %s)" % \
                  (event.type, event.detail1, event.detail2, event.any_data,
                   self._value_to_harness_string(event.source.getRole()),
-                  self._get_id(event.source))
+                  self._value_to_harness_string(event.source))
         return string.replace(" ", "\u00a0")
 
     def _get_result(self):

@@ -13,13 +13,14 @@ import re
 import sys
 import traceback
 
+from textwrap import TextWrapper
+
 
 class AttaAssertion:
 
-    PASS = "PASS"
-    FAIL = "FAIL"
-    ERROR = "ERROR"
-    NOT_RUN = "NOT RUN"
+    STATUS_PASS = "PASS"
+    STATUS_FAIL = "FAIL"
+    STATUS_NOT_RUN = "NOT RUN"
 
     EXPECTATION_EXISTS = "exists"
     EXPECTATION_IS = "is"
@@ -41,30 +42,40 @@ class AttaAssertion:
 
     def __init__(self, obj, assertion):
         self._obj = obj
+        self._as_string = " ".join(map(str, assertion))
         self._test_class = assertion[0]
         self._test_string = assertion[1]
         self._expectation = assertion[2]
         self._expected_value = assertion[3]
         self._actual_value = None
-        self._msgs = []
-        self._status = self.NOT_RUN
+        self._messages = []
+        self._status = self.STATUS_NOT_RUN
 
     def __str__(self):
-        return "\n ASSERTION: %s %s %s %s" \
-               "\n    STATUS: %s (Actual value: %s)" \
-               "\n  MESSAGES: %s\n" % \
-               (self._test_class,
-                self._test_string,
-                self._expectation,
-                self._expected_value,
-                self._status,
-                self._actual_value,
-                ", ".join(self._msgs))
+        labels = ["ASSERTION:", "STATUS:", "ACTUAL VALUE:", "MESSAGES:"]
+        label_width = max(list(map(len, labels))) + 2
+        indent = " " * (label_width+1)
+        wrapper = TextWrapper(subsequent_indent=indent, width=80, break_on_hyphens=False, break_long_words=False)
+
+        def _wrap(towrap):
+            if isinstance(towrap, list):
+                return "\n".join(wrapper.wrap(", ".join(towrap)))
+            return "\n".join(wrapper.wrap(str(towrap)))
+
+        return "\n\n{labels[0]:>{width}} {self._as_string}" \
+               "\n{labels[1]:>{width}} {self._status}" \
+               "\n{labels[2]:>{width}} {actual_value}" \
+               "\n{labels[3]:>{width}} {messages}\n".format(
+                   width=label_width,
+                   self=self,
+                   actual_value=_wrap(self._actual_value),
+                   messages=_wrap(self._messages),
+                   labels=labels)
 
     def _on_exception(self):
         etype, evalue, tb = sys.exc_info()
         error = traceback.format_exc(limit=1, chain=False)
-        self._msgs.append(error)
+        self._messages.append(error)
 
 
 class AttaEventAssertion(AttaAssertion):
@@ -73,7 +84,7 @@ class AttaEventAssertion(AttaAssertion):
         super().__init__(obj, assertion)
 
     def run(self):
-        pass
+        return self._status, " ".join(self._messages), str(self)
 
 
 class AttaPropertyAssertion(AttaAssertion):
@@ -85,7 +96,7 @@ class AttaPropertyAssertion(AttaAssertion):
         return None
 
     def run(self):
-        pass
+        return self._status, " ".join(self._messages), str(self)
 
 
 class AttaRelationAssertion(AttaAssertion):
@@ -97,7 +108,7 @@ class AttaRelationAssertion(AttaAssertion):
         return []
 
     def run(self):
-        pass
+        return self._status, " ".join(self._messages), str(self)
 
 
 class AttaResultAssertion(AttaAssertion):
@@ -106,10 +117,16 @@ class AttaResultAssertion(AttaAssertion):
         super().__init__(obj, assertion)
 
     def get_method_result(self):
-        pass
+        return None
+
+    def run(self):
+        return self._status, " ".join(self._messages), str(self)
 
 
 class AttaDumpInfoAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion):
         super().__init__(obj, assertion)
+
+    def run(self):
+        return self._status, " ".join(self._messages), str(self)

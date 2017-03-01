@@ -96,45 +96,33 @@ class Assertion(AttaAssertion):
 
         return value_name
 
-    def _get_value(self):
-        pass
-
     def _get_result(self):
         self._actual_value = self._get_value()
-        actual_value = self._value_to_harness_string(self._actual_value)
+        self._actual_value = self._value_to_harness_string(self._actual_value)
 
         if self._expectation == self.EXPECTATION_IS:
-            result = self._expected_value == actual_value
+            result = self._expected_value == self._actual_value
         elif self._expectation == self.EXPECTATION_IS_NOT:
-            result = self._expected_value != actual_value
+            result = self._expected_value != self._actual_value
         elif self._expectation == self.EXPECTATION_CONTAINS:
-            result = actual_value and self._expected_value in actual_value
+            result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            result = actual_value is not None and self._expected_value not in actual_value
+            result = self._actual_value is not None and self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
-            result = actual_value in self._expected_value
+            result = self._actual_value in self._expected_value
         elif self._expectation == self.EXPECTATION_IS_TYPE:
-            result = actual_value == self._expected_value
+            result = self._actual_value == self._expected_value
         elif self._expectation == self.EXPECTATION_EXISTS:
-            result = self._expected_value == actual_value
+            result = self._expected_value == self._actual_value
         else:
             result = False
 
         if result:
-            self._status = self.PASS
+            self._status = self.STATUS_PASS
         else:
-            self._status = self.FAIL
+            self._status = self.STATUS_FAIL
 
         return result
-
-    def run(self):
-        result, log = self._get_result(), ""
-        if not result:
-            value = self._value_to_harness_string(self._actual_value)
-            log = "(Got: %s)\n" % re.sub("[\[\]\"\']", "", str(value))
-            self._msgs.append(log)
-
-        return self._status, "\n".join(self._msgs), log
 
 
 class PropertyAssertion(Assertion, AttaPropertyAssertion):
@@ -152,24 +140,34 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         "states": lambda x: x.getState().getStates() if x else None,
     }
 
-    def get_property_value(self, prop):
+    def __init__(self, obj, assertion):
+        super().__init__(obj, assertion)
+
+    def get_property_value(self):
         try:
             self._obj.clearCache()
         except:
             self._on_exception()
 
-        getter = self.GETTERS.get(prop)
+        getter = self.GETTERS.get(self._test_string)
         if getter:
             return getter(self._obj)
 
-        self._msgs.append("ERROR: Unhandled property: %s" % prop)
+        self._messages.append("ERROR: Unhandled property: %s" % prop)
         return None
 
     def _get_value(self):
-        return self.get_property_value(self._test_string)
+        return self.get_property_value()
+
+    def run(self):
+        self._get_result()
+        return self._status, " ".join(self._messages), str(self)
 
 
-class RelationAssertion(Assertion):
+class RelationAssertion(Assertion, AttaRelationAssertion):
+
+    def __init__(self, obj, assertion):
+        super().__init__(obj, assertion)
 
     def _get_relations(self, obj):
         if not obj:
@@ -193,12 +191,16 @@ class RelationAssertion(Assertion):
         relations = self._get_relations(self._obj)
         return re.sub("['\s]", "", str(relations.get(self._test_string)))
 
+    def run(self):
+        self._get_result()
+        return self._status, " ".join(self._messages), str(self)
 
-class ResultAssertion(Assertion):
+
+class ResultAssertion(Assertion, AttaResultAssertion):
 
     def __init__(self, obj, assertion):
         super().__init__(obj, assertion)
-        self._errors = []
+        self._error = False
         self._method = None
         self._args = []
 
@@ -213,14 +215,14 @@ class ResultAssertion(Assertion):
 
         methods = self.get_interface_methods(iface)
         if not methods:
-            self._errors.append("ERROR: '%s' interface not found." % iface)
-            self._errors.append("INTERFACES: %s\n" % ", ".join(self.INTERFACES))
+            self._messages.append("ERROR: '%s' interface not found." % iface)
+            self._error = True
             return
 
         names = list(map(lambda x: x.get_name(), methods))
         if names and function not in names:
-            self._errors.append("ERROR: '%s' method not found." % function)
-            self._errors.append("METHODS: %s\n" % ", ".join(names))
+            self._messages.append("ERROR: '%s' method not found." % function)
+            self._error = True
             return
 
         self._method = list(filter(lambda x: x.get_name() == function, methods))[0]
@@ -234,9 +236,8 @@ class ResultAssertion(Assertion):
                 self._args.append(argtype(arg))
             except:
                 info = self._get_arg_info(expectedargs[i])
-                self._errors.append("ERROR: Argument %i should be %s (got: %s)\n" % (i, info, arg))
-
-        return
+                self._messages.append("ERROR: Argument %i should be %s (got: %s)\n" % (i, info, arg))
+                self._error = True
 
     @classmethod
     def _get_arg_type(cls, arg):
@@ -276,13 +277,13 @@ class ResultAssertion(Assertion):
         return atspi_info.get_methods()
 
     def _get_value(self):
-        if self._errors:
+        if self._error:
             return None
 
         try:
             value = self._method.invoke(self._obj, *self._args)
         except RuntimeError:
-            self._errors.append("ERROR: Exception calling %s\n" % self._method.get_name())
+            self._messages.append("ERROR: Exception calling %s\n" % self._method.get_name())
         except:
             self._on_exception()
         else:
@@ -291,14 +292,8 @@ class ResultAssertion(Assertion):
         return None
 
     def run(self):
-        result, log = self._get_result(), ""
-        if not result:
-            log = "(Got: %s)\n" % self._value_to_harness_string(self._actual_value)
-            self._msgs.append(log)
-            log += "\n".join(self._errors)
-            self._msgs.extend(self._errors)
-
-        return self._status, "\n".join(self._msgs), log
+        self._get_result()
+        return self._status, " ".join(self._messages), str(self)
 
 
 class EventAssertion(Assertion):
@@ -329,36 +324,31 @@ class EventAssertion(Assertion):
         self._matching_events = list(matches)
 
     def _event_to_string(self, event):
-        return "%s (%i, %i, %s) from %s with id: %s" % \
-            (event.type,
-             event.detail1,
-             event.detail2,
-             event.any_data,
-             event.source.getRole(),
-             self._get_id(event.source))
+        string = "%s (%i,%i,%s) from %s (id: %s)" % \
+                 (event.type, event.detail1, event.detail2, event.any_data,
+                  self._value_to_harness_string(event.source.getRole()),
+                  self._get_id(event.source))
+        return string.replace(" ", "\u00a0")
 
     def _get_result(self):
         self._actual_value = self._obj_events or self._events
+        self._actual_value = list(map(self._event_to_string, self._actual_value))
 
         # At the moment, the assumption is that we are only testing that
         # we have an event which matches the asserted event properties.
         if self._matching_events:
-            self._status = self.PASS
+            self._status = self.STATUS_PASS
             return True
 
-        self._status = self.FAIL
+        self._status = self.STATUS_FAIL
         return False
 
     def run(self):
-        result, log = self._get_result(), ""
-        if not result:
-            log = "(Got: %s)\n" % "\n".join(map(self._event_to_string, self._actual_value))
-            self._msgs.append(log)
-
-        return self._status, "\n".join(self._msgs), log
+        self._get_result()
+        return self._status, " ".join(self._messages), str(self)
 
 
-class DumpInfoAssertion(Assertion):
+class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
 
     def __init__(self, obj, assertion=None):
         assertion = [""] * 4
@@ -380,7 +370,8 @@ class DumpInfoAssertion(Assertion):
 
         info = self._value_to_harness_string(info)
         log = json.dumps(info, indent=4, sort_keys=True)
-        return True, "\n".join(self._msgs), log
+        self._status = self.STATUS_FAIL
+        return self._status, " ".join(self._messages), log
 
 
 class AtkAtspiAtta():
@@ -389,11 +380,6 @@ class AtkAtspiAtta():
     STATUS_ERROR = "ERROR"
     STATUS_OK = "OK"
     STATUS_READY = "READY"
-
-    RESULT_PASS = "PASS"
-    RESULT_FAIL = "FAIL"
-    RESULT_NOT_RUN = "NOTRUN"
-    RESULT_ERROR = "ERROR"
 
     FAILURE_ATTA_NOT_ENABLED = "ATTA not enabled"
     FAILURE_ATTA_NOT_READY = "ATTA not ready"
@@ -625,7 +611,7 @@ class AtkAtspiAtta():
         test_class = Assertion.get_test_class(assertion)
 
         if test_class is None:
-            result_value = Assertion.FAIL
+            result_value = Assertion.STATUS_FAIL
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
         elif test_class == EventAssertion:

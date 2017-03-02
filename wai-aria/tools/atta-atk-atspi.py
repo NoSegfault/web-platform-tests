@@ -368,14 +368,10 @@ class AtkAtspiAtta():
 
     STATUS_ERROR = "ERROR"
     STATUS_OK = "OK"
-    STATUS_READY = "READY"
 
     FAILURE_ATTA_NOT_ENABLED = "ATTA not enabled"
     FAILURE_ATTA_NOT_READY = "ATTA not ready"
-    FAILURE_INVALID_REQUEST = "Invalid request"
-    FAILURE_NOT_FOUND = "Not found"
-    FAILURE_RESULTS = "Expected result does not match actual result"
-    SUCCESS = "Success"
+    FAILURE_ELEMENT_NOT_FOUND = "Element not found"
 
     # Gecko and WebKitGtk respectively
     UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
@@ -624,14 +620,12 @@ class AtkAtspiAtta():
         Returns:
         - A list of [Test Class, Test Type, Assertion Type, Value] assertions
           which are ready to be run by this ATTA.
-        - A boolean reflecting if the conversion was successfully performed.
-        - A string indicating the error if conversion failed.
         """
 
         is_event = lambda x: x and x[0] == "event"
         event_assertions = list(filter(is_event, assertions))
         if not event_assertions:
-            return assertions, True, ""
+            return assertions
 
         platform_assertions = list(filter(lambda x: x not in event_assertions, assertions))
 
@@ -646,7 +640,7 @@ class AtkAtspiAtta():
 
         combined_event_assertions = ["event", "event", "contains", properties]
         platform_assertions.append(combined_event_assertions)
-        return platform_assertions, True, ""
+        return platform_assertions
 
     def run_tests(self, obj_id, assertions):
         """Runs the provided assertions on the object with the specified id.
@@ -670,21 +664,15 @@ class AtkAtspiAtta():
                     "message": self.FAILURE_ATTA_NOT_READY,
                     "results": []}
 
-        to_run, success, message = self._create_platform_assertions(assertions)
-        if not success:
+        to_run = self._create_platform_assertions(assertions)
+        obj = self._get_element_with_id(self._current_document, obj_id)
+        if not obj:
             return {"status": self.STATUS_ERROR,
-                    "message": message,
+                    "message": self.FAILURE_ELEMENT_NOT_FOUND,
                     "results": []}
 
-        obj, message = self._get_element_with_id(self._current_document, obj_id)
         results = [self._run_test(obj, a) for a in to_run]
-        if not results:
-            return {"status": self.STATUS_ERROR,
-                    "message": message,
-                    "results": []}
-
         return {"status": self.STATUS_OK,
-                "message": message,
                 "results": results}
 
     def end_test_run(self):
@@ -760,23 +748,19 @@ class AtkAtspiAtta():
 
         Returns:
         - A string containing the URI or an empty string upon failure
-        - A string indicating success, or the cause of failure
         """
 
-        uri = None
         try:
             document = obj.queryDocument()
-            for name in self.UA_URI_ATTRIBUTE_NAMES:
-                uri = document.getAttributeValue(name)
-                if uri:
-                    break
         except:
-            return "", self._on_exception()
+            return ""
 
-        if not uri:
-            return "", self.FAILURE_NOT_FOUND
+        for name in self.UA_URI_ATTRIBUTE_NAMES:
+            uri = document.getAttributeValue(name)
+            if uri:
+                return uri
 
-        return uri, self.SUCCESS
+        return ""
 
     def _get_element_id(self, obj):
         """Returns the id associated with obj.
@@ -786,21 +770,16 @@ class AtkAtspiAtta():
 
         Returns:
         - A string containing the id or an empty string upon failure
-        - A string indicating success, or the cause of failure
         """
 
         try:
             attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
         except:
-            return "", self._on_exception()
+            return ""
 
-        result = attrs.get("id") or attrs.get("html-id")
-        if not result:
-            return "", self.FAILURE_NOT_FOUND
+        return attrs.get("id") or attrs.get("html-id") or ""
 
-        return result, self.SUCCESS
-
-    def _get_element_with_id(self, root, element_id, timeout=5):
+    def _get_element_with_id(self, root, element_id, timeout=2):
         """Returns the descendent of root which has the specified id.
 
         Arguments:
@@ -810,47 +789,41 @@ class AtkAtspiAtta():
 
         Returns:
         - The AtspiAccessible if found and valid or None upon failure
-        - A string indicating success, or the cause of failure
         """
 
         self._current_element = None
         if not element_id:
-            return None, self.FAILURE_INVALID_REQUEST
+            return None
 
         def _on_timeout(root, pred):
             try:
                 obj = pyatspi.utils.findDescendant(root, pred)
             except:
-                self._on_exception()
+                pass
             else:
-                if self._is_valid_object(obj):
+                if obj:
                     self._current_element = obj
                     return False
 
             return True
 
         timestamp = time.time()
-        pred = lambda x: self._get_element_id(x)[0] == element_id
+        pred = lambda x: self._get_element_id(x) == element_id
         callback_id = GLib.timeout_add(100, _on_timeout, root, pred)
 
-        msg = self.FAILURE_NOT_FOUND
         while int(time.time() - timestamp) < timeout:
             if self._current_element:
-                msg = self.SUCCESS
                 break
 
         if not self._current_element:
             GLib.source_remove(callback_id)
 
-        return self._current_element, msg
+        return self._current_element
 
     def _in_current_document(self, obj):
         """Returns True if obj is, or is a descendant of, the current document."""
 
-        if not self._current_document:
-            return False
-
-        if not self._is_valid_object(obj):
+        if not (self._current_document and obj):
             return False
 
         if obj.getApplication() != self._current_application:
@@ -861,25 +834,6 @@ class AtkAtspiAtta():
             return True
 
         return pyatspi.utils.findAncestor(obj, is_document) is not None
-
-    def _is_valid_object(self, obj):
-        """Performs a quick-and-dirty sanity check on obj, taking advantage
-        of the fact that AT-SPI2 tends to raise an exception if you ask for
-        the name of a defunct, invalid, or otherwise bogus object.
-
-        Arguments:
-        - obj: The AtspiAccessible being tested
-
-        Returns:
-        - A boolean indicating whether obj is believed to be a valid object
-        """
-
-        try:
-            name = obj.name
-        except:
-            return False
-
-        return True
 
     def _on_load_complete(self, event):
         """Callback for the document:load-complete AtspiEvent. We are interested
@@ -895,27 +849,13 @@ class AtkAtspiAtta():
         if test_name is None:
             return
 
-        # There appears to be a to-be-debugged race condition in either Firefox
-        # or AT-SPI2 in which the object emitting document:load-complete is not
-        # always valid at the time the event is emitted. When this error occurs,
-        # clearing AT-SPI2's cache for the user agent seems to fix it.
-        if not self._is_valid_object(event.source):
-            print("ERROR: load-complete from invalid source %s." % event.source)
-            event.host_application.clearCache()
-            print("INFO: AT-SPI2 cached cleared. Source is %s." % event.source)
-
-        uri, status = self._get_document_uri(event.source)
+        uri = self._get_document_uri(event.source)
         self._ready = uri and uri == test_uri
 
         if self._ready:
-            print("READY: Next test is '%s' (%s)" % (test_name, test_uri))
+            print("READY (ON LOAD COMPLETE): Next test is '%s' (%s)" % (test_name, test_uri))
             self._current_document = event.source
             self._current_application = event.host_application
-            return
-
-        if not uri:
-            print("ERROR: No URI for %s (%s)" % (event.source, status))
-            return
 
     def _on_test_event(self, event):
         """Generic callback for a variety of object: AtspiEvent types. It caches

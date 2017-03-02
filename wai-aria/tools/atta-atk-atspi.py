@@ -144,7 +144,7 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         if getter:
             return getter(self._obj)
 
-        self._messages.append("ERROR: Unhandled property: %s" % prop)
+        self._messages.append("ERROR: Unhandled property: %s" % self._test_string)
         return None
 
     def _get_value(self):

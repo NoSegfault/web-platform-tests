@@ -160,27 +160,25 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
     def __init__(self, obj, assertion):
         super().__init__(obj, assertion)
 
-    def _get_relations(self, obj):
-        if not obj:
-            return {}
+    def get_relation_targets(self):
+        if not self._obj:
+            return []
 
         try:
-            relation_set = obj.getRelationSet()
+            relation_set = self._obj.getRelationSet()
         except:
             self._on_exception()
-            return {}
+            return []
 
-        relations = {}
         for r in relation_set:
-            relation = self._value_to_harness_string(r.getRelationType())
-            targets = [r.getTarget(i) for i in range(r.getNTargets())]
-            relations[relation] = list(map(self._value_to_harness_string, targets))
+            if self._value_to_harness_string(r.getRelationType()) == self._test_string:
+                return [r.getTarget(i) for i in range(r.getNTargets())]
 
-        return relations
+        return []
 
     def _get_value(self):
-        relations = self._get_relations(self._obj)
-        return re.sub("['\s]", "", str(relations.get(self._test_string)))
+        targets = self._value_to_harness_string(self.get_relation_targets())
+        return "[%s]" % " ".join(targets)
 
     def run(self):
         self._get_result()

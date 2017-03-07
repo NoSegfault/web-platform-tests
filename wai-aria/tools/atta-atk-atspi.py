@@ -775,7 +775,10 @@ class AtkAtspiAtta():
 
         # Gecko and WebKitGtk respectively
         for name in ("DocURL", "URI"):
-            uri = document.getAttributeValue(name)
+            try:
+                uri = document.getAttributeValue(name)
+            except:
+                return ""
             if uri:
                 return uri
 

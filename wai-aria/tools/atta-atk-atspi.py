@@ -695,6 +695,9 @@ class AtkAtspiAtta():
         """Cleans up cached information at the end of a test run."""
 
         self._current_document = None
+        self._current_element = None
+        self._next_test = None, ""
+        self._ready = False
 
     def start(self):
         """Starts this ATTA, registering for ATTA-required events, and

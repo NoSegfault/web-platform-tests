@@ -40,6 +40,9 @@ class AttaAssertion:
     CLASS_RESULT = "result"
     CLASS_TBD = "TBD"
 
+    _text_wrapper = TextWrapper(width=80, break_on_hyphens=False, break_long_words=False)
+    _labels = ["ASSERTION:", "STATUS:", "ACTUAL VALUE:", "MESSAGES:"]
+
     def __init__(self, obj, assertion):
         self._obj = obj
         self._as_string = " ".join(map(str, assertion))
@@ -52,25 +55,22 @@ class AttaAssertion:
         self._status = self.STATUS_NOT_RUN
 
     def __str__(self):
-        labels = ["ASSERTION:", "STATUS:", "ACTUAL VALUE:", "MESSAGES:"]
-        label_width = max(list(map(len, labels))) + 2
-        indent = " " * (label_width+1)
-        wrapper = TextWrapper(subsequent_indent=indent, width=80, break_on_hyphens=False, break_long_words=False)
+        label_width = max(list(map(len, self._labels))) + 2
+        self._text_wrapper.subsequent_indent = " " * (label_width+1)
 
         def _wrap(towrap):
             if isinstance(towrap, list):
-                return "\n".join(wrapper.wrap(", ".join(towrap)))
-            return "\n".join(wrapper.wrap(str(towrap)))
+                towrap = ",\n".join(towrap)
+            return "\n".join(self._text_wrapper.wrap(str(towrap)))
 
-        return "\n\n{labels[0]:>{width}} {self._as_string}" \
-               "\n{labels[1]:>{width}} {self._status}" \
-               "\n{labels[2]:>{width}} {actual_value}" \
-               "\n{labels[3]:>{width}} {messages}\n".format(
+        return "\n\n{self._labels[0]:>{width}} {self._as_string}" \
+               "\n{self._labels[1]:>{width}} {self._status}" \
+               "\n{self._labels[2]:>{width}} {actual_value}" \
+               "\n{self._labels[3]:>{width}} {messages}\n".format(
                    width=label_width,
                    self=self,
                    actual_value=_wrap(self._actual_value),
-                   messages=_wrap(self._messages),
-                   labels=labels)
+                   messages=_wrap(self._messages))
 
     def _on_exception(self):
         etype, evalue, tb = sys.exc_info()

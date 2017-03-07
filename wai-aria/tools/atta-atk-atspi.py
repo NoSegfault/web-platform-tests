@@ -71,7 +71,7 @@ class Assertion(AttaAssertion):
                 attrs = dict([a.split(':', 1) for a in value.getAttributes()])
                 return attrs.get("id") or attrs.get("html-id")
             except:
-                return None
+                return ""
 
         if value_type in (tuple, list):
             return value_type(map(self._value_to_harness_string, value))
@@ -286,17 +286,20 @@ class ResultAssertion(Assertion, AttaResultAssertion):
         return self._status, " ".join(self._messages), str(self)
 
 
-class EventAssertion(Assertion):
+class EventAssertion(Assertion, AttaEventAssertion):
 
     def __init__(self, obj, assertion, events=[]):
         super().__init__(obj, assertion)
-        self._events = events
+        self._actual_value = list(map(self._event_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
         self._matching_events = []
 
+        # At the moment, the assumption is that we are only testing that
+        # we have an event which matches the asserted event properties.
+
         e_type = self._expected_value.get("type")
         if e_type is not None:
-            matches = filter(lambda x: x.type == e_type, self._events)
+            matches = filter(lambda x: x.type == e_type, events)
 
         detail1 = self._expected_value.get("detail1")
         if detail1 is not None:
@@ -313,19 +316,20 @@ class EventAssertion(Assertion):
 
         self._matching_events = list(matches)
 
-    def _event_to_string(self, event):
-        string = "%s (%i,%i,%s) from %s (id: %s)" % \
-                 (event.type, event.detail1, event.detail2, event.any_data,
-                  self._value_to_harness_string(event.source.getRole()),
-                  self._value_to_harness_string(event.source))
-        return string.replace(" ", "\u00a0")
+    def _event_to_string(self, e):
+        try:
+            role = e.source.getRole()
+            objid = self._value_to_harness_string(e.source) or ""
+        except:
+            role = "[DEAD]"
+        else:
+            role = self._value_to_harness_string(role)
+            if objid:
+                objid = " (%s)" % objid
+
+        return "%s(%i,%i,%s) by %s%s" % (e.type, e.detail1, e.detail2, e.any_data, role, objid)
 
     def _get_result(self):
-        self._actual_value = self._obj_events or self._events
-        self._actual_value = list(map(self._event_to_string, self._actual_value))
-
-        # At the moment, the assumption is that we are only testing that
-        # we have an event which matches the asserted event properties.
         if self._matching_events:
             self._status = self.STATUS_PASS
             return True
@@ -563,6 +567,9 @@ class AtkAtspiAtta():
         - event_types: a list or tuple of AtspiEvent types
         """
 
+        self._monitored_event_types = []
+        self._event_history = []
+
         for e in event_types:
             self._register_listener(e, self._on_test_event)
             self._monitored_event_types.append(e)
@@ -598,7 +605,6 @@ class AtkAtspiAtta():
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
         elif test_class == EventAssertion:
-            time.sleep(0.5)
             test = test_class(obj, assertion, self._event_history)
             result_value, messages, log = test.run()
         else:
@@ -676,7 +682,6 @@ class AtkAtspiAtta():
     def end_test_run(self):
         """Cleans up cached information at the end of a test run."""
 
-        self.stop_event_monitoring()
         self._current_document = None
 
     def start(self):

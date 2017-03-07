@@ -527,9 +527,21 @@ class AtkAtspiAtta():
 
         return self._enabled
 
-    def is_ready(self):
+    def is_ready(self, document=None):
         """Returns True if this ATTA is able to proceed with a test run."""
 
+        if self._ready:
+            return True
+
+        test_name, test_uri = self._next_test
+        if test_name is None:
+            return False
+
+        if document is None:
+            document = self._current_document
+
+        uri = self._get_document_uri(document)
+        self._ready = uri and uri == test_uri
         return self._ready
 
     def get_info(self):
@@ -849,14 +861,8 @@ class AtkAtspiAtta():
         - event: The AtspiEvent which was emitted
         """
 
-        test_name, test_uri = self._next_test
-        if test_name is None:
-            return
-
-        uri = self._get_document_uri(event.source)
-        self._ready = uri and uri == test_uri
-
-        if self._ready:
+        if self.is_ready(event.source):
+            test_name, test_uri = self._next_test
             print("READY (ON LOAD COMPLETE): Next test is '%s' (%s)" % (test_name, test_uri))
             self._current_document = event.source
             self._current_application = event.host_application

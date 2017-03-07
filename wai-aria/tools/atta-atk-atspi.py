@@ -39,6 +39,9 @@ class Assertion(AttaAssertion):
 
     @classmethod
     def get_test_class(cls, assertion):
+        if cls.CLASS_TBD in assertion:
+            return DumpInfoAssertion
+
         test_class = assertion[0]
         if test_class == cls.CLASS_PROPERTY:
             return PropertyAssertion
@@ -48,8 +51,6 @@ class Assertion(AttaAssertion):
             return RelationAssertion
         if test_class == cls.CLASS_RESULT:
             return ResultAssertion
-        if test_class == cls.CLASS_TBD:
-            return DumpInfoAssertion
 
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None

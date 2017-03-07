@@ -374,9 +374,6 @@ class AtkAtspiAtta():
     FAILURE_ATTA_NOT_READY = "ATTA not ready"
     FAILURE_ELEMENT_NOT_FOUND = "Element not found"
 
-    # Gecko and WebKitGtk respectively
-    UA_URI_ATTRIBUTE_NAMES = ("DocURL", "URI")
-
     def __init__(self, host, port, verify_dependencies=True):
         """Initializes this ATTA.
 
@@ -756,7 +753,8 @@ class AtkAtspiAtta():
         except:
             return ""
 
-        for name in self.UA_URI_ATTRIBUTE_NAMES:
+        # Gecko and WebKitGtk respectively
+        for name in ("DocURL", "URI"):
             uri = document.getAttributeValue(name)
             if uri:
                 return uri

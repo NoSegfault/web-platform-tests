@@ -11,6 +11,7 @@
 
 import json
 import sys
+import time
 import traceback
 
 from http.server import BaseHTTPRequestHandler
@@ -122,7 +123,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             response.update(self._atta.get_info())
             self._atta.set_next_test(name=params.get("test"), url=params.get("url"))
             while not self._atta.is_ready():
-                pass
+                time.sleep(0.5)
 
         response["status"] = "READY"
         self._send_response(response)

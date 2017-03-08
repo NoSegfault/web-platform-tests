@@ -12,10 +12,10 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import argparse
+import faulthandler
 import gi
 import json
 import os
-import pyatspi
 import re
 import signal
 import sys
@@ -24,8 +24,9 @@ import time
 import traceback
 
 gi.require_version("Atk", "1.0")
+gi.require_version("Atspi", "2.0")
 
-from gi.repository import Atk, Gio, GLib
+from gi.repository import Atk, Atspi, Gio, GLib
 from http.server import HTTPServer
 
 from atta_request_handler import AttaRequestHandler
@@ -56,22 +57,27 @@ class Assertion(AttaAssertion):
         return None
 
     def _value_to_harness_string(self, value):
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            return type(value).__name__
-
         value_type = type(value)
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            if value_type is bool:
+                return "Boolean"
+            if value_type is str:
+                return "String"
+            if value_type in (int, float):
+                return "Number"
+            if value_type in (tuple, list, dict, set, range):
+                return "List"
+            if value_type is Atspi.Accessible:
+                return "Object"
+            if value_type in (Atspi.StateType, Atspi.RelationType, Atspi.Role):
+                return "Constant"
+            return "Undefined"
+
         if value_type is bool:
             return str(value).lower()
 
         if value_type in (int, float):
             return str(value)
-
-        if value_type in (pyatspi.Accessible, pyatspi.Atspi.Accessible):
-            try:
-                attrs = dict([a.split(':', 1) for a in value.getAttributes()])
-                return attrs.get("id") or attrs.get("html-id")
-            except:
-                return ""
 
         if value_type in (tuple, list):
             return value_type(map(self._value_to_harness_string, value))
@@ -79,16 +85,34 @@ class Assertion(AttaAssertion):
         if value_type is dict:
             return {self._value_to_harness_string(k): self._value_to_harness_string(v) for k, v in value.items()}
 
-        try:
+        if value_type is Atspi.Accessible:
+            try:
+                attrs = Atspi.Accessible.get_attributes(value)
+                return attrs.get("id") or attrs.get("html-id")
+            except:
+                return ""
+
+        if value_type is Atspi.Relation:
+            return self._value_to_harness_string(Atspi.Relation.get_relation_type(value))
+
+        if value_type is Atspi.StateSet:
+            all_states = [Atspi.StateType(i) for i in range(Atspi.StateType.LAST_DEFINED)]
+            states = [s for s in all_states if value.contains(s)]
+            return list(map(self._value_to_harness_string, states))
+
+        if value_type in (Atspi.Role, Atspi.RelationType, Atspi.StateType):
+            if not (0 <= value.real < value_type.LAST_DEFINED):
+                self._messages.append("ERROR: %s is not valid value" % value)
+                return str(value)
+
             value_name = value.value_name.replace("ATSPI_", "")
-        except:
-            value_name = str(value)
+            if value_type is Atspi.Role:
+                # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
+                # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
+                value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
+            return value_name
 
-        # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
-        # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
-        value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
-
-        return value_name
+        return str(value)
 
     def _get_result(self):
         self._actual_value = self._get_value()
@@ -122,24 +146,28 @@ class Assertion(AttaAssertion):
 class PropertyAssertion(Assertion, AttaPropertyAssertion):
 
     GETTERS = {
-        "accessible": lambda x: bool(x),
-        "childCount": lambda x: x.childCount if x else None,
-        "description": lambda x: x.description if x else None,
-        "name": lambda x: x.name if x else None,
-        "interfaces": lambda x: pyatspi.utils.listInterfaces(x) if x else [],
-        "objectAttributes": lambda x: x.getAttributes() if x else [],
-        "parent": lambda x: x.parent if x else None,
-        "relations": lambda x: [r.getRelationType() for r in x.getRelationSet()] if x else [],
-        "role": lambda x: x.getRole() if x else None,
-        "states": lambda x: x.getState().getStates() if x else None,
+        "accessible": lambda x: x is not None,
+        "childCount": lambda x: Atspi.Accessible.get_child_count(x),
+        "description": lambda x: Atspi.Accessible.get_description(x),
+        "name": lambda x: Atspi.Accessible.get_name(x),
+        "interfaces": lambda x: Atspi.Accessible.get_interfaces(x),
+        "objectAttributes": lambda x: Atspi.Accessible.get_attributes_as_array(x),
+        "parent": lambda x: Atspi.Accessible.get_parent(x),
+        "relations": lambda x: Atspi.Accessible.get_relation_set(x),
+        "role": lambda x: Atspi.Accessible.get_role(x),
+        "states": lambda x: Atspi.Accessible.get_state_set(x),
     }
 
     def __init__(self, obj, assertion):
         super().__init__(obj, assertion)
 
     def get_property_value(self):
+        if not (self._obj or self._test_string == "accessible"):
+            self._messages.append("ERROR: Accessible object not found")
+            return None
+
         if self._obj:
-            self._obj.clearCache()
+            Atspi.Accessible.clear_cache(self._obj)
 
         getter = self.GETTERS.get(self._test_string)
         if getter:
@@ -166,14 +194,16 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
             return []
 
         try:
-            relation_set = self._obj.getRelationSet()
+            relation_set = Atspi.Accessible.get_relation_set(self._obj)
         except:
             self._on_exception()
             return []
 
         for r in relation_set:
-            if self._value_to_harness_string(r.getRelationType()) == self._test_string:
-                return [r.getTarget(i) for i in range(r.getNTargets())]
+            rtype = Atspi.Relation.get_relation_type(r)
+            if self._value_to_harness_string(rtype) == self._test_string:
+                n_targets = Atspi.Relation.get_n_targets(r)
+                return [Atspi.Relation.get_target(r, i) for i in range(n_targets)]
 
         return []
 
@@ -318,10 +348,11 @@ class EventAssertion(Assertion, AttaEventAssertion):
 
     def _event_to_string(self, e):
         try:
-            role = e.source.getRole()
+            role = Atspi.Accessible.get_role(e.source)
             objid = self._value_to_harness_string(e.source) or ""
         except:
             role = "[DEAD]"
+            objid = "EXCEPTION GETTING ID"
         else:
             role = self._value_to_harness_string(role)
             if objid:
@@ -400,10 +431,8 @@ class AtkAtspiAtta():
         self._enabled = False
         self._ready = False
         self._next_test = None, ""
-        self._current_element = None
         self._current_document = None
-        self._current_application = None
-        self._callbacks = {"document:load-complete": self._on_load_complete}
+        self._listeners = {}
         self._monitored_event_types = []
         self._event_history = []
         self._listener_thread = None
@@ -413,18 +442,14 @@ class AtkAtspiAtta():
             return
 
         try:
-            desktop = pyatspi.Registry.getDesktop(0)
+            desktop = Atspi.get_desktop(0)
         except:
             print(self._on_exception())
         else:
             self._enabled = True
 
     def _on_exception(self):
-        """Handles exceptions encountered by this ATTA.
-
-        Returns:
-        - A string containing the exception.
-        """
+        """Handles exceptions, returning a string with the error."""
 
         etype, evalue, tb = sys.exc_info()
         error = "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
@@ -451,14 +476,8 @@ class AtkAtspiAtta():
         return enabled
 
     def _set_accessibility_enabled(self, enable):
-        """Enables or disables platform accessibility support.
-
-        Arguments:
-        - enable: A boolean indicating if support should be enabled or disabled
-
-        Returns:
-        - A boolean indicating success or failure.
-        """
+        """Returns True if platform accessibility support was successfully
+        set to the value of enable."""
 
         if not self._proxy:
             return False
@@ -503,24 +522,18 @@ class AtkAtspiAtta():
         return can_enable
 
     def _register_listener(self, event_type, callback):
-        """Registers an accessible-event listener with the ATSPI2 registry.
+        """Registers an accessible-event listener on the platform."""
 
-        Arguments:
-        - event_type: A string containing the accessible-event type
-        - callback: The method to be connected with the signal
-        """
-
-        pyatspi.Registry.registerEventListener(callback, event_type)
+        listener = self._listeners.get(callback, Atspi.EventListener.new(callback))
+        Atspi.EventListener.register(listener, event_type)
+        self._listeners[callback] = listener
 
     def _deregister_listener(self, event_type, callback):
-        """De-registers an accessible-event listener from the ATSPI2 registry.
+        """De-registers an accessible-event listener on the platform."""
 
-        Arguments:
-        - event_type: A string containing the accessible-event type
-        - callback: The method connected with the signal
-        """
-
-        pyatspi.Registry.deregisterEventListener(callback, event_type)
+        listener = self._listeners.get(callback)
+        if listener:
+            Atspi.EventListener.deregister(listener, event_type)
 
     def is_enabled(self):
         """Returns True if this ATTA is enabled."""
@@ -537,17 +550,26 @@ class AtkAtspiAtta():
         if test_name is None:
             return False
 
+        document = document or self._current_document
         if document is None:
-            document = self._current_document
+            return False
+
+        try:
+            Atspi.Accessible.clear_cache(document)
+        except:
+            print(self._on_exception())
+            return False
 
         uri = self._get_document_uri(document)
         self._ready = uri and uri == test_uri
+        if self._ready:
+            self._current_document = document
+            print("READY: Test is '%s' (%s)" % (test_name, test_uri))
+
         return self._ready
 
     def get_info(self):
-        """Returns a dict containing the basic details about this ATTA which
-        the ARIA test harness script will use to identify this ATTA and send
-        the platform-specific assertions."""
+        """Returns a dict of details about this ATTA needed by the harness."""
 
         return {"ATTAname": self._atta_name,
                 "ATTAversion": self._atta_version,
@@ -555,29 +577,13 @@ class AtkAtspiAtta():
                 "APIversion": self._api_version}
 
     def set_next_test(self, name, url):
-        """Sets the next test to be run to the specified name and url. This
-        method should be called prior to the test document being loaded so
-        that we can listen for document:load-complete accessibility events.
-        We set this ATTA's ready state to False here, and set it to True once
-        we have received a document:load-complete event for the next test.
-
-        Arguments:
-        - name: A string containing the name of the test. This name is used
-          for information only.
-        - url: A string containing the url of the next test file. This url
-          is used to determine if a subsequent page load is associated with
-          the next test.
-        """
+        """Sets the next test to be run to the specified name and url."""
 
         self._next_test = name, url
         self._ready = False
 
     def monitor_events(self, event_types):
-        """Registers an accessible-event listener with the ATSPI2 registry.
-
-        Arguments:
-        - event_types: a list or tuple of AtspiEvent types
-        """
+        """Causes the ATTA to start listening for the specified events."""
 
         self._monitored_event_types = []
         self._event_history = []
@@ -587,7 +593,7 @@ class AtkAtspiAtta():
             self._monitored_event_types.append(e)
 
     def stop_event_monitoring(self):
-        """De-registers the test-specific listeners from the ATSPI2 registry."""
+        """Causes the ATTA to stop listening for the specified events."""
 
         for e in self._monitored_event_types:
             self._deregister_listener(e, self._on_test_event)
@@ -596,19 +602,9 @@ class AtkAtspiAtta():
         self._event_history = []
 
     def _run_test(self, obj, assertion):
-        """Runs a single assertion on the specified object.
-
-        Arguments:
-        - obj: The AtspiAccessible being tested
-        - assertion: A tokenized list containing the components of the property
-          or other condition being tested. Note that this is a consequence of
-          what we receive from the ARIA test harness and not an indication of
-          what is desired or required by this ATTA.
-
-        Returns:
-        - A dict containing the result (e.g. "PASS" or "FAIL"), messages to be
-          displayed by WPT explaining any failures, and logging output.
-        """
+        """Runs a single assertion on the specified object, returning a dict
+        with the result (e.g. "PASS" or "FAIL"), messages to be displayed by
+        WPT explaining any failures, and logging output."""
 
         test_class = Assertion.get_test_class(assertion)
 
@@ -626,17 +622,7 @@ class AtkAtspiAtta():
         return {"result": result_value, "message": str(messages), "log": log}
 
     def _create_platform_assertions(self, assertions):
-        """Converts a list of assertions received from the test harness into
-        a list of assertions the platform can handle.
-
-        Arguments:
-        - assertions: A list of [Test Class, Test Type, Assertion Type, Value]
-          assertion lists as received from the harness
-
-        Returns:
-        - A list of [Test Class, Test Type, Assertion Type, Value] assertions
-          which are ready to be run by this ATTA.
-        """
+        """Performs any platform-specific changes needed to the harness assertions."""
 
         is_event = lambda x: x and x[0] == "event"
         event_assertions = list(filter(is_event, assertions))
@@ -659,16 +645,8 @@ class AtkAtspiAtta():
         return platform_assertions
 
     def run_tests(self, obj_id, assertions):
-        """Runs the provided assertions on the object with the specified id.
-
-        Arguments:
-        - obj_id: A string containing the id of the host-language element
-        - assertions: A list of tokenized lists containing the components of
-          the property or other condition being tested.
-
-        Returns:
-        - A dict containing the response
-        """
+        """Runs the assertions on the object with the specified id, returning
+        a dict with the results, the status of the run, and any messages."""
 
         if not self._enabled:
             return {"status": self.STATUS_ERROR,
@@ -695,26 +673,19 @@ class AtkAtspiAtta():
         """Cleans up cached information at the end of a test run."""
 
         self._current_document = None
-        self._current_element = None
         self._next_test = None, ""
         self._ready = False
 
     def start(self):
-        """Starts this ATTA, registering for ATTA-required events, and
-        spawning a listener thread if one does not already exist.
-
-        Returns:
-        - A boolean reflecting if this ATTA was started successfully.
-        """
+        """Starts this ATTA (i.e. before running a series of tests)."""
 
         if not self._enabled:
             print("START FAILED: ATTA is not enabled.")
+            return
 
-        for event_type, callback in self._callbacks.items():
-            self._register_listener(event_type, callback)
-
+        self._register_listener("document:load-complete", self._on_load_complete)
         if self._listener_thread is None:
-            self._listener_thread = threading.Thread(target=pyatspi.Registry.start)
+            self._listener_thread = threading.Thread(target=Atspi.event_main)
             self._listener_thread.setDaemon(True)
             self._listener_thread.setName("ATSPI2 Client")
             self._listener_thread.start()
@@ -725,11 +696,7 @@ class AtkAtspiAtta():
         self._server.serve_forever()
 
     def stop(self, signum=None, frame=None):
-        """Stops this ATTA, notifying the AT-SPI2 registry.
-
-        Returns:
-        - A boolean reflecting if this ATTA was stopped successfully.
-        """
+        """Stops this ATTA (i.e. after all tests have been run)."""
 
         if not self._enabled:
             return False
@@ -744,11 +711,9 @@ class AtkAtspiAtta():
                 signal_string = str(signum)
             print("\nShutting down on signal %s" % signal_string)
 
-        for event_type, callback in self._callbacks.items():
-            self._deregister_listener(event_type, callback)
-
+        self._deregister_listener("document:load-complete", self._on_load_complete)
         if self._listener_thread is not None:
-            pyatspi.Registry.stop()
+            Atspi.event_quit()
             self._listener_thread.join()
             self._listener_thread = None
 
@@ -759,24 +724,15 @@ class AtkAtspiAtta():
         return True
 
     def _get_document_uri(self, obj):
-        """Returns the URI associated with obj.
+        """Returns the URI associated with obj or an empty string upon failure."""
 
-        Arguments:
-        - obj: The AtspiAccessible which implements AtspiDocument
-
-        Returns:
-        - A string containing the URI or an empty string upon failure
-        """
-
-        try:
-            document = obj.queryDocument()
-        except:
+        if obj is None:
             return ""
 
         # Gecko and WebKitGtk respectively
         for name in ("DocURL", "URI"):
             try:
-                uri = document.getAttributeValue(name)
+                uri = Atspi.Document.get_document_attribute_value(obj, name)
             except:
                 return ""
             if uri:
@@ -784,63 +740,46 @@ class AtkAtspiAtta():
 
         return ""
 
-    def _get_element_id(self, obj):
-        """Returns the id associated with obj.
+    def _find_descendant(self, root, pred):
+        """Finds the descendant of root for which pred returns True."""
 
-        Arguments:
-        - obj: The AtspiAccessible which implements AtspiDocument
-
-        Returns:
-        - A string containing the id or an empty string upon failure
-        """
+        if pred(root) or root is None:
+            return root
 
         try:
-            attrs = dict([attr.split(':', 1) for attr in obj.getAttributes()])
+            child_count = Atspi.Accessible.get_child_count(root)
         except:
-            return ""
+            print(self._on_exception())
+            return None
 
-        return attrs.get("id") or attrs.get("html-id") or ""
+        for i in range(child_count):
+            child = Atspi.Accessible.get_child_at_index(root, i)
+            element = self._find_descendant(child, pred)
+            if element:
+                return element
 
-    def _get_element_with_id(self, root, element_id, timeout=2):
-        """Returns the descendent of root which has the specified id.
+        return None
 
-        Arguments:
-        - root: An AtspiAccessible, typically a document object
-        - element_id: A string containing the id to look for
-        - timeout: Time in seconds before giving up
+    def _get_element_with_id(self, root, element_id):
+        """Returns the accessible descendant of root with the specified id."""
 
-        Returns:
-        - The AtspiAccessible if found and valid or None upon failure
-        """
-
-        self._current_element = None
         if not element_id:
             return None
 
-        def _on_timeout(root, pred):
+        def has_id(x):
             try:
-                obj = pyatspi.utils.findDescendant(root, pred)
+                attrs = Atspi.Accessible.get_attributes(x) or {}
             except:
-                pass
-            else:
-                if obj:
-                    self._current_element = obj
-                    return False
+                return False
 
-            return True
+            # Gecko and WebKitGtk respectively
+            id_attr = attrs.get("id") or attrs.get("html-id")
+            return element_id == id_attr
 
-        timestamp = time.time()
-        pred = lambda x: self._get_element_id(x) == element_id
-        callback_id = GLib.timeout_add(100, _on_timeout, root, pred)
+        if has_id(root):
+            return root
 
-        while int(time.time() - timestamp) < timeout:
-            if self._current_element:
-                break
-
-        if not self._current_element:
-            GLib.source_remove(callback_id)
-
-        return self._current_element
+        return self._find_descendant(root, has_id)
 
     def _in_current_document(self, obj):
         """Returns True if obj is, or is a descendant of, the current document."""
@@ -848,38 +787,23 @@ class AtkAtspiAtta():
         if not (self._current_document and obj):
             return False
 
-        if obj.getApplication() != self._current_application:
-            return False
+        parent = obj
+        while parent:
+            if parent == self._current_document:
+                return True
+            parent = Atspi.Accessible.get_parent(parent)
 
-        is_document = lambda x: x == self._current_document
-        if is_document(obj):
-            return True
-
-        return pyatspi.utils.findAncestor(obj, is_document) is not None
+        return False
 
     def _on_load_complete(self, event):
-        """Callback for the document:load-complete AtspiEvent. We are interested
-        in this event because it greatly simplifies locating the document which
-        contains the elements which will be tested. In order for this to work,
-        the ATTA must be loaded before the test starts.
-
-        Arguments:
-        - event: The AtspiEvent which was emitted
-        """
+        """Callback for the platform's signal that a document has loaded."""
 
         if self.is_ready(event.source):
-            test_name, test_uri = self._next_test
-            print("READY (ON LOAD COMPLETE): Next test is '%s' (%s)" % (test_name, test_uri))
-            self._current_document = event.source
-            self._current_application = event.host_application
+            application = Atspi.Accessible.get_application(event.source)
+            Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)
 
     def _on_test_event(self, event):
-        """Generic callback for a variety of object: AtspiEvent types. It caches
-        the event for later examination when evaluating assertion results.
-
-        Arguments:
-        - event: The AtspiEvent which was emitted
-        """
+        """Callback for platform accessibility events the ATTA is testing."""
 
         if self._in_current_document(event.source):
             self._event_history.append(event)
@@ -904,6 +828,7 @@ if __name__ == "__main__":
         print("ERROR: Unable to enable ATTA")
         sys.exit(1)
 
+    faulthandler.enable(all_threads=False)
     signal.signal(signal.SIGINT, atta.stop)
     signal.signal(signal.SIGTERM, atta.stop)
 

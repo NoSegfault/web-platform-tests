@@ -537,13 +537,14 @@ class AtkAtspiAtta():
                 "API": self._api_name,
                 "APIversion": self._api_version}
 
-    def set_next_test(self, name, url):
-        """Sets the next test to be run to the specified name and url."""
+    def start_test_run(self, name, url):
+        """Causes the ATTA to look for the specified test file in the user agent.
+        The ATTA should update its "ready" status upon finding that file."""
 
         self._next_test = name, url
         self._ready = False
 
-    def monitor_events(self, event_types):
+    def start_listen(self, event_types):
         """Causes the ATTA to start listening for the specified events."""
 
         self._monitored_event_types = []
@@ -553,7 +554,7 @@ class AtkAtspiAtta():
             self._register_listener(e, self._on_test_event)
             self._monitored_event_types.append(e)
 
-    def stop_event_monitoring(self):
+    def stop_listen(self):
         """Causes the ATTA to stop listening for the specified events."""
 
         for e in self._monitored_event_types:
@@ -656,7 +657,7 @@ class AtkAtspiAtta():
         AttaRequestHandler.set_atta(self)
         self._server.serve_forever()
 
-    def stop(self, signum=None, frame=None):
+    def shutdown(self, signum=None, frame=None):
         """Stops this ATTA (i.e. after all tests have been run)."""
 
         if not self._enabled:
@@ -788,7 +789,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     faulthandler.enable(all_threads=False)
-    signal.signal(signal.SIGINT, atta.stop)
-    signal.signal(signal.SIGTERM, atta.stop)
+    signal.signal(signal.SIGINT, atta.shutdown)
+    signal.signal(signal.SIGTERM, atta.shutdown)
 
     atta.start()

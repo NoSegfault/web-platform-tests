@@ -33,9 +33,9 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
 
     def dispatch(self):
         if self.path.endswith("start"):
-            self.start_test()
+            self.start_test_run()
         elif self.path.endswith("end"):
-            self.end_test()
+            self.end_test_run()
         elif self.path.endswith("test"):
             self.run_tests()
         elif self.path.endswith("startlisten"):
@@ -106,7 +106,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self.wfile._wbuf = []
             self.wfile._wbuf_len = 0
 
-    def start_test(self):
+    def start_test_run(self):
         print("==================================")
         response = {}
         params = self.get_params("test", "url")
@@ -121,7 +121,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             print("RUNNING ATTA NOT FOUND. TEST MUST BE RUN MANUALLY.")
         else:
             response.update(self._atta.get_info())
-            self._atta.set_next_test(name=params.get("test"), url=params.get("url"))
+            self._atta.start_test_run(name=params.get("test"), url=params.get("url"))
             while not self._atta.is_ready():
                 time.sleep(0.5)
 
@@ -141,14 +141,14 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         if self._atta is None:
             print("AUTOMATIC EVENT MONITORING NOT POSSIBLE WITHOUT RUNNING ATTA.")
         else:
-            self._atta.monitor_events(params.get("events"))
+            self._atta.start_listen(params.get("events"))
 
         response["status"] = "READY"
         self._send_response(response)
 
     def stop_listen(self):
         if self._atta is not None:
-            self._atta.stop_event_monitoring()
+            self._atta.stop_listen()
 
         response = {"status": "READY"}
         self._send_response(response)
@@ -165,7 +165,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
 
         self._send_response(response)
 
-    def end_test(self):
+    def end_test_run(self):
         self._atta.end_test_run()
         response = {"status": "DONE"}
         self._send_response(response)

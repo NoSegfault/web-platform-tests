@@ -56,51 +56,35 @@ class Assertion(AttaAssertion):
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
 
-    def _value_to_harness_string(self, value):
+    def _value_to_string(self, value):
         value_type = type(value)
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            if value_type is bool:
-                return "Boolean"
-            if value_type is str:
-                return "String"
-            if value_type in (int, float):
-                return "Number"
-            if value_type in (tuple, list, dict, set, range):
-                return "List"
-            if value_type is Atspi.Accessible:
+
+        if value_type == Atspi.Accessible:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
                 return "Object"
-            if value_type in (Atspi.StateType, Atspi.RelationType, Atspi.Role):
-                return "Constant"
-            return "Undefined"
-
-        if value_type is bool:
-            return str(value).lower()
-
-        if value_type in (int, float):
-            return str(value)
-
-        if value_type in (tuple, list):
-            return value_type(map(self._value_to_harness_string, value))
-
-        if value_type is dict:
-            return {self._value_to_harness_string(k): self._value_to_harness_string(v) for k, v in value.items()}
-
-        if value_type is Atspi.Accessible:
             try:
                 attrs = Atspi.Accessible.get_attributes(value)
                 return attrs.get("id") or attrs.get("html-id")
             except:
                 return ""
 
-        if value_type is Atspi.Relation:
-            return self._value_to_harness_string(Atspi.Relation.get_relation_type(value))
+        if value_type == Atspi.Relation:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "Object"
+            return self._value_to_string(Atspi.Relation.get_relation_type(value))
 
-        if value_type is Atspi.StateSet:
+        if value_type == Atspi.StateSet:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "List"
+
             all_states = [Atspi.StateType(i) for i in range(Atspi.StateType.LAST_DEFINED)]
             states = [s for s in all_states if value.contains(s)]
-            return list(map(self._value_to_harness_string, states))
+            return list(map(self._value_to_string, states))
 
         if value_type in (Atspi.Role, Atspi.RelationType, Atspi.StateType):
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "Constant"
+
             if not (0 <= value.real < value_type.LAST_DEFINED):
                 self._messages.append("ERROR: %s is not valid value" % value)
                 return str(value)
@@ -112,11 +96,11 @@ class Assertion(AttaAssertion):
                 value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
             return value_name
 
-        return str(value)
+        return super()._value_to_string(value)
 
     def _get_result(self):
         self._actual_value = self._get_value()
-        self._actual_value = self._value_to_harness_string(self._actual_value)
+        self._actual_value = self._value_to_string(self._actual_value)
 
         if self._expectation == self.EXPECTATION_IS:
             result = self._expected_value == self._actual_value
@@ -201,14 +185,14 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
 
         for r in relation_set:
             rtype = Atspi.Relation.get_relation_type(r)
-            if self._value_to_harness_string(rtype) == self._test_string:
+            if self._value_to_string(rtype) == self._test_string:
                 n_targets = Atspi.Relation.get_n_targets(r)
                 return [Atspi.Relation.get_target(r, i) for i in range(n_targets)]
 
         return []
 
     def _get_value(self):
-        targets = self._value_to_harness_string(self.get_relation_targets())
+        targets = self._value_to_string(self.get_relation_targets())
         return "[%s]" % " ".join(targets)
 
     def run(self):
@@ -307,7 +291,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
         except:
             self._on_exception()
         else:
-            return self._value_to_harness_string(value)
+            return self._value_to_string(value)
 
         return None
 
@@ -349,12 +333,12 @@ class EventAssertion(Assertion, AttaEventAssertion):
     def _event_to_string(self, e):
         try:
             role = Atspi.Accessible.get_role(e.source)
-            objid = self._value_to_harness_string(e.source) or ""
+            objid = self._value_to_string(e.source) or ""
         except:
             role = "[DEAD]"
             objid = "EXCEPTION GETTING ID"
         else:
-            role = self._value_to_harness_string(role)
+            role = self._value_to_string(role)
             if objid:
                 objid = " (%s)" % objid
 
@@ -393,7 +377,7 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
             methods.extend(list(map(lambda x: "%s.%s" % (iface, x), details)))
         info["ResultAssertion Candidate Methods"] = sorted(methods)
 
-        info = self._value_to_harness_string(info)
+        info = self._value_to_string(info)
         log = json.dumps(info, indent=4, sort_keys=True)
         self._status = self.STATUS_FAIL
         return self._status, " ".join(self._messages), log

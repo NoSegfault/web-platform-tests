@@ -77,6 +77,44 @@ class AttaAssertion:
         error = traceback.format_exc(limit=1, chain=False)
         self._messages.append(re.sub("\s+", " ", error))
 
+    def _value_to_string(self, value):
+        value_type = type(value)
+
+        if value_type == str:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "String"
+            return value
+
+        if value_type == bool:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "Boolean"
+            return str(value).lower()
+
+        if value_type in (int, float):
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "Number"
+            return str(value)
+
+        if value_type in (tuple, list, set):
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "List"
+            return value_type(map(self._value_to_string, value))
+
+        if value_type == range:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "List"
+            return str(range)
+
+        if value_type == dict:
+            if self._expectation == self.EXPECTATION_IS_TYPE:
+                return "List"
+            return {self._value_to_string(k): self._value_to_string(v) for k, v in value.items()}
+
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            return "Undefined"
+
+        return str(value)
+
 
 class AttaEventAssertion(AttaAssertion):
 

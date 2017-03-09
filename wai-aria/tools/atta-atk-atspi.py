@@ -393,16 +393,8 @@ class AtkAtspiAtta():
     FAILURE_ATTA_NOT_READY = "ATTA not ready"
     FAILURE_ELEMENT_NOT_FOUND = "Element not found"
 
-    def __init__(self, host, port, verify_dependencies=True):
-        """Initializes this ATTA.
-
-        Arguments:
-        - verify_dependencies: Boolean reflecting if we should verify that the
-          client environment meets the minimum requirements needed for reliable
-          test results. Note: If verify_dependencies is False, the installed
-          versions of the accessibility libraries will not be obtained and thus
-          will not be reported in the results. DEFAULT: True
-        """
+    def __init__(self, host, port):
+        """Initializes this ATTA."""
 
         self._host = host
         self._port = int(port)
@@ -422,15 +414,35 @@ class AtkAtspiAtta():
         self._listener_thread = None
         self._proxy = None
 
-        if verify_dependencies and not self._check_environment():
+        if not sys.version_info[0] == 3:
+            print("ERROR: This ATTA requires Python 3.")
             return
 
         try:
             desktop = Atspi.get_desktop(0)
         except:
-            print(self._on_exception())
+            print("ERROR: Could not get accessible desktop from AT-SPI2.")
+            return
+
+        try:
+            self._api_version = Atk.get_version()
+        except:
+            print("ERROR: Could not get ATK version.")
         else:
-            self._enabled = True
+            minimum = list(map(int, self._minimum_api_version.split(".")))
+            actual = list(map(int, self._api_version.split(".")))
+            if actual < minimum:
+                print("WARNING: ATK %s < %s." % (self._api_version, self._minimum_api_version))
+
+        if not self._get_accessibility_enabled():
+            if not self._set_accessibility_enabled(True):
+                print("ERROR: Accessibility support cannot be enabled.")
+                return
+
+            print("IMPORTANT: Accessibility support was just enabled. "\
+                  "Please quit and relaunch the browser being tested.")
+
+        self._enabled = True
 
     def _on_exception(self):
         """Handles exceptions, returning a string with the error."""
@@ -469,41 +481,6 @@ class AtkAtspiAtta():
         vEnable = GLib.Variant("b", enable)
         self._proxy.Set("(ssv)", "org.a11y.Status", "IsEnabled", vEnable)
         return self._get_accessibility_enabled() == enable
-
-    def _check_environment(self):
-        """Returns True if the client environment has all expected dependencies."""
-
-        try:
-            self._api_version = Atk.get_version()
-            print("INFO: Installed ATK version: %s" % self._api_version)
-        except:
-            print(self._on_exception())
-            can_enable = False
-        else:
-            minimum = list(map(int, self._minimum_api_version.split(".")))
-            actual = list(map(int, self._api_version.split(".")))
-            can_enable = actual >= minimum
-            if not can_enable:
-                print("ERROR: Minimum ATK version: %s" % self._minimum_api_version)
-
-        # GNOME migrated to Python 3 several years ago. AT-SPI2-based ATs and
-        # testing tools, as well as the Python bindings for AT-SPI2, now expect
-        # Python 3. Because Python 2 is no longer officially supported or being
-        # used by existing ATs for this platform, we don't know if and to what
-        # extent accessibility support might fail to work as expected in a
-        # Python 2 environment. Thus in order to maximize reliability of test
-        # results obtained by this ATTA, Python 3 is required.
-        if not sys.version_info[0] == 3:
-            print("ERROR: This ATTA requires Python 3.")
-            can_enable = False
-
-        if can_enable and not self._get_accessibility_enabled():
-            can_enable = self._set_accessibility_enabled(True)
-            if can_enable:
-                print("IMPORTANT: Accessibility support was just enabled. "\
-                      "Please quit and relaunch the browser being tested.")
-
-        return can_enable
 
     def _register_listener(self, event_type, callback):
         """Registers an accessible-event listener on the platform."""
@@ -797,17 +774,15 @@ def get_cmdline_options():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", action="store")
     parser.add_argument("--port", action="store")
-    parser.add_argument("--ignore-dependencies", action="store_true")
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
     args = get_cmdline_options()
-    verify_dependencies = not args.get("ignore_dependencies")
     host = args.get("host") or "localhost"
     port = args.get("port") or "4119"
 
     print("Attempting to start AtkAtspiAtta")
-    atta = AtkAtspiAtta(host, port, verify_dependencies)
+    atta = AtkAtspiAtta(host, port)
     if not atta.is_enabled():
         print("ERROR: Unable to enable ATTA")
         sys.exit(1)

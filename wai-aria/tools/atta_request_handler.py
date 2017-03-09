@@ -34,14 +34,14 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
     def dispatch(self):
         if self.path.endswith("start"):
             self.start_test_run()
-        elif self.path.endswith("end"):
-            self.end_test_run()
-        elif self.path.endswith("test"):
-            self.run_tests()
         elif self.path.endswith("startlisten"):
             self.start_listen()
+        elif self.path.endswith("test"):
+            self.run_tests()
         elif self.path.endswith("stoplisten"):
             self.stop_listen()
+        elif self.path.endswith("end"):
+            self.end_test_run()
         else:
             print("UNHANDLED PATH: %s" % self.path)
             self.send_error()
@@ -146,13 +146,6 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         response["status"] = "READY"
         self._send_response(response)
 
-    def stop_listen(self):
-        if self._atta is not None:
-            self._atta.stop_listen()
-
-        response = {"status": "READY"}
-        self._send_response(response)
-
     def run_tests(self):
         params = self.get_params("title", "id", "data")
         response = {}
@@ -163,6 +156,13 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         if not response.get("results"):
             response["statusText"] = params.get("error")
 
+        self._send_response(response)
+
+    def stop_listen(self):
+        if self._atta is not None:
+            self._atta.stop_listen()
+
+        response = {"status": "READY"}
         self._send_response(response)
 
     def end_test_run(self):

@@ -12,12 +12,10 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import argparse
-import faulthandler
 import gi
 import json
 import os
 import re
-import signal
 import sys
 import threading
 import time
@@ -27,8 +25,7 @@ gi.require_version("Atk", "1.0")
 gi.require_version("Atspi", "2.0")
 
 from gi.repository import Atk, Atspi, Gio, GLib
-from http.server import HTTPServer
-
+from atta_base import Atta
 from atta_request_handler import AttaRequestHandler
 from atta_assertion import *
 
@@ -383,77 +380,64 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         return self._status, " ".join(self._messages), log
 
 
-class AtkAtspiAtta():
+class AtkAtspiAtta(Atta):
     """Accessible Technology Test Adapter using AT-SPI2 to test ATK support."""
 
-    STATUS_ERROR = "ERROR"
-    STATUS_OK = "OK"
-
-    FAILURE_ATTA_NOT_ENABLED = "ATTA not enabled"
-    FAILURE_ATTA_NOT_READY = "ATTA not ready"
-    FAILURE_ELEMENT_NOT_FOUND = "Element not found"
-
-    def __init__(self, host, port):
-        """Initializes this ATTA."""
-
-        self._host = host
-        self._port = int(port)
-        self._server = None
-        self._atta_name = "WPT ATK/AT-SPI2 ATTA"
-        self._atta_version = "0.1"
-        self._api_name = "ATK"
-        self._api_version = ""
-        self._minimum_api_version = "2.20.0"
-        self._enabled = False
-        self._ready = False
-        self._next_test = None, ""
-        self._current_document = None
-        self._listeners = {}
-        self._monitored_event_types = []
-        self._event_history = []
+    def __init__(self, host, port, name="ATTA for ATK", version="0.1", api="ATK"):
+        self._api_min_version = "2.20.0"
         self._listener_thread = None
         self._proxy = None
-
-        if not sys.version_info[0] == 3:
-            print("ERROR: This ATTA requires Python 3.")
-            return
 
         try:
             desktop = Atspi.get_desktop(0)
         except:
-            print("ERROR: Could not get accessible desktop from AT-SPI2.")
+            self._print(self.LOG_ERROR, "Could not get desktop from AT-SPI2.")
+            self._enabled = False
             return
 
+        super().__init__(host, port, name, version, api, Atta.LOG_INFO)
+
+    def start(self, **kwargs):
+        if not self._enabled:
+            return
+
+        self._register_listener("document:load-complete", self._on_load_complete)
+        if self._listener_thread is None:
+            self._listener_thread = threading.Thread(target=Atspi.event_main)
+            self._listener_thread.setDaemon(True)
+            self._listener_thread.setName("ATSPI2 Client")
+            self._listener_thread.start()
+
+        super().start(**kwargs)
+
+    def shutdown(self, signum=None, frame=None, **kwargs):
+        if not self._enabled:
+            return
+
+        self._deregister_listener("document:load-complete", self._on_load_complete)
+        if self._listener_thread is not None:
+            Atspi.event_quit()
+            self._listener_thread.join()
+            self._listener_thread = None
+
+        super().shutdown(signum, frame, **kwargs)
+
+    def _get_system_api_version(self, **kwargs):
         try:
-            self._api_version = Atk.get_version()
+            version = Atk.get_version()
         except:
-            print("ERROR: Could not get ATK version.")
-        else:
-            minimum = list(map(int, self._minimum_api_version.split(".")))
-            actual = list(map(int, self._api_version.split(".")))
-            if actual < minimum:
-                print("WARNING: ATK %s < %s." % (self._api_version, self._minimum_api_version))
+            self._print(self.LOG_ERROR, "Could not get ATK version.")
+            return ""
 
-        if not self._get_accessibility_enabled():
-            if not self._set_accessibility_enabled(True):
-                print("ERROR: Accessibility support cannot be enabled.")
-                return
+        actual_version = list(map(int, version.split(".")))
+        minimum_version = list(map(int, self._api_min_version.split(".")))
+        if actual_version < minimum_version:
+            msg = "ATK %s < %s." % (version, self._api_min_version)
+            self._print(self.LOG_WARNING, msg)
 
-            print("IMPORTANT: Accessibility support was just enabled. "\
-                  "Please quit and relaunch the browser being tested.")
+        return version
 
-        self._enabled = True
-
-    def _on_exception(self):
-        """Handles exceptions, returning a string with the error."""
-
-        etype, evalue, tb = sys.exc_info()
-        error = "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
-        return error
-
-    def _get_accessibility_enabled(self):
-        """Returns True if accessibility support is enabled on this platform."""
-
+    def _get_accessibility_enabled(self, **kwargs):
         try:
             self._proxy = Gio.DBusProxy.new_for_bus_sync(
                 Gio.BusType.SESSION,
@@ -464,128 +448,37 @@ class AtkAtspiAtta():
                 "org.freedesktop.DBus.Properties",
                 None)
         except:
-            print(self._on_exception())
+            self._print(self.LOG_ERROR, self._on_exception())
             return False
 
         enabled = self._proxy.Get("(ss)", "org.a11y.Status", "IsEnabled")
-        print("Platform accessibility support is enabled: %s" % enabled)
         return enabled
 
-    def _set_accessibility_enabled(self, enable):
-        """Returns True if platform accessibility support was successfully
-        set to the value of enable."""
-
+    def _set_accessibility_enabled(self, enable, **kwargs):
         if not self._proxy:
             return False
 
         vEnable = GLib.Variant("b", enable)
         self._proxy.Set("(ssv)", "org.a11y.Status", "IsEnabled", vEnable)
-        return self._get_accessibility_enabled() == enable
+        success = self._get_accessibility_enabled() == enable
 
-    def _register_listener(self, event_type, callback):
-        """Registers an accessible-event listener on the platform."""
+        if success and enable:
+            msg = "Accessibility support was just enabled. Browser restart may be needed."
+            self._print(self.LOG_WARNING, msg)
 
+        return success
+
+    def _register_listener(self, event_type, callback, **kwargs):
         listener = self._listeners.get(callback, Atspi.EventListener.new(callback))
         Atspi.EventListener.register(listener, event_type)
         self._listeners[callback] = listener
 
-    def _deregister_listener(self, event_type, callback):
-        """De-registers an accessible-event listener on the platform."""
-
+    def _deregister_listener(self, event_type, callback, **kwargs):
         listener = self._listeners.get(callback)
         if listener:
             Atspi.EventListener.deregister(listener, event_type)
 
-    def is_enabled(self):
-        """Returns True if this ATTA is enabled."""
-
-        return self._enabled
-
-    def is_ready(self, document=None):
-        """Returns True if this ATTA is able to proceed with a test run."""
-
-        if self._ready:
-            return True
-
-        test_name, test_uri = self._next_test
-        if test_name is None:
-            return False
-
-        document = document or self._current_document
-        if document is None:
-            return False
-
-        try:
-            Atspi.Accessible.clear_cache(document)
-        except:
-            print(self._on_exception())
-            return False
-
-        uri = self._get_document_uri(document)
-        self._ready = uri and uri == test_uri
-        if self._ready:
-            self._current_document = document
-            print("READY: Test is '%s' (%s)" % (test_name, test_uri))
-
-        return self._ready
-
-    def get_info(self):
-        """Returns a dict of details about this ATTA needed by the harness."""
-
-        return {"ATTAname": self._atta_name,
-                "ATTAversion": self._atta_version,
-                "API": self._api_name,
-                "APIversion": self._api_version}
-
-    def start_test_run(self, name, url):
-        """Causes the ATTA to look for the specified test file in the user agent.
-        The ATTA should update its "ready" status upon finding that file."""
-
-        self._next_test = name, url
-        self._ready = False
-
-    def start_listen(self, event_types):
-        """Causes the ATTA to start listening for the specified events."""
-
-        self._monitored_event_types = []
-        self._event_history = []
-
-        for e in event_types:
-            self._register_listener(e, self._on_test_event)
-            self._monitored_event_types.append(e)
-
-    def stop_listen(self):
-        """Causes the ATTA to stop listening for the specified events."""
-
-        for e in self._monitored_event_types:
-            self._deregister_listener(e, self._on_test_event)
-
-        self._monitored_event_types = []
-        self._event_history = []
-
-    def _run_test(self, obj, assertion):
-        """Runs a single assertion on the specified object, returning a dict
-        with the result (e.g. "PASS" or "FAIL"), messages to be displayed by
-        WPT explaining any failures, and logging output."""
-
-        test_class = Assertion.get_test_class(assertion)
-
-        if test_class is None:
-            result_value = Assertion.STATUS_FAIL
-            messages = "ERROR: %s is not a valid assertion" % assertion
-            log = messages
-        elif test_class == EventAssertion:
-            test = test_class(obj, assertion, self._event_history)
-            result_value, messages, log = test.run()
-        else:
-            test = test_class(obj, assertion)
-            result_value, messages, log = test.run()
-
-        return {"result": result_value, "message": str(messages), "log": log}
-
-    def _create_platform_assertions(self, assertions):
-        """Performs any platform-specific changes needed to the harness assertions."""
-
+    def _create_platform_assertions(self, assertions, **kwargs):
         is_event = lambda x: x and x[0] == "event"
         event_assertions = list(filter(is_event, assertions))
         if not event_assertions:
@@ -606,95 +499,36 @@ class AtkAtspiAtta():
         platform_assertions.append(combined_event_assertions)
         return platform_assertions
 
-    def run_tests(self, obj_id, assertions):
-        """Runs the assertions on the object with the specified id, returning
-        a dict with the results, the status of the run, and any messages."""
+    def _run_test(self, obj, assertion, **kwargs):
+        test_class = Assertion.get_test_class(assertion)
 
-        if not self._enabled:
-            return {"status": self.STATUS_ERROR,
-                    "message": self.FAILURE_ATTA_NOT_ENABLED,
-                    "results": []}
+        if test_class is None:
+            result_value = Assertion.STATUS_FAIL
+            messages = "ERROR: %s is not a valid assertion" % assertion
+            log = messages
+        elif test_class == EventAssertion:
+            test = test_class(obj, assertion, self._event_history)
+            result_value, messages, log = test.run()
+        else:
+            test = test_class(obj, assertion)
+            result_value, messages, log = test.run()
 
-        if not self._ready:
-            return {"status": self.STATUS_ERROR,
-                    "message": self.FAILURE_ATTA_NOT_READY,
-                    "results": []}
+        return {"result": result_value, "message": str(messages), "log": log}
 
-        to_run = self._create_platform_assertions(assertions)
-        obj = self._get_element_with_id(self._current_document, obj_id)
-        if not obj:
-            return {"status": self.STATUS_ERROR,
-                    "message": self.FAILURE_ELEMENT_NOT_FOUND,
-                    "results": []}
-
-        results = [self._run_test(obj, a) for a in to_run]
-        return {"status": self.STATUS_OK,
-                "results": results}
-
-    def end_test_run(self):
-        """Cleans up cached information at the end of a test run."""
-
-        self._current_document = None
-        self._next_test = None, ""
-        self._ready = False
-
-    def start(self):
-        """Starts this ATTA (i.e. before running a series of tests)."""
-
-        if not self._enabled:
-            print("START FAILED: ATTA is not enabled.")
-            return
-
-        self._register_listener("document:load-complete", self._on_load_complete)
-        if self._listener_thread is None:
-            self._listener_thread = threading.Thread(target=Atspi.event_main)
-            self._listener_thread.setDaemon(True)
-            self._listener_thread.setName("ATSPI2 Client")
-            self._listener_thread.start()
-
-        print("Starting server on http://%s:%s/" % (self._host, self._port))
-        self._server = HTTPServer((self._host, self._port), AttaRequestHandler)
-        AttaRequestHandler.set_atta(self)
-        self._server.serve_forever()
-
-    def shutdown(self, signum=None, frame=None):
-        """Stops this ATTA (i.e. after all tests have been run)."""
-
-        if not self._enabled:
-            return False
-
-        self._ready = False
-
-        if signum is not None:
-            # The 'Signals' enum was introduced to signal module in 3.5.
-            try:
-                signal_string = signal.Signals(signum).name
-            except:
-                signal_string = str(signum)
-            print("\nShutting down on signal %s" % signal_string)
-
-        self._deregister_listener("document:load-complete", self._on_load_complete)
-        if self._listener_thread is not None:
-            Atspi.event_quit()
-            self._listener_thread.join()
-            self._listener_thread = None
-
-        if self._server is not None:
-            thread = threading.Thread(target=self._server.shutdown)
-            thread.start()
-
-        return True
-
-    def _get_document_uri(self, obj):
-        """Returns the URI associated with obj or an empty string upon failure."""
-
-        if obj is None:
+    def _get_uri(self, document, **kwargs):
+        if document is None:
             return ""
+
+        try:
+            Atspi.Accessible.clear_cache(document)
+        except:
+            self._print(self.LOG_ERROR, self._on_exception())
+            return False
 
         # Gecko and WebKitGtk respectively
         for name in ("DocURL", "URI"):
             try:
-                uri = Atspi.Document.get_document_attribute_value(obj, name)
+                uri = Atspi.Document.get_document_attribute_value(document, name)
             except:
                 return ""
             if uri:
@@ -703,8 +537,6 @@ class AtkAtspiAtta():
         return ""
 
     def _find_descendant(self, root, pred):
-        """Finds the descendant of root for which pred returns True."""
-
         if pred(root) or root is None:
             return root
 
@@ -722,9 +554,7 @@ class AtkAtspiAtta():
 
         return None
 
-    def _get_element_with_id(self, root, element_id):
-        """Returns the accessible descendant of root with the specified id."""
-
+    def _get_element_with_id(self, root, element_id, **kwargs):
         if not element_id:
             return None
 
@@ -744,8 +574,6 @@ class AtkAtspiAtta():
         return self._find_descendant(root, has_id)
 
     def _in_current_document(self, obj):
-        """Returns True if obj is, or is a descendant of, the current document."""
-
         if not (self._current_document and obj):
             return False
 
@@ -757,18 +585,14 @@ class AtkAtspiAtta():
 
         return False
 
-    def _on_load_complete(self, event):
-        """Callback for the platform's signal that a document has loaded."""
-
-        if self.is_ready(event.source):
-            application = Atspi.Accessible.get_application(event.source)
+    def _on_load_complete(self, data, **kwargs):
+        if self.is_ready(data.source):
+            application = Atspi.Accessible.get_application(data.source)
             Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)
 
-    def _on_test_event(self, event):
-        """Callback for platform accessibility events the ATTA is testing."""
-
-        if self._in_current_document(event.source):
-            self._event_history.append(event)
+    def _on_test_event(self, data, **kwargs):
+        if self._in_current_document(data.source):
+            self._event_history.append(data)
 
 
 def get_cmdline_options():
@@ -785,11 +609,6 @@ if __name__ == "__main__":
     print("Attempting to start AtkAtspiAtta")
     atta = AtkAtspiAtta(host, port)
     if not atta.is_enabled():
-        print("ERROR: Unable to enable ATTA")
         sys.exit(1)
-
-    faulthandler.enable(all_threads=False)
-    signal.signal(signal.SIGINT, atta.shutdown)
-    signal.signal(signal.SIGTERM, atta.shutdown)
 
     atta.start()

@@ -32,8 +32,8 @@ from atta_assertion import *
 
 class Assertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     @classmethod
     def get_test_class(cls, assertion):
@@ -139,8 +139,8 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
         "states": lambda x: Atspi.Accessible.get_state_set(x),
     }
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def get_property_value(self):
         if not (self._obj or self._test_string == "accessible"):
@@ -167,8 +167,8 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
 
 class RelationAssertion(Assertion, AttaRelationAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def get_relation_targets(self):
         if not self._obj:
@@ -199,38 +199,47 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
 
 class ResultAssertion(Assertion, AttaResultAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    KNOWN_ISSUES = {
+        "atk_table_cell_get_position": "https://bugzilla.gnome.org/show_bug.cgi?id=779835",
+        "atspi_table_cell_row_index": "https://bugzilla.gnome.org/show_bug.cgi?id=779835",
+    }
+
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
         self._error = False
         self._method = None
         self._args = []
 
-        iface, call = re.split("\.", self._test_string, maxsplit=1)
-        call = call.replace("atk_%s_" % iface.lower(), "")
         try:
-            function, args = re.split("\(", call, maxsplit=1)
+            function, args = re.split("\(", self._test_string, maxsplit=1)
             args = args[:-1]
         except ValueError:
-            function = call
+            function = self._test_string
             args = ""
 
-        methods = self.get_interface_methods(iface)
-        if not methods:
-            self._messages.append("ERROR: '%s' interface not found." % iface)
-            self._error = True
-            return
-
-        names = list(map(lambda x: x.get_name(), methods))
-        if names and function not in names:
+        methods = self._atta.get_testable_api_methods()
+        info_dict = methods.get(function)
+        if not info_dict:
             self._messages.append("ERROR: '%s' method not found." % function)
             self._error = True
             return
 
-        self._method = list(filter(lambda x: x.get_name() == function, methods))[0]
+        self._method = info_dict.get("ATSPI") or info_dict.get("ATK")
+        iface = self._method.get_container().get_name()
+        if not iface in Atspi.Accessible.get_interfaces(self._obj):
+            self._messages.append("ERROR: %s interface not implemented by obj" % iface)
+            self._error = True
+            return
 
         expectedargs = self._method.get_arguments()
         actualargs = list(filter(lambda x: x != "", args.split(",")))
         argtypes = list(map(self._get_arg_type, expectedargs))
+        if len(expectedargs) > len(actualargs):
+            expected = ", ".join(map(lambda x: x.__name__, argtypes))
+            self._messages.append("ERROR: Expected arg types: %s" % expected)
+            self._error = True
+            return
+
         for i, argtype in enumerate(argtypes):
             arg = actualargs[i]
             try:
@@ -254,28 +263,12 @@ class ResultAssertion(Assertion, AttaResultAssertion):
 
     @classmethod
     def get_method_details(cls, method):
-        name = method.get_name()
+        symbol = method.get_symbol()
         args = list(map(cls._get_arg_info, method.get_arguments()))
-        return "%s(%s)" % (name, ", ".join(args))
-
-    @staticmethod
-    def get_interface_methods(interface_name):
-        gir = gi.Repository.get_default()
-
-        try:
-            atspi_info = gir.find_by_name("Atspi", interface_name)
-            atk_info = gir.find_by_name("Atk", interface_name)
-        except:
-            return []
-
-        # If an interface is in AT-SPI2 but not ATK, it's a utility which user
-        # agent implementors do not implement. If it's in ATK, but not AT-SPI2,
-        # implementors implement it, but we cannot directly call the implemented
-        # methods via an AT-SPI2 interface.
-        if not (atspi_info and atk_info):
-            return []
-
-        return atspi_info.get_methods()
+        rv = "%s(%s)" % (symbol, ", ".join(args))
+        if method.is_deprecated():
+            rv = "DEPRECATED: %s" % rv
+        return rv
 
     def _get_value(self):
         if self._error:
@@ -283,10 +276,14 @@ class ResultAssertion(Assertion, AttaResultAssertion):
 
         try:
             value = self._method.invoke(self._obj, *self._args)
-        except RuntimeError:
-            self._messages.append("ERROR: Exception calling %s\n" % self._method.get_name())
         except:
-            self._on_exception()
+            symbol = self._method.get_symbol()
+            self._messages.append("ERROR: Exception calling %s" % symbol)
+            issue = self.KNOWN_ISSUES.get(symbol)
+            if issue:
+                self._messages.append(issue)
+            else:
+                self._on_exception()
         else:
             return self._value_to_string(value)
 
@@ -299,8 +296,8 @@ class ResultAssertion(Assertion, AttaResultAssertion):
 
 class EventAssertion(Assertion, AttaEventAssertion):
 
-    def __init__(self, obj, assertion, events=[]):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta, events=[]):
+        super().__init__(obj, assertion, atta)
         self._actual_value = list(map(self._event_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
         self._matching_events = []
@@ -356,9 +353,9 @@ class EventAssertion(Assertion, AttaEventAssertion):
 
 class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
 
-    def __init__(self, obj, assertion=None):
+    def __init__(self, obj, assertion, atta):
         assertion = [""] * 4
-        super().__init__(obj, assertion)
+        super().__init__(obj, assertion, atta)
 
     def run(self):
         info = {}
@@ -368,10 +365,12 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
 
         methods = []
         ifaces = dict.fromkeys(info["PropertyAssertion Candidates"].get("interfaces", []))
-        for iface in ifaces:
-            iface_methods = ResultAssertion.get_interface_methods(iface)
-            details = map(ResultAssertion.get_method_details, iface_methods)
-            methods.extend(list(map(lambda x: "%s.%s" % (iface, x), details)))
+        supported = atta.get_testable_api_methods()
+        for symbol, function_info_dict in supported.items():
+            method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
+            iface = method.get_container().get_name()
+            if iface in ifaces:
+                methods.append(ResultAssertion.get_method_details(method))
         info["ResultAssertion Candidate Methods"] = sorted(methods)
 
         info = self._value_to_string(info)
@@ -387,6 +386,7 @@ class AtkAtspiAtta(Atta):
         self._api_min_version = "2.20.0"
         self._listener_thread = None
         self._proxy = None
+        self._testable_api_methods = {}
 
         try:
             desktop = Atspi.get_desktop(0)
@@ -395,6 +395,7 @@ class AtkAtspiAtta(Atta):
             self._enabled = False
             return
 
+        self._testable_api_methods = self.get_testable_api_methods()
         super().__init__(host, port, name, version, api, Atta.LOG_INFO)
 
     def start(self, **kwargs):
@@ -507,10 +508,10 @@ class AtkAtspiAtta(Atta):
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
         elif test_class == EventAssertion:
-            test = test_class(obj, assertion, self._event_history)
+            test = test_class(obj, assertion, atta, self._event_history)
             result_value, messages, log = test.run()
         else:
-            test = test_class(obj, assertion)
+            test = test_class(obj, assertion, atta)
             result_value, messages, log = test.run()
 
         return {"result": result_value, "message": str(messages), "log": log}
@@ -584,6 +585,99 @@ class AtkAtspiAtta(Atta):
             parent = Atspi.Accessible.get_parent(parent)
 
         return False
+
+    def _find_matching_symbol(self, atk_symbol, atspi_symbols):
+        # Things which are unique or hard to reliably map via heuristic.
+        mappings = {
+            "atk_selection_add_selection": "atspi_selection_select_child",
+        }
+
+        mapped = mappings.get(atk_symbol)
+        if mapped in atspi_symbols:
+            return atspi_symbols[atspi_symbols.index(mapped)]
+
+        # Ideally, the symbols are the same, not counting the API name.
+        candidate_symbol = atk_symbol.replace("atk", "atspi")
+        if candidate_symbol in atspi_symbols:
+            return atspi_symbols[atspi_symbols.index(candidate_symbol)]
+
+        # AT-SPI2 tends to use "get" when ATK uses "ref".
+        replaced = candidate_symbol.replace("_ref_", "_get_")
+        if replaced in atspi_symbols:
+            return atspi_symbols[atspi_symbols.index(replaced)]
+
+        replaced = candidate_symbol.replace("_ref_at", "_get_accessible_at")
+        if replaced in atspi_symbols:
+            return atspi_symbols[atspi_symbols.index(replaced)]
+
+        # They sometimes split words differently ("key_binding", "keybinding").
+        collapsed = candidate_symbol.replace("_", "")
+        matches = list(map(lambda x: x.replace("_", ""), atspi_symbols))
+        if collapsed in matches:
+            return atspi_symbols[matches.index(collapsed)]
+
+        # AT-SPI2 tends to use "get n" when ATK uses "get ... count".
+        if "_get_" in atk_symbol and "_count" in atk_symbol:
+            matches = list(filter(lambda x: "get_n_" in x, atspi_symbols))
+            if len(matches) == 1:
+                return atspi_symbols[atspi_symbols.index(matches[0])]
+
+        return None
+
+    def get_testable_api_methods(self):
+        if self._testable_api_methods:
+            return self._testable_api_methods
+
+        gir = gi.Repository.get_default()
+        info = gir.find_by_name("Atspi", "Accessible")
+        interfaces = [x.get_name() for x in info.get_interfaces()]
+
+        # These setters have corresponding getters in ATK, which we can test
+        # via a matching AT-SPI2 getter. More importantly, they lack matching
+        # setters in AT-SPI2, so we cannot set these property values via ATTA.
+        implementor_only = [
+            "atk_action_set_description",
+            "atk_document_set_attribute_value",
+            "atk_image_set_image_description",
+            "atk_table_set_caption",
+            "atk_table_set_column_description",
+            "atk_table_set_column_header",
+            "atk_table_set_row_description",
+            "atk_table_set_row_header",
+            "atk_table_set_summary",
+        ]
+
+        for iface in interfaces:
+            # If an interface is in AT-SPI2 but not ATK, it's a utility which
+            # user agent implementors do not implement. If it's in ATK, but not
+            # AT-SPI2, implementors implement it, but we cannot directly call
+            # the implemented methods via an AT-SPI2 interface.
+            atk_info = gir.find_by_name("Atk", iface)
+            atspi_info = gir.find_by_name("Atspi", iface)
+            if not (atk_info and atspi_info):
+                continue
+
+            atk_methods = {m.get_symbol(): m for m in atk_info.get_methods()}
+            atspi_methods = {m.get_symbol(): m for m in atspi_info.get_methods()}
+
+            for atk_symbol, atk_function_info in atk_methods.items():
+                if atk_symbol in implementor_only:
+                    continue
+
+                value = {"ATK": atk_function_info}
+                atspi_symbols = list(atspi_methods.keys())
+                atspi_symbol = self._find_matching_symbol(atk_symbol, atspi_symbols)
+                if atspi_symbol:
+                    value["ATSPI"] = atspi_methods.pop(atspi_symbol)
+                self._testable_api_methods[atk_symbol] = value
+
+            # These items weren't matched cleanly with an ATK method, but we may need
+            # to use them. Example: To test atk_table_cell_get_position() we need both
+            # atspi_table_cell_get_row_index() and atspi_table_cell_get_column_index().
+            for symbol, function_info in atspi_methods.items():
+                self._testable_api_methods[symbol] = {"ATSPI": function_info}
+
+        return self._testable_api_methods
 
     def _on_load_complete(self, data, **kwargs):
         if self.is_ready(data.source):

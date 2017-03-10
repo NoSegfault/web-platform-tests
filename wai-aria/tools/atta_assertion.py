@@ -43,7 +43,8 @@ class AttaAssertion:
     _text_wrapper = TextWrapper(width=80, break_on_hyphens=False, break_long_words=False)
     _labels = ["ASSERTION:", "STATUS:", "ACTUAL VALUE:", "MESSAGES:"]
 
-    def __init__(self, obj, assertion):
+    def __init__(self, obj, assertion, atta):
+        self._atta = atta
         self._obj = obj
         self._as_string = " ".join(map(str, assertion))
         self._test_class = assertion[0]
@@ -118,8 +119,8 @@ class AttaAssertion:
 
 class AttaEventAssertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def run(self):
         return self._status, " ".join(self._messages), str(self)
@@ -127,8 +128,8 @@ class AttaEventAssertion(AttaAssertion):
 
 class AttaPropertyAssertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def get_property_value(self):
         return None
@@ -139,8 +140,8 @@ class AttaPropertyAssertion(AttaAssertion):
 
 class AttaRelationAssertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def get_relation_targets(self):
         return []
@@ -151,8 +152,8 @@ class AttaRelationAssertion(AttaAssertion):
 
 class AttaResultAssertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def get_method_result(self):
         return None
@@ -163,8 +164,8 @@ class AttaResultAssertion(AttaAssertion):
 
 class AttaDumpInfoAssertion(AttaAssertion):
 
-    def __init__(self, obj, assertion):
-        super().__init__(obj, assertion)
+    def __init__(self, obj, assertion, atta):
+        super().__init__(obj, assertion, atta)
 
     def run(self):
         return self._status, " ".join(self._messages), str(self)

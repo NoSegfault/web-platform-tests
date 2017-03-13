@@ -549,7 +549,7 @@ class AtkAtspiAtta(Atta):
 
         return ""
 
-    def _get_children(sefl, obj, **kwargs):
+    def _get_children(self, obj, **kwargs):
         try:
             count = Atspi.Accessible.get_child_count(obj)
         except:

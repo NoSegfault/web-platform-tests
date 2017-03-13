@@ -215,6 +215,52 @@ class Atta():
             thread = threading.Thread(target=self._server.shutdown)
             thread.start()
 
+    def _get_element_with_id(self, root, element_id, **kwargs):
+        """Returns the accessible descendant of root with the specified id."""
+
+        if not element_id:
+            return None
+
+        pred = lambda x: self._get_id(x) == element_id
+        return self._find_descendant(root, pred, **kwargs)
+
+    def _in_current_document(self, obj, **kwargs):
+        """Returns True if obj is an element in the current test's document."""
+
+        if not self._current_document:
+            return False
+
+        pred = lambda x: x == self._current_document
+        return self._find_ancestor(obj, pred, **kwargs) is not None
+
+    def _find_ancestor(self, obj, pred, **kwargs):
+        """Returns the ancestor of obj for which pred returns True."""
+
+        if obj is None:
+            return None
+
+        parent = self._get_parent(obj)
+        while parent:
+            if pred(parent):
+                return parent
+            parent = self._get_parent(parent)
+
+        return None
+
+    def _find_descendant(self, root, pred, **kwargs):
+        """Returns the descendant of root for which pred returns True."""
+
+        if pred(root) or root is None:
+            return root
+
+        children = self._get_children(root, **kwargs)
+        for child in children:
+            element = self._find_descendant(child, pred, **kwargs)
+            if element:
+                return element
+
+        return None
+
     def _get_system_api_version(self, **kwargs):
         """Returns a string with the installed version of the accessibility API."""
 
@@ -255,16 +301,28 @@ class Atta():
         self._print(self.LOG_DEBUG, log)
         return {"result": AttaAssertion.FAIL, "message": log, "log": log}
 
-    def _get_uri(self, obj, **kwargs):
-        """Returns the URI associated with obj or an empty string upon failure."""
+    def _get_id(self, obj, **kwargs):
+        """Returns the element id associated with obj or an empty string upon failure."""
+
+        self._print(self.LOG_DEBUG, "_get_id() not implemented")
+        return ""
+
+    def _get_uri(self, document, **kwargs):
+        """Returns the URI associated with document or an empty string upon failure."""
 
         self._print(self.LOG_DEBUG, "_get_uri() not implemented")
         return ""
 
-    def _get_element_with_id(self, root, element_id, **kwargs):
-        """Returns the accessible descendant of root with the specified id."""
+    def _get_children(sefl, obj, **kwargs):
+        """Returns the children of obj or [] upon failure or absence of children."""
 
-        self._print(self.LOG_DEBUG, "_get_element_with_id() not implemented")
+        self._print(self.LOG_DEBUG, "_get_children() not implemented")
+        return []
+
+    def _get_parent(self, obj, **kwargs):
+        """Returns the parent of obj or None upon failure."""
+
+        self._print(self.LOG_DEBUG, "_get_parent() not implemented")
         return None
 
     def _on_load_complete(self, data, **kwargs):
@@ -275,4 +333,4 @@ class Atta():
     def _on_test_event(self, data, **kwargs):
         """Callback for platform accessibility events the ATTA is testing."""
 
-        self._print(self.LOG_DEBUG, "_on_load_complete() not implemented")
+        self._print(self.LOG_DEBUG, "_on_test_event() not implemented")

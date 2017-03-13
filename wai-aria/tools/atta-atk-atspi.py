@@ -516,6 +516,18 @@ class AtkAtspiAtta(Atta):
 
         return {"result": result_value, "message": str(messages), "log": log}
 
+    def _get_id(self, obj, **kwargs):
+        if obj is None:
+            return ""
+
+        try:
+            attrs = Atspi.Accessible.get_attributes(obj) or {}
+        except:
+            return ""
+
+        # Gecko and WebKitGtk respectively
+        return attrs.get("id") or attrs.get("html-id") or ""
+
     def _get_uri(self, document, **kwargs):
         if document is None:
             return ""
@@ -524,7 +536,7 @@ class AtkAtspiAtta(Atta):
             Atspi.Accessible.clear_cache(document)
         except:
             self._print(self.LOG_ERROR, self._on_exception())
-            return False
+            return ""
 
         # Gecko and WebKitGtk respectively
         for name in ("DocURL", "URI"):
@@ -537,54 +549,23 @@ class AtkAtspiAtta(Atta):
 
         return ""
 
-    def _find_descendant(self, root, pred):
-        if pred(root) or root is None:
-            return root
-
+    def _get_children(sefl, obj, **kwargs):
         try:
-            child_count = Atspi.Accessible.get_child_count(root)
+            count = Atspi.Accessible.get_child_count(obj)
+        except:
+            print(self._on_exception())
+            return []
+
+        return [Atspi.Accessible.get_child_at_index(obj, i) for i in range(count)]
+
+    def _get_parent(self, obj, **kwargs):
+        try:
+            parent = Atspi.Accessible.get_parent(obj)
         except:
             print(self._on_exception())
             return None
 
-        for i in range(child_count):
-            child = Atspi.Accessible.get_child_at_index(root, i)
-            element = self._find_descendant(child, pred)
-            if element:
-                return element
-
-        return None
-
-    def _get_element_with_id(self, root, element_id, **kwargs):
-        if not element_id:
-            return None
-
-        def has_id(x):
-            try:
-                attrs = Atspi.Accessible.get_attributes(x) or {}
-            except:
-                return False
-
-            # Gecko and WebKitGtk respectively
-            id_attr = attrs.get("id") or attrs.get("html-id")
-            return element_id == id_attr
-
-        if has_id(root):
-            return root
-
-        return self._find_descendant(root, has_id)
-
-    def _in_current_document(self, obj):
-        if not (self._current_document and obj):
-            return False
-
-        parent = obj
-        while parent:
-            if parent == self._current_document:
-                return True
-            parent = Atspi.Accessible.get_parent(parent)
-
-        return False
+        return parent
 
     def _find_matching_symbol(self, atk_symbol, atspi_symbols):
         # Things which are unique or hard to reliably map via heuristic.

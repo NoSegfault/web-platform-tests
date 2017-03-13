@@ -50,6 +50,7 @@ class Atta():
         self._host = host
         self._port = int(port)
         self._server = None
+        self._server_thread = None
         self._atta_name = name
         self._atta_version = version
         self._api_name = api
@@ -100,7 +101,10 @@ class Atta():
         self._print(self.LOG_INFO, "Starting server on http://%s:%s/" % (self._host, self._port))
         self._server = HTTPServer((self._host, self._port), AttaRequestHandler)
         AttaRequestHandler.set_atta(self)
-        self._server.serve_forever()
+
+        if self._server_thread is None:
+            self._server_thread = threading.Thread(target=self._server.serve_forever)
+            self._server_thread.start()
 
     def get_info(self, **kwargs):
         """Returns a dict of details about this ATTA needed by the harness."""

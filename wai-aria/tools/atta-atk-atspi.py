@@ -571,6 +571,7 @@ class AtkAtspiAtta(Atta):
         # Things which are unique or hard to reliably map via heuristic.
         mappings = {
             "atk_selection_add_selection": "atspi_selection_select_child",
+            "atk_selection_ref_selection": "atspi_selection_get_selected_child",
         }
 
         mapped = mappings.get(atk_symbol)

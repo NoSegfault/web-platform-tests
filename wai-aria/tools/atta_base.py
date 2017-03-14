@@ -329,11 +329,61 @@ class Atta:
         self._print(self.LOG_DEBUG, "_get_parent() not implemented")
         return None
 
+    def get_property_value(self, obj, property_name, **kwargs):
+        """Returns the value of property_name for obj."""
+
+        self._print(self.LOG_DEBUG, "get_property_value() not implemented")
+        return None
+
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
         self._print(self.LOG_DEBUG, "get_relation_targets() not implemented")
         return []
+
+    def type_to_string(self, value, **kwargs):
+        """Returns the type of value as a harness-compliant string."""
+
+        value_type = type(value)
+
+        if value_type == str:
+            return "String"
+
+        if value_type == bool:
+            return "Boolean"
+
+        if value_type in (int, float):
+            return "Number"
+
+        if value_type in (tuple, list, set, range, dict):
+            return "List"
+
+        return "Undefined"
+
+    def value_to_string(self, value, **kwargs):
+        """Returns value (e.g. a platform contstant) as a string."""
+
+        value_type = type(value)
+
+        if value_type == str:
+            return value
+
+        if value_type == bool:
+            return str(value).lower()
+
+        if value_type in (int, float):
+            return str(value)
+
+        if value_type in (tuple, list, set):
+            return value_type(map(self.value_to_string, value))
+
+        if value_type == range:
+            return str(range)
+
+        if value_type == dict:
+            return {self.value_to_string(k): self.value_to_string(v) for k, v in value.items()}
+
+        return str(value)
 
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""

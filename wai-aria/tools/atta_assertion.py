@@ -76,47 +76,12 @@ class AttaAssertion:
         error = traceback.format_exc(limit=1, chain=False)
         self._messages.append(re.sub("\s+", " ", error))
 
-    def _value_to_string(self, value):
-        value_type = type(value)
-
-        if value_type == str:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "String"
-            return value
-
-        if value_type == bool:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "Boolean"
-            return str(value).lower()
-
-        if value_type in (int, float):
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "Number"
-            return str(value)
-
-        if value_type in (tuple, list, set):
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "List"
-            return value_type(map(self._value_to_string, value))
-
-        if value_type == range:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "List"
-            return str(range)
-
-        if value_type == dict:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "List"
-            return {self._value_to_string(k): self._value_to_string(v) for k, v in value.items()}
-
-        if self._expectation == self.EXPECTATION_IS_TYPE:
-            return "Undefined"
-
-        return str(value)
-
     def _get_result(self):
         value = self._get_value()
-        self._actual_value = self._value_to_string(value)
+        if self._expectation == self.EXPECTATION_IS_TYPE:
+            self._actual_value = self._atta.type_to_string(value)
+        else:
+            self._actual_value = self._atta.value_to_string(value)
 
         if self._expectation == self.EXPECTATION_IS:
             result = self._expected_value == self._actual_value
@@ -145,14 +110,15 @@ class AttaAssertion:
     def _get_value(self):
         pass
 
+    def run(self):
+        self._get_result()
+        return self._status, " ".join(self._messages), str(self)
+
 
 class AttaEventAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
-
-    def run(self):
-        return self._status, " ".join(self._messages), str(self)
 
 
 class AttaPropertyAssertion(AttaAssertion):
@@ -160,11 +126,14 @@ class AttaPropertyAssertion(AttaAssertion):
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
 
-    def get_property_value(self):
-        return None
+    def _get_value(self):
+        try:
+            value = self._atta.get_property_value(self._obj, self._test_string)
+        except Exception as error:
+            self._messages.append("ERROR: %s" % error)
+            return None
 
-    def run(self):
-        return self._status, " ".join(self._messages), str(self)
+        return value
 
 
 class AttaRelationAssertion(AttaAssertion):
@@ -173,12 +142,13 @@ class AttaRelationAssertion(AttaAssertion):
         super().__init__(obj, assertion, atta)
 
     def _get_value(self):
-        targets = self._atta.get_relation_targets(self._obj, self._test_string)
-        return "[%s]" % " ".join(self._value_to_string(targets))
+        try:
+            targets = self._atta.get_relation_targets(self._obj, self._test_string)
+        except Exception as error:
+            self._messages.append("ERROR: %s" % error)
+            return None
 
-    def run(self):
-        self._get_result()
-        return self._status, " ".join(self._messages), str(self)
+        return "[%s]" % " ".join(self._atta.value_to_string(targets))
 
 
 class AttaResultAssertion(AttaAssertion):
@@ -189,14 +159,8 @@ class AttaResultAssertion(AttaAssertion):
     def get_method_result(self):
         return None
 
-    def run(self):
-        return self._status, " ".join(self._messages), str(self)
-
 
 class AttaDumpInfoAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
-
-    def run(self):
-        return self._status, " ".join(self._messages), str(self)

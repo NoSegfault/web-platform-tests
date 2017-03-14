@@ -38,7 +38,7 @@ class Assertion(AttaAssertion):
 
         test_class = assertion[0]
         if test_class == cls.CLASS_PROPERTY:
-            return PropertyAssertion
+            return AttaPropertyAssertion
         if test_class == cls.CLASS_EVENT:
             return EventAssertion
         if test_class == cls.CLASS_RELATION:
@@ -48,102 +48,6 @@ class Assertion(AttaAssertion):
 
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
-
-    def _value_to_string(self, value):
-        value_type = type(value)
-
-        if value_type == Atspi.Accessible:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "Object"
-            try:
-                attrs = Atspi.Accessible.get_attributes(value)
-                return attrs.get("id") or attrs.get("html-id")
-            except:
-                self._on_exception()
-                return ""
-
-        if value_type == Atspi.Relation:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "Object"
-            return self._value_to_string(Atspi.Relation.get_relation_type(value))
-
-        if value_type == Atspi.StateSet:
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "List"
-
-            all_states = [Atspi.StateType(i) for i in range(Atspi.StateType.LAST_DEFINED)]
-            states = [s for s in all_states if value.contains(s)]
-            return list(map(self._value_to_string, states))
-
-        if value_type in (Atspi.Role, Atspi.RelationType, Atspi.StateType):
-            if self._expectation == self.EXPECTATION_IS_TYPE:
-                return "Constant"
-
-            if not 0 <= value.real < value_type.LAST_DEFINED:
-                self._messages.append("ERROR: %s is not valid value" % value)
-                return str(value)
-
-            value_name = value.value_name.replace("ATSPI_", "")
-            if value_type is Atspi.Role:
-                # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
-                # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
-                value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
-            return value_name
-
-        if value_type == Atspi.Event:
-            try:
-                role = self._value_to_string(Atspi.Accessible.get_role(value.source))
-                objid = self._value_to_string(value.source) or ""
-                any_data = self._value_to_string(value.any_data)
-            except:
-                self._on_exception()
-                return ""
-
-            if objid:
-                objid = " (%s)" % objid
-
-            return "%s(%i,%i,%s) by %s%s" % \
-                (value.type, value.detail1, value.detail2, any_data, role, objid)
-
-        return super()._value_to_string(value)
-
-
-class PropertyAssertion(Assertion, AttaPropertyAssertion):
-
-    GETTERS = {
-        "accessible": lambda x: x is not None,
-        "childCount": Atspi.Accessible.get_child_count,
-        "description": Atspi.Accessible.get_description,
-        "name": Atspi.Accessible.get_name,
-        "interfaces": Atspi.Accessible.get_interfaces,
-        "objectAttributes": Atspi.Accessible.get_attributes_as_array,
-        "parent": Atspi.Accessible.get_parent,
-        "relations": Atspi.Accessible.get_relation_set,
-        "role": Atspi.Accessible.get_role,
-        "states": Atspi.Accessible.get_state_set,
-    }
-
-    def __init__(self, obj, assertion, atta):
-        super().__init__(obj, assertion, atta)
-
-    def get_property_value(self):
-        if not (self._obj or self._test_string == "accessible"):
-            self._messages.append("ERROR: Accessible object not found")
-            return None
-
-        getter = self.GETTERS.get(self._test_string)
-        if getter:
-            return getter(self._obj)
-
-        self._messages.append("ERROR: Unhandled property: %s" % self._test_string)
-        return None
-
-    def _get_value(self):
-        return self.get_property_value()
-
-    def run(self):
-        self._get_result()
-        return self._status, " ".join(self._messages), str(self)
 
 
 class ResultAssertion(Assertion, AttaResultAssertion):
@@ -234,7 +138,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
             else:
                 self._on_exception()
         else:
-            return self._value_to_string(value)
+            return self._atta.value_to_string(value)
 
         return None
 
@@ -247,7 +151,7 @@ class EventAssertion(Assertion, AttaEventAssertion):
 
     def __init__(self, obj, assertion, atta, events):
         super().__init__(obj, assertion, atta)
-        self._actual_value = list(map(self._value_to_string, events))
+        self._actual_value = list(map(self._atta.value_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
         self._matching_events = []
 
@@ -293,6 +197,8 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         super().__init__(obj, assertion, atta)
 
     def run(self):
+        return self._status, " ".join(self._messages), ""
+
         info = {}
         info["PropertyAssertion Candidates"] = {}
         for prop, getter in PropertyAssertion.GETTERS.items():
@@ -308,7 +214,7 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
                 methods.append(ResultAssertion.get_method_details(method))
         info["ResultAssertion Candidate Methods"] = sorted(methods)
 
-        info = self._value_to_string(info)
+        info = self._atta.value_to_string(info)
         log = json.dumps(info, indent=4, sort_keys=True)
         self._status = self.STATUS_FAIL
         return self._status, " ".join(self._messages), log
@@ -573,26 +479,44 @@ class AtkAtta(Atta):
 
         return None
 
+    def get_property_value(self, obj, property_name, **kwargs):
+        """Returns the value of property_name for obj."""
+
+        getters = {
+            "accessible": lambda x: x is not None,
+            "childCount": Atspi.Accessible.get_child_count,
+            "description": Atspi.Accessible.get_description,
+            "name": Atspi.Accessible.get_name,
+            "interfaces": Atspi.Accessible.get_interfaces,
+            "objectAttributes": Atspi.Accessible.get_attributes_as_array,
+            "parent": Atspi.Accessible.get_parent,
+            "relations": Atspi.Accessible.get_relation_set,
+            "role": Atspi.Accessible.get_role,
+            "states": Atspi.Accessible.get_state_set,
+        }
+
+        if not obj and property_name != "accessible":
+            raise AttributeError("Object not found")
+
+        getter = getters.get(property_name)
+        if getter is None:
+            raise ValueError("Unsupported property: %s" % property_name)
+
+        return getter(obj)
+
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
-        if not obj:
-            return []
+        if not obj and property_name != "accessible":
+            raise AttributeError("Object not found")
 
-        try:
-            relations = Atspi.Accessible.get_relation_set(obj)
-        except:
-            print(self._on_exception())
-            return []
+        for relation in Atspi.Accessible.get_relation_set(obj):
+            r_type = Atspi.Relation.get_relation_type(relation)
+            n_targets = Atspi.Relation.get_n_targets(relation)
+            if self.value_to_string(r_type) == relation_type and n_targets:
+                return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
 
-        is_type = lambda x: Atspi.Relation.get_relation_type(x) == relation_type
-        relations = list(filter(is_type, relations))
-        if not len(relations) == 1:
-            return []
-
-        relation = relations[0]
-        n_targets = Atspi.Relation.get_n_targets(relation)
-        return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
+        return []
 
     def get_testable_api_methods(self):
         """Returns the list of platform accessibility API methods this ATTA supports."""
@@ -650,6 +574,54 @@ class AtkAtta(Atta):
                 self._testable_api_methods[symbol] = {"ATSPI": function_info}
 
         return self._testable_api_methods
+
+    def type_to_string(self, value, **kwargs):
+        """Returns the type of value as a harness-compliant string."""
+
+        value_type = type(value)
+        if value_type in (Atspi.Accessible, Atspi.Relation):
+            return "Object"
+
+        if value_type == Atspi.StateSet:
+            return "List"
+
+        if value_type in (Atspi.Role, Atspi.RelationType, Atspi.StateType):
+            return "Constant"
+
+        return super().type_to_string(value, **kwargs)
+
+    def value_to_string(self, value, **kwargs):
+        """Returns value (e.g. a platform contstant) as a string."""
+
+        value_type = type(value)
+        if value_type == Atspi.Accessible:
+            return self._get_id(value, **kwargs)
+
+        if value_type == Atspi.Relation:
+            return self.value_to_string(Atspi.Relation.get_relation_type(value))
+
+        if value_type == Atspi.StateSet:
+            all_states = [Atspi.StateType(i) for i in range(Atspi.StateType.LAST_DEFINED)]
+            states = [s for s in all_states if value.contains(s)]
+            return list(map(self.value_to_string, states))
+
+        if value_type in (Atspi.Role, Atspi.RelationType, Atspi.StateType):
+            value_name = value.value_name.replace("ATSPI_", "")
+            if value_type == Atspi.Role:
+                # ATK (which we're testing) has ROLE_STATUSBAR; AT-SPI (which we're using)
+                # has ROLE_STATUS_BAR. ATKify the latter so we can verify the former.
+                value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
+            return value_name
+
+        if value_type == Atspi.Event:
+            role = self.value_to_string(Atspi.Accessible.get_role(value.source))
+            objid = "(id=%s)" % (self.value_to_string(value.source) or "")
+            detail1 = value.detail1
+            detail2 = value.detail2
+            any_data = self.value_to_string(value.any_data)
+            return "%s(%i,%i,%s) by %s %s" % (value.type, detail1, detail2, any_data, role, objid)
+
+        return super().value_to_string(value, **kwargs)
 
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""

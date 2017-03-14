@@ -12,16 +12,16 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import argparse
-import gi
 import json
 import re
 import sys
 import threading
 
+import gi
 gi.require_version("Atk", "1.0")
 gi.require_version("Atspi", "2.0")
-
 from gi.repository import Atk, Atspi, Gio, GLib
+
 from atta_base import Atta
 from atta_assertion import *
 
@@ -127,15 +127,15 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
 
     GETTERS = {
         "accessible": lambda x: x is not None,
-        "childCount": lambda x: Atspi.Accessible.get_child_count(x),
-        "description": lambda x: Atspi.Accessible.get_description(x),
-        "name": lambda x: Atspi.Accessible.get_name(x),
-        "interfaces": lambda x: Atspi.Accessible.get_interfaces(x),
-        "objectAttributes": lambda x: Atspi.Accessible.get_attributes_as_array(x),
-        "parent": lambda x: Atspi.Accessible.get_parent(x),
-        "relations": lambda x: Atspi.Accessible.get_relation_set(x),
-        "role": lambda x: Atspi.Accessible.get_role(x),
-        "states": lambda x: Atspi.Accessible.get_state_set(x),
+        "childCount": Atspi.Accessible.get_child_count,
+        "description": Atspi.Accessible.get_description,
+        "name": Atspi.Accessible.get_name,
+        "interfaces": Atspi.Accessible.get_interfaces,
+        "objectAttributes": Atspi.Accessible.get_attributes_as_array,
+        "parent": Atspi.Accessible.get_parent,
+        "relations": Atspi.Accessible.get_relation_set,
+        "role": Atspi.Accessible.get_role,
+        "states": Atspi.Accessible.get_state_set,
     }
 
     def __init__(self, obj, assertion, atta):
@@ -594,7 +594,8 @@ class AtkAtta(Atta):
 
         return parent
 
-    def _find_matching_symbol(self, atk_symbol, atspi_symbols):
+    @staticmethod
+    def _find_matching_symbol(atk_symbol, atspi_symbols):
         """Returns the symbol in atspi_symbols which is equivalent to atk_symbol."""
 
         # Things which are unique or hard to reliably map via heuristic.

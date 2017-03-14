@@ -70,7 +70,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
             function = self._test_string
             function_args = ""
 
-        methods = self._atta.get_testable_api_methods()
+        methods = self._atta.get_supported_methods()
         info_dict = methods.get(function)
         if not info_dict:
             self._messages.append("ERROR: '%s' method not found." % function)
@@ -197,22 +197,20 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         super().__init__(obj, assertion, atta)
 
     def run(self):
-        return self._status, " ".join(self._messages), ""
-
         info = {}
-        info["PropertyAssertion Candidates"] = {}
-        for prop, getter in PropertyAssertion.GETTERS.items():
-            info["PropertyAssertion Candidates"][prop] = getter(self._obj)
 
+        properties = {}
+        supported_properties = self._atta.get_supported_properties(self._obj)
+        for supported_property in supported_properties.keys():
+            properties[supported_property] = self._atta.get_property_value(self._obj, supported_property)
+        info["properties"] = properties
+
+        supported_methods = self._atta.get_supported_methods(self._obj)
         methods = []
-        ifaces = dict.fromkeys(info["PropertyAssertion Candidates"].get("interfaces", []))
-        supported = self._atta.get_testable_api_methods()
-        for function_info_dict in supported.values():
+        for function_info_dict in supported_methods.values():
             method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
-            iface = method.get_container().get_name()
-            if iface in ifaces:
-                methods.append(ResultAssertion.get_method_details(method))
-        info["ResultAssertion Candidate Methods"] = sorted(methods)
+            methods.append(ResultAssertion.get_method_details(method))
+        info["supported methods"] = sorted(methods)
 
         info = self._atta.value_to_string(info)
         log = json.dumps(info, indent=4, sort_keys=True)
@@ -229,7 +227,7 @@ class AtkAtta(Atta):
         self._api_min_version = "2.20.0"
         self._listener_thread = None
         self._proxy = None
-        self._testable_api_methods = {}
+        self._interfaces = []
 
         try:
             Atspi.get_desktop(0)
@@ -238,7 +236,11 @@ class AtkAtta(Atta):
             self._enabled = False
             return
 
-        self._testable_api_methods = self.get_testable_api_methods()
+        gir = gi.Repository.get_default()
+        info = gir.find_by_name("Atspi", "Accessible")
+        ifaces = [x.get_name() for x in info.get_interfaces()]
+        self._interfaces = list(filter(lambda x: gir.find_by_name("Atk", x), ifaces))
+
         super().__init__(host, port, name, version, api, Atta.LOG_INFO)
 
     def start(self, **kwargs):
@@ -479,31 +481,6 @@ class AtkAtta(Atta):
 
         return None
 
-    def get_property_value(self, obj, property_name, **kwargs):
-        """Returns the value of property_name for obj."""
-
-        getters = {
-            "accessible": lambda x: x is not None,
-            "childCount": Atspi.Accessible.get_child_count,
-            "description": Atspi.Accessible.get_description,
-            "name": Atspi.Accessible.get_name,
-            "interfaces": Atspi.Accessible.get_interfaces,
-            "objectAttributes": Atspi.Accessible.get_attributes_as_array,
-            "parent": Atspi.Accessible.get_parent,
-            "relations": Atspi.Accessible.get_relation_set,
-            "role": Atspi.Accessible.get_role,
-            "states": Atspi.Accessible.get_state_set,
-        }
-
-        if not obj and property_name != "accessible":
-            raise AttributeError("Object not found")
-
-        getter = getters.get(property_name)
-        if getter is None:
-            raise ValueError("Unsupported property: %s" % property_name)
-
-        return getter(obj)
-
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
@@ -518,15 +495,22 @@ class AtkAtta(Atta):
 
         return []
 
-    def get_testable_api_methods(self):
-        """Returns the list of platform accessibility API methods this ATTA supports."""
+    def get_supported_methods(self, obj=None, **kwargs):
+        """Returns a name:callable dict of supported platform methods."""
 
-        if self._testable_api_methods:
-            return self._testable_api_methods
+        if obj is None:
+            obj_interfaces = self._interfaces
+        else:
+            obj_interfaces = self.get_property_value(obj, "interfaces")
 
-        gir = gi.Repository.get_default()
-        info = gir.find_by_name("Atspi", "Accessible")
-        interfaces = [x.get_name() for x in info.get_interfaces()]
+        def _include(info_dict):
+            method = info_dict.get("ATK") or info_dict.get("ATSPI")
+            interface = method.get_container().get_name()
+            return interface in obj_interfaces
+
+        if self._supported_methods:
+            return {k: v for k, v in self._supported_methods.items() if _include(v)}
+            return self._supported_methods
 
         # These setters have corresponding getters in ATK, which we can test
         # via a matching AT-SPI2 getter. More importantly, they lack matching
@@ -543,16 +527,11 @@ class AtkAtta(Atta):
             "atk_table_set_summary",
         ]
 
-        for iface in interfaces:
-            # If an interface is in AT-SPI2 but not ATK, it's a utility which
-            # user agent implementors do not implement. If it's in ATK, but not
-            # AT-SPI2, implementors implement it, but we cannot directly call
-            # the implemented methods via an AT-SPI2 interface.
+        gir = gi.Repository.get_default()
+
+        for iface in self._interfaces:
             atk_info = gir.find_by_name("Atk", iface)
             atspi_info = gir.find_by_name("Atspi", iface)
-            if not (atk_info and atspi_info):
-                continue
-
             atk_methods = {m.get_symbol(): m for m in atk_info.get_methods()}
             atspi_methods = {m.get_symbol(): m for m in atspi_info.get_methods()}
 
@@ -565,15 +544,36 @@ class AtkAtta(Atta):
                 atspi_symbol = self._find_matching_symbol(atk_symbol, atspi_symbols)
                 if atspi_symbol:
                     value["ATSPI"] = atspi_methods.pop(atspi_symbol)
-                self._testable_api_methods[atk_symbol] = value
+                self._supported_methods[atk_symbol] = value
 
             # These items weren't matched cleanly with an ATK method, but we may need
             # to use them. Example: To test atk_table_cell_get_position() we need both
             # atspi_table_cell_get_row_index() and atspi_table_cell_get_column_index().
             for symbol, function_info in atspi_methods.items():
-                self._testable_api_methods[symbol] = {"ATSPI": function_info}
+                self._supported_methods[symbol] = {"ATSPI": function_info}
 
-        return self._testable_api_methods
+        return {k: v for k, v in self._supported_methods.items() if _include(v)}
+
+    def get_supported_properties(self, obj=None, **kwargs):
+        """Returns a name:callable dict of supported platform properties."""
+
+        if self._supported_properties:
+            return self._supported_properties
+
+        self._supported_properties = {
+            "accessible": lambda x: x is not None,
+            "childCount": Atspi.Accessible.get_child_count,
+            "description": Atspi.Accessible.get_description,
+            "name": Atspi.Accessible.get_name,
+            "interfaces": Atspi.Accessible.get_interfaces,
+            "objectAttributes": Atspi.Accessible.get_attributes_as_array,
+            "parent": Atspi.Accessible.get_parent,
+            "relations": Atspi.Accessible.get_relation_set,
+            "role": Atspi.Accessible.get_role,
+            "states": Atspi.Accessible.get_state_set,
+        }
+
+        return self._supported_properties
 
     def type_to_string(self, value, **kwargs):
         """Returns the type of value as a harness-compliant string."""

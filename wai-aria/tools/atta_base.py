@@ -62,6 +62,8 @@ class Atta:
         self._monitored_event_types = []
         self._event_history = []
         self._listeners = {}
+        self._supported_methods = {}
+        self._supported_properties = {}
 
         if not sys.version_info[0] == 3:
             self._print(self.LOG_ERROR, "This ATTA requires Python 3.")
@@ -73,6 +75,8 @@ class Atta:
            and not self._set_accessibility_enabled(True):
             return
 
+        self._supported_methods = self.get_supported_methods()
+        self._supported_properties = self.get_supported_properties()
         self._enabled = True
 
     @staticmethod
@@ -332,14 +336,33 @@ class Atta:
     def get_property_value(self, obj, property_name, **kwargs):
         """Returns the value of property_name for obj."""
 
-        self._print(self.LOG_DEBUG, "get_property_value() not implemented")
-        return None
+        if not obj and property_name != "accessible":
+            raise AttributeError("Object not found")
+
+        getters = self.get_supported_properties(**kwargs)
+        getter = getters.get(property_name)
+        if getter is None:
+            raise ValueError("Unsupported property: %s" % property_name)
+
+        return getter(obj)
 
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
         self._print(self.LOG_DEBUG, "get_relation_targets() not implemented")
         return []
+
+    def get_supported_methods(self, obj=None, **kwargs):
+        """Returns a name:callable dict of supported platform methods."""
+
+        self._print(self.LOG_DEBUG, "get_supported_methods() not implemented")
+        return {}
+
+    def get_supported_properties(self, obj=None, **kwargs):
+        """Returns a name:callable dict of supported platform properties."""
+
+        self._print(self.LOG_DEBUG, "get_supported_properties() not implemented")
+        return {}
 
     def type_to_string(self, value, **kwargs):
         """Returns the type of value as a harness-compliant string."""

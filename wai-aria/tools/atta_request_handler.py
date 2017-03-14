@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # atta_request_handler
-# Shareable Request Handler for Accessible Technology Test Adapters
+# Optional Request Handler for Accessible Technology Test Adapters
 #
 # Developed by Joanmarie Diggs (@joanmarie)
 # Copyright (c) 2016-2017 Igalia, S.L.
@@ -10,7 +10,6 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import json
-import sys
 import time
 import traceback
 
@@ -18,12 +17,13 @@ from http.server import BaseHTTPRequestHandler
 
 
 class AttaRequestHandler(BaseHTTPRequestHandler):
+    """Optional request handler for python3 Accessible Technology Test Adapters."""
 
     _atta = None
 
     @classmethod
-    def set_atta(self, atta):
-        self._atta = atta
+    def set_atta(cls, atta):
+        cls._atta = atta
 
     def do_GET(self):
         self.dispatch()
@@ -46,7 +46,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             print("UNHANDLED PATH: %s" % self.path)
             self.send_error()
 
-    def send_error(self):
+    def send_error(self, code, message=None):
         self.send_response(404)
         self.send_header("Content-Type", "text/plain")
         self.add_headers()
@@ -78,7 +78,6 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             content = self.rfile.read(int(length))
             submission = json.loads(content.decode("utf-8"))
         except:
-            etype, evalue, tb = sys.exc_info()
             error = traceback.format_exc(limit=1, chain=False)
             errors.append(error)
 

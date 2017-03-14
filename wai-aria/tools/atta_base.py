@@ -20,7 +20,7 @@ from atta_assertion import AttaAssertion
 from atta_request_handler import AttaRequestHandler
 
 
-class Atta():
+class Atta:
     """Optional base class for python3 Accessible Technology Test Adapters."""
 
     STATUS_ERROR = "ERROR"
@@ -75,10 +75,10 @@ class Atta():
 
         self._enabled = True
 
-    def _on_exception(self, **kwargs):
+    @staticmethod
+    def _on_exception():
         """Handles exceptions, returning a string with the error."""
 
-        etype, evalue, tb = sys.exc_info()
         return "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
 
     def _print(self, level, string, **kwargs):
@@ -154,9 +154,9 @@ class Atta():
         self._monitored_event_types = []
         self._event_history = []
 
-        for e in event_types:
-            self._register_listener(e, self._on_test_event, **kwargs)
-            self._monitored_event_types.append(e)
+        for event_type in event_types:
+            self._register_listener(event_type, self._on_test_event, **kwargs)
+            self._monitored_event_types.append(event_type)
 
     def run_tests(self, obj_id, assertions):
         """Runs the assertions on the object with the specified id, returning
@@ -186,8 +186,8 @@ class Atta():
     def stop_listen(self, **kwargs):
         """Causes the ATTA to stop listening for the specified events."""
 
-        for e in self._monitored_event_types:
-            self._deregister_listener(e, self._on_test_event, **kwargs)
+        for event_type in self._monitored_event_types:
+            self._deregister_listener(event_type, self._on_test_event, **kwargs)
 
         self._monitored_event_types = []
         self._event_history = []
@@ -303,7 +303,7 @@ class Atta():
 
         log = "_run_test() not implemented"
         self._print(self.LOG_DEBUG, log)
-        return {"result": AttaAssertion.FAIL, "message": log, "log": log}
+        return {"result": AttaAssertion.STATUS_FAIL, "message": log, "log": log}
 
     def _get_id(self, obj, **kwargs):
         """Returns the element id associated with obj or an empty string upon failure."""
@@ -317,7 +317,7 @@ class Atta():
         self._print(self.LOG_DEBUG, "_get_uri() not implemented")
         return ""
 
-    def _get_children(sefl, obj, **kwargs):
+    def _get_children(self, obj, **kwargs):
         """Returns the children of obj or [] upon failure or absence of children."""
 
         self._print(self.LOG_DEBUG, "_get_children() not implemented")

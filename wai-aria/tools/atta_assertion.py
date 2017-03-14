@@ -10,7 +10,6 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import re
-import sys
 import traceback
 
 from textwrap import TextWrapper
@@ -74,7 +73,6 @@ class AttaAssertion:
                    messages=_wrap(self._messages))
 
     def _on_exception(self):
-        etype, evalue, tb = sys.exc_info()
         error = traceback.format_exc(limit=1, chain=False)
         self._messages.append(re.sub("\s+", " ", error))
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
-# atta-atk-atspi
+# atk_atta
 #
-# Accessible Technology Test Adapter for ATK/AT-SPI2
+# Accessible Technology Test Adapter for ATK
 # Tests ATK (server-side) implementations via AT-SPI2 (client-side)
 #
 # Developed by Joanmarie Diggs (@joanmarie)
@@ -14,19 +14,15 @@
 import argparse
 import gi
 import json
-import os
 import re
 import sys
 import threading
-import time
-import traceback
 
 gi.require_version("Atk", "1.0")
 gi.require_version("Atspi", "2.0")
 
 from gi.repository import Atk, Atspi, Gio, GLib
 from atta_base import Atta
-from atta_request_handler import AttaRequestHandler
 from atta_assertion import *
 
 
@@ -82,7 +78,7 @@ class Assertion(AttaAssertion):
             if self._expectation == self.EXPECTATION_IS_TYPE:
                 return "Constant"
 
-            if not (0 <= value.real < value_type.LAST_DEFINED):
+            if not 0 <= value.real < value_type.LAST_DEFINED:
                 self._messages.append("ERROR: %s is not valid value" % value)
                 return str(value)
 
@@ -95,6 +91,9 @@ class Assertion(AttaAssertion):
 
         return super()._value_to_string(value)
 
+    def _get_value(self):
+        pass
+
     def _get_result(self):
         self._actual_value = self._get_value()
         self._actual_value = self._value_to_string(self._actual_value)
@@ -106,7 +105,7 @@ class Assertion(AttaAssertion):
         elif self._expectation == self.EXPECTATION_CONTAINS:
             result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            result = self._actual_value is not None and self._expected_value not in self._actual_value
+            result = self._actual_value and self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
             result = self._actual_value in self._expected_value
         elif self._expectation == self.EXPECTATION_IS_TYPE:
@@ -180,11 +179,11 @@ class RelationAssertion(Assertion, AttaRelationAssertion):
             self._on_exception()
             return []
 
-        for r in relation_set:
-            rtype = Atspi.Relation.get_relation_type(r)
+        for relation in relation_set:
+            rtype = Atspi.Relation.get_relation_type(relation)
             if self._value_to_string(rtype) == self._test_string:
-                n_targets = Atspi.Relation.get_n_targets(r)
-                return [Atspi.Relation.get_target(r, i) for i in range(n_targets)]
+                n_targets = Atspi.Relation.get_n_targets(relation)
+                return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
 
         return []
 
@@ -211,11 +210,11 @@ class ResultAssertion(Assertion, AttaResultAssertion):
         self._args = []
 
         try:
-            function, args = re.split("\(", self._test_string, maxsplit=1)
-            args = args[:-1]
+            function, function_args = re.split("\(", self._test_string, maxsplit=1)
+            function_args = function_args[:-1]
         except ValueError:
             function = self._test_string
-            args = ""
+            function_args = ""
 
         methods = self._atta.get_testable_api_methods()
         info_dict = methods.get(function)
@@ -232,7 +231,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
             return
 
         expectedargs = self._method.get_arguments()
-        actualargs = list(filter(lambda x: x != "", args.split(",")))
+        actualargs = list(filter(lambda x: x != "", function_args.split(",")))
         argtypes = list(map(self._get_arg_type, expectedargs))
         if len(expectedargs) > len(actualargs):
             expected = ", ".join(map(lambda x: x.__name__, argtypes))
@@ -246,7 +245,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
                 self._args.append(argtype(arg))
             except:
                 info = self._get_arg_info(expectedargs[i])
-                self._messages.append("ERROR: Argument %i should be %s (got: %s)\n" % (i, info, arg))
+                self._messages.append("ERROR: Argument %i should be %s (got %s)\n" % (i, info, arg))
                 self._error = True
 
     @classmethod
@@ -264,11 +263,11 @@ class ResultAssertion(Assertion, AttaResultAssertion):
     @classmethod
     def get_method_details(cls, method):
         symbol = method.get_symbol()
-        args = list(map(cls._get_arg_info, method.get_arguments()))
-        rv = "%s(%s)" % (symbol, ", ".join(args))
+        method_args = list(map(cls._get_arg_info, method.get_arguments()))
+        string = "%s(%s)" % (symbol, ", ".join(method_args))
         if method.is_deprecated():
-            rv = "DEPRECATED: %s" % rv
-        return rv
+            string = "DEPRECATED: %s" % string
+        return string
 
     def _get_value(self):
         if self._error:
@@ -296,7 +295,7 @@ class ResultAssertion(Assertion, AttaResultAssertion):
 
 class EventAssertion(Assertion, AttaEventAssertion):
 
-    def __init__(self, obj, assertion, atta, events=[]):
+    def __init__(self, obj, assertion, atta, events):
         super().__init__(obj, assertion, atta)
         self._actual_value = list(map(self._event_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
@@ -324,10 +323,10 @@ class EventAssertion(Assertion, AttaEventAssertion):
 
         self._matching_events = list(matches)
 
-    def _event_to_string(self, e):
+    def _event_to_string(self, event):
         try:
-            role = Atspi.Accessible.get_role(e.source)
-            objid = self._value_to_string(e.source) or ""
+            role = Atspi.Accessible.get_role(event.source)
+            objid = self._value_to_string(event.source) or ""
         except:
             role = "[DEAD]"
             objid = "EXCEPTION GETTING ID"
@@ -336,7 +335,9 @@ class EventAssertion(Assertion, AttaEventAssertion):
             if objid:
                 objid = " (%s)" % objid
 
-        return "%s(%i,%i,%s) by %s%s" % (e.type, e.detail1, e.detail2, e.any_data, role, objid)
+        string = "%s(%i,%i,%s) by %s%s" % \
+                 (event.type, event.detail1, event.detail2, event.any_data, role, objid)
+        return string
 
     def _get_result(self):
         if self._matching_events:
@@ -365,8 +366,8 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
 
         methods = []
         ifaces = dict.fromkeys(info["PropertyAssertion Candidates"].get("interfaces", []))
-        supported = atta.get_testable_api_methods()
-        for symbol, function_info_dict in supported.items():
+        supported = self._atta.get_testable_api_methods()
+        for function_info_dict in supported.values():
             method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
             iface = method.get_container().get_name()
             if iface in ifaces:
@@ -379,17 +380,19 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         return self._status, " ".join(self._messages), log
 
 
-class AtkAtspiAtta(Atta):
-    """Accessible Technology Test Adapter using AT-SPI2 to test ATK support."""
+class AtkAtta(Atta):
+    """Accessible Technology Test Adapter to test ATK support."""
 
     def __init__(self, host, port, name="ATTA for ATK", version="0.1", api="ATK"):
+        """Initializes this ATTA."""
+
         self._api_min_version = "2.20.0"
         self._listener_thread = None
         self._proxy = None
         self._testable_api_methods = {}
 
         try:
-            desktop = Atspi.get_desktop(0)
+            Atspi.get_desktop(0)
         except:
             self._print(self.LOG_ERROR, "Could not get desktop from AT-SPI2.")
             self._enabled = False
@@ -399,6 +402,8 @@ class AtkAtspiAtta(Atta):
         super().__init__(host, port, name, version, api, Atta.LOG_INFO)
 
     def start(self, **kwargs):
+        """Starts this ATTA (i.e. before running a series of tests)."""
+
         if not self._enabled:
             return
 
@@ -412,6 +417,8 @@ class AtkAtspiAtta(Atta):
         super().start(**kwargs)
 
     def shutdown(self, signum=None, frame=None, **kwargs):
+        """Shuts down this ATTA (i.e. after all tests have been run)."""
+
         if not self._enabled:
             return
 
@@ -424,6 +431,8 @@ class AtkAtspiAtta(Atta):
         super().shutdown(signum, frame, **kwargs)
 
     def _get_system_api_version(self, **kwargs):
+        """Returns a string with the installed version of the accessibility API."""
+
         try:
             version = Atk.get_version()
         except:
@@ -439,6 +448,8 @@ class AtkAtspiAtta(Atta):
         return version
 
     def _get_accessibility_enabled(self, **kwargs):
+        """Returns True if accessibility support is enabled on this platform."""
+
         try:
             self._proxy = Gio.DBusProxy.new_for_bus_sync(
                 Gio.BusType.SESSION,
@@ -456,11 +467,13 @@ class AtkAtspiAtta(Atta):
         return enabled
 
     def _set_accessibility_enabled(self, enable, **kwargs):
+        """Returns True if accessibility support was successfully set."""
+
         if not self._proxy:
             return False
 
-        vEnable = GLib.Variant("b", enable)
-        self._proxy.Set("(ssv)", "org.a11y.Status", "IsEnabled", vEnable)
+        should_enable = GLib.Variant("b", enable)
+        self._proxy.Set("(ssv)", "org.a11y.Status", "IsEnabled", should_enable)
         success = self._get_accessibility_enabled() == enable
 
         if success and enable:
@@ -470,16 +483,22 @@ class AtkAtspiAtta(Atta):
         return success
 
     def _register_listener(self, event_type, callback, **kwargs):
+        """Registers an accessible-event listener on the platform."""
+
         listener = self._listeners.get(callback, Atspi.EventListener.new(callback))
         Atspi.EventListener.register(listener, event_type)
         self._listeners[callback] = listener
 
     def _deregister_listener(self, event_type, callback, **kwargs):
+        """De-registers an accessible-event listener on the platform."""
+
         listener = self._listeners.get(callback)
         if listener:
             Atspi.EventListener.deregister(listener, event_type)
 
     def _create_platform_assertions(self, assertions, **kwargs):
+        """Performs platform-specific changes needed to harness assertions."""
+
         is_event = lambda x: x and x[0] == "event"
         event_assertions = list(filter(is_event, assertions))
         if not event_assertions:
@@ -508,15 +527,17 @@ class AtkAtspiAtta(Atta):
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
         elif test_class == EventAssertion:
-            test = test_class(obj, assertion, atta, self._event_history)
+            test = test_class(obj, assertion, self, self._event_history)
             result_value, messages, log = test.run()
         else:
-            test = test_class(obj, assertion, atta)
+            test = test_class(obj, assertion, self)
             result_value, messages, log = test.run()
 
         return {"result": result_value, "message": str(messages), "log": log}
 
     def _get_id(self, obj, **kwargs):
+        """Returns the element id associated with obj or an empty string upon failure."""
+
         if obj is None:
             return ""
 
@@ -529,6 +550,8 @@ class AtkAtspiAtta(Atta):
         return attrs.get("id") or attrs.get("html-id") or ""
 
     def _get_uri(self, document, **kwargs):
+        """Returns the URI associated with document or an empty string upon failure."""
+
         if document is None:
             return ""
 
@@ -550,6 +573,8 @@ class AtkAtspiAtta(Atta):
         return ""
 
     def _get_children(self, obj, **kwargs):
+        """Returns the children of obj or [] upon failure or absence of children."""
+
         try:
             count = Atspi.Accessible.get_child_count(obj)
         except:
@@ -559,6 +584,8 @@ class AtkAtspiAtta(Atta):
         return [Atspi.Accessible.get_child_at_index(obj, i) for i in range(count)]
 
     def _get_parent(self, obj, **kwargs):
+        """Returns the parent of obj or None upon failure."""
+
         try:
             parent = Atspi.Accessible.get_parent(obj)
         except:
@@ -568,6 +595,8 @@ class AtkAtspiAtta(Atta):
         return parent
 
     def _find_matching_symbol(self, atk_symbol, atspi_symbols):
+        """Returns the symbol in atspi_symbols which is equivalent to atk_symbol."""
+
         # Things which are unique or hard to reliably map via heuristic.
         mappings = {
             "atk_selection_add_selection": "atspi_selection_select_child",
@@ -607,6 +636,8 @@ class AtkAtspiAtta(Atta):
         return None
 
     def get_testable_api_methods(self):
+        """Returns the list of platform accessibility API methods this ATTA supports."""
+
         if self._testable_api_methods:
             return self._testable_api_methods
 
@@ -662,11 +693,15 @@ class AtkAtspiAtta(Atta):
         return self._testable_api_methods
 
     def _on_load_complete(self, data, **kwargs):
+        """Callback for the platform's signal that a document has loaded."""
+
         if self.is_ready(data.source):
             application = Atspi.Accessible.get_application(data.source)
             Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)
 
     def _on_test_event(self, data, **kwargs):
+        """Callback for platform accessibility events the ATTA is testing."""
+
         if self._in_current_document(data.source):
             self._event_history.append(data)
 
@@ -678,13 +713,13 @@ def get_cmdline_options():
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
-    args = get_cmdline_options()
-    host = args.get("host") or "localhost"
-    port = args.get("port") or "4119"
+    options = get_cmdline_options()
+    atta_host = options.get("host") or "localhost"
+    atta_port = options.get("port") or "4119"
 
-    print("Attempting to start AtkAtspiAtta")
-    atta = AtkAtspiAtta(host, port)
-    if not atta.is_enabled():
+    print("Attempting to start AtkAtta")
+    atk_atta = AtkAtta(atta_host, atta_port)
+    if not atk_atta.is_enabled():
         sys.exit(1)
 
-    atta.start()
+    atk_atta.start()

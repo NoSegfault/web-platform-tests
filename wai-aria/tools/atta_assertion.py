@@ -114,6 +114,37 @@ class AttaAssertion:
 
         return str(value)
 
+    def _get_result(self):
+        value = self._get_value()
+        self._actual_value = self._value_to_string(value)
+
+        if self._expectation == self.EXPECTATION_IS:
+            result = self._expected_value == self._actual_value
+        elif self._expectation == self.EXPECTATION_IS_NOT:
+            result = self._expected_value != self._actual_value
+        elif self._expectation == self.EXPECTATION_CONTAINS:
+            result = self._actual_value and self._expected_value in self._actual_value
+        elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
+            result = self._actual_value and self._expected_value not in self._actual_value
+        elif self._expectation == self.EXPECTATION_IS_ANY:
+            result = self._actual_value in self._expected_value
+        elif self._expectation == self.EXPECTATION_IS_TYPE:
+            result = self._actual_value == self._expected_value
+        elif self._expectation == self.EXPECTATION_EXISTS:
+            result = self._expected_value == self._actual_value
+        else:
+            result = False
+
+        if result:
+            self._status = self.STATUS_PASS
+        else:
+            self._status = self.STATUS_FAIL
+
+        return result
+
+    def _get_value(self):
+        pass
+
 
 class AttaEventAssertion(AttaAssertion):
 
@@ -141,10 +172,12 @@ class AttaRelationAssertion(AttaAssertion):
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
 
-    def get_relation_targets(self):
-        return []
+    def _get_value(self):
+        targets = self._atta.get_relation_targets(self._obj, self._test_string)
+        return "[%s]" % " ".join(self._value_to_string(targets))
 
     def run(self):
+        self._get_result()
         return self._status, " ".join(self._messages), str(self)
 
 

@@ -42,7 +42,7 @@ class Assertion(AttaAssertion):
         if test_class == cls.CLASS_EVENT:
             return EventAssertion
         if test_class == cls.CLASS_RELATION:
-            return RelationAssertion
+            return AttaRelationAssertion
         if test_class == cls.CLASS_RESULT:
             return ResultAssertion
 
@@ -59,6 +59,7 @@ class Assertion(AttaAssertion):
                 attrs = Atspi.Accessible.get_attributes(value)
                 return attrs.get("id") or attrs.get("html-id")
             except:
+                self._on_exception()
                 return ""
 
         if value_type == Atspi.Relation:
@@ -89,38 +90,22 @@ class Assertion(AttaAssertion):
                 value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
             return value_name
 
+        if value_type == Atspi.Event:
+            try:
+                role = self._value_to_string(Atspi.Accessible.get_role(value.source))
+                objid = self._value_to_string(value.source) or ""
+                any_data = self._value_to_string(value.any_data)
+            except:
+                self._on_exception()
+                return ""
+
+            if objid:
+                objid = " (%s)" % objid
+
+            return "%s(%i,%i,%s) by %s%s" % \
+                (value.type, value.detail1, value.detail2, any_data, role, objid)
+
         return super()._value_to_string(value)
-
-    def _get_value(self):
-        pass
-
-    def _get_result(self):
-        self._actual_value = self._get_value()
-        self._actual_value = self._value_to_string(self._actual_value)
-
-        if self._expectation == self.EXPECTATION_IS:
-            result = self._expected_value == self._actual_value
-        elif self._expectation == self.EXPECTATION_IS_NOT:
-            result = self._expected_value != self._actual_value
-        elif self._expectation == self.EXPECTATION_CONTAINS:
-            result = self._actual_value and self._expected_value in self._actual_value
-        elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            result = self._actual_value and self._expected_value not in self._actual_value
-        elif self._expectation == self.EXPECTATION_IS_ANY:
-            result = self._actual_value in self._expected_value
-        elif self._expectation == self.EXPECTATION_IS_TYPE:
-            result = self._actual_value == self._expected_value
-        elif self._expectation == self.EXPECTATION_EXISTS:
-            result = self._expected_value == self._actual_value
-        else:
-            result = False
-
-        if result:
-            self._status = self.STATUS_PASS
-        else:
-            self._status = self.STATUS_FAIL
-
-        return result
 
 
 class PropertyAssertion(Assertion, AttaPropertyAssertion):
@@ -155,38 +140,6 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
 
     def _get_value(self):
         return self.get_property_value()
-
-    def run(self):
-        self._get_result()
-        return self._status, " ".join(self._messages), str(self)
-
-
-class RelationAssertion(Assertion, AttaRelationAssertion):
-
-    def __init__(self, obj, assertion, atta):
-        super().__init__(obj, assertion, atta)
-
-    def get_relation_targets(self):
-        if not self._obj:
-            return []
-
-        try:
-            relation_set = Atspi.Accessible.get_relation_set(self._obj)
-        except:
-            self._on_exception()
-            return []
-
-        for relation in relation_set:
-            rtype = Atspi.Relation.get_relation_type(relation)
-            if self._value_to_string(rtype) == self._test_string:
-                n_targets = Atspi.Relation.get_n_targets(relation)
-                return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
-
-        return []
-
-    def _get_value(self):
-        targets = self._value_to_string(self.get_relation_targets())
-        return "[%s]" % " ".join(targets)
 
     def run(self):
         self._get_result()
@@ -294,7 +247,7 @@ class EventAssertion(Assertion, AttaEventAssertion):
 
     def __init__(self, obj, assertion, atta, events):
         super().__init__(obj, assertion, atta)
-        self._actual_value = list(map(self._event_to_string, events))
+        self._actual_value = list(map(self._value_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
         self._matching_events = []
 
@@ -319,22 +272,6 @@ class EventAssertion(Assertion, AttaEventAssertion):
             matches = filter(lambda x: x.any_data == any_data, matches)
 
         self._matching_events = list(matches)
-
-    def _event_to_string(self, event):
-        try:
-            role = Atspi.Accessible.get_role(event.source)
-            objid = self._value_to_string(event.source) or ""
-        except:
-            role = "[DEAD]"
-            objid = "EXCEPTION GETTING ID"
-        else:
-            role = self._value_to_string(role)
-            if objid:
-                objid = " (%s)" % objid
-
-        string = "%s(%i,%i,%s) by %s%s" % \
-                 (event.type, event.detail1, event.detail2, event.any_data, role, objid)
-        return string
 
     def _get_result(self):
         if self._matching_events:
@@ -635,6 +572,27 @@ class AtkAtta(Atta):
                 return atspi_symbols[atspi_symbols.index(matches[0])]
 
         return None
+
+    def get_relation_targets(self, obj, relation_type, **kwargs):
+        """Returns the elements of pointed to by relation_type for obj."""
+
+        if not obj:
+            return []
+
+        try:
+            relations = Atspi.Accessible.get_relation_set(obj)
+        except:
+            print(self._on_exception())
+            return []
+
+        is_type = lambda x: Atspi.Relation.get_relation_type(x) == relation_type
+        relations = list(filter(is_type, relations))
+        if not len(relations) == 1:
+            return []
+
+        relation = relations[0]
+        n_targets = Atspi.Relation.get_n_targets(relation)
+        return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
 
     def get_testable_api_methods(self):
         """Returns the list of platform accessibility API methods this ATTA supports."""

@@ -329,6 +329,12 @@ class Atta:
         self._print(self.LOG_DEBUG, "_get_parent() not implemented")
         return None
 
+    def get_relation_targets(self, obj, relation_type, **kwargs):
+        """Returns the elements of pointed to by relation_type for obj."""
+
+        self._print(self.LOG_DEBUG, "get_relation_targets() not implemented")
+        return []
+
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""
 

@@ -146,9 +146,6 @@ class PropertyAssertion(Assertion, AttaPropertyAssertion):
             self._messages.append("ERROR: Accessible object not found")
             return None
 
-        if self._obj:
-            Atspi.Accessible.clear_cache(self._obj)
-
         getter = self.GETTERS.get(self._test_string)
         if getter:
             return getter(self._obj)
@@ -521,6 +518,9 @@ class AtkAtta(Atta):
 
     def _run_test(self, obj, assertion, **kwargs):
         test_class = Assertion.get_test_class(assertion)
+
+        if obj:
+            Atspi.Accessible.clear_cache(obj)
 
         if test_class is None:
             result_value = Assertion.STATUS_FAIL

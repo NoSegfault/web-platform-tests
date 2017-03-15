@@ -64,6 +64,7 @@ class Atta:
         self._listeners = {}
         self._supported_methods = {}
         self._supported_properties = {}
+        self._supported_relation_types = []
 
         if not sys.version_info[0] == 3:
             self._print(self.LOG_ERROR, "This ATTA requires Python 3.")
@@ -77,6 +78,7 @@ class Atta:
 
         self._supported_methods = self.get_supported_methods()
         self._supported_properties = self.get_supported_properties()
+        self._supported_relation_types = self.get_supported_relation_types()
         self._enabled = True
 
     @staticmethod
@@ -377,6 +379,18 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_supported_properties() not implemented")
         return {}
 
+    def get_supported_relation_types(self, obj=None, **kwargs):
+        """Returns a list of supported platform relation types."""
+
+        self._print(self.LOG_DEBUG, "get_supported_relation_types() not implemented")
+        return []
+
+    def string_to_value(self, string, **kwargs):
+        """Returns value (e.g. a platform contstant) represented by string."""
+
+        self._print(self.LOG_DEBUG, "string_to_value() not implemented")
+        return None
+
     def type_to_string(self, value, **kwargs):
         """Returns the type of value as a harness-compliant string."""
 
@@ -397,7 +411,7 @@ class Atta:
         return "Undefined"
 
     def value_to_string(self, value, **kwargs):
-        """Returns value (e.g. a platform contstant) as a string."""
+        """Returns the string representation of value (e.g. a platform contstant)."""
 
         value_type = type(value)
 

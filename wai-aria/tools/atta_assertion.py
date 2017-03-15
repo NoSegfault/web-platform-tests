@@ -140,10 +140,11 @@ class AttaRelationAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        self._relation_type = atta.string_to_value(self._test_string)
 
     def _get_value(self):
         try:
-            targets = self._atta.get_relation_targets(self._obj, self._test_string)
+            targets = self._atta.get_relation_targets(self._obj, self._relation_type)
         except Exception as error:
             self._messages.append("ERROR: %s" % error)
             return None

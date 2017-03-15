@@ -104,16 +104,17 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         super().__init__(obj, assertion, atta)
 
     def run(self):
-        info = {}
+        info = dict.fromkeys(["properties", "relation targets", "supported methods"], {})
 
-        properties = {}
-        supported_properties = self._atta.get_supported_properties(self._obj)
-        for supported_property in supported_properties.keys():
-            properties[supported_property] = self._atta.get_property_value(self._obj, supported_property)
-        info["properties"] = properties
+        for prop, getter in self._atta.get_supported_properties(self._obj).items():
+            info["properties"][prop] = getter(self._obj)
 
-        supported_methods = self._atta.get_supported_methods(self._obj)
+        for relation_type in self._atta.get_supported_relation_types(self._obj):
+            targets = self._atta.get_relation_targets(self._obj, relation_type)
+            info["relation targets"][relation_type] = targets
+
         methods = []
+        supported_methods = self._atta.get_supported_methods(self._obj)
         for function_info_dict in supported_methods.values():
             method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
             methods.append(self._atta.value_to_string(method))
@@ -391,16 +392,16 @@ class AtkAtta(Atta):
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
-        if not obj and property_name != "accessible":
+        if not obj:
             raise AttributeError("Object not found")
 
-        for relation in Atspi.Accessible.get_relation_set(obj):
-            r_type = Atspi.Relation.get_relation_type(relation)
-            n_targets = Atspi.Relation.get_n_targets(relation)
-            if self.value_to_string(r_type) == relation_type and n_targets:
-                return [Atspi.Relation.get_target(relation, i) for i in range(n_targets)]
+        is_type = lambda x: Atspi.Relation.get_relation_type(x) == relation_type
+        relations = list(filter(is_type, Atspi.Accessible.get_relation_set(obj)))
+        if not len(relations) == 1:
+            return []
 
-        return []
+        count = Atspi.Relation.get_n_targets(relations[0])
+        return [Atspi.Relation.get_target(relations[0], i) for i in range(count)]
 
     def get_supported_methods(self, obj=None, **kwargs):
         """Returns a name:callable dict of supported platform methods."""
@@ -517,6 +518,36 @@ class AtkAtta(Atta):
 
         return self._supported_properties
 
+    def get_supported_relation_types(self, obj=None, **kwargs):
+        """Returns a list of supported platform relation types."""
+
+        if obj:
+            relation_set = Atspi.Accessible.get_relation_set(obj)
+            return list(map(Atspi.Relation.get_relation_type, relation_set))
+
+        if self._supported_relation_types:
+            return self._supported_relation_types
+
+        types = map(Atspi.RelationType, range(Atspi.RelationType.LAST_DEFINED))
+        self._supported_relation_types = list(types)
+        return self._supported_relation_types
+
+    def string_to_value(self, string, **kwargs):
+        """Returns value (e.g. a platform contstant) represented by string."""
+
+        values_maps = {
+            "RELATION": map(Atspi.RelationType, range(Atspi.RelationType.LAST_DEFINED)),
+            "ROLE": map(Atspi.Role, range(Atspi.Role.LAST_DEFINED)),
+            "STATE": map(Atspi.StateType, range(Atspi.StateType.LAST_DEFINED)),
+        }
+
+        values_map = values_maps.get(string.split("_")[0], [])
+        for value in values_map:
+            if self.value_to_string(value) == string:
+                return value
+
+        return None
+
     def type_to_string(self, value, **kwargs):
         """Returns the type of value as a harness-compliant string."""
 
@@ -533,7 +564,7 @@ class AtkAtta(Atta):
         return super().type_to_string(value, **kwargs)
 
     def value_to_string(self, value, **kwargs):
-        """Returns value (e.g. a platform contstant) as a string."""
+        """Returns the string representation of value (e.g. a platform contstant)."""
 
         value_type = type(value)
         if value_type == Atspi.Accessible:

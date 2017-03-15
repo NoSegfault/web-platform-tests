@@ -358,6 +358,19 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_supported_methods() not implemented")
         return {}
 
+    def string_to_method_and_arguments(self, callable_as_string, **kwargs):
+        """Converts callable_as_string into the appropriate callable platform method
+        and list of arguments with the appropriate types."""
+
+        self._print(self.LOG_DEBUG, "string_to_method_and_arguments() not implemented")
+        return None, []
+
+    def get_result(self, method, arguments, **kwargs):
+        """Returns the result of calling method with the specified arguments."""
+
+        self._print(self.LOG_DEBUG, "get_result_for_method_and_arguments() not implemented")
+        return None
+
     def get_supported_properties(self, obj=None, **kwargs):
         """Returns a name:callable dict of supported platform properties."""
 

@@ -18,9 +18,13 @@ import sys
 import threading
 
 import gi
+from gi.docstring import Direction, TypeTag
+from gi.module import FunctionInfo
+from gi.repository import Gio, GLib
+
 gi.require_version("Atk", "1.0")
 gi.require_version("Atspi", "2.0")
-from gi.repository import Atk, Atspi, Gio, GLib
+from gi.repository import Atk, Atspi
 
 from atta_base import Atta
 from atta_assertion import *
@@ -44,107 +48,10 @@ class Assertion(AttaAssertion):
         if test_class == cls.CLASS_RELATION:
             return AttaRelationAssertion
         if test_class == cls.CLASS_RESULT:
-            return ResultAssertion
+            return AttaResultAssertion
 
         print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
         return None
-
-
-class ResultAssertion(Assertion, AttaResultAssertion):
-
-    KNOWN_ISSUES = {
-        "atk_table_cell_get_position": "https://bugzilla.gnome.org/show_bug.cgi?id=779835",
-        "atspi_table_cell_row_index": "https://bugzilla.gnome.org/show_bug.cgi?id=779835",
-    }
-
-    def __init__(self, obj, assertion, atta):
-        super().__init__(obj, assertion, atta)
-        self._error = False
-        self._method = None
-        self._args = []
-
-        try:
-            function, function_args = re.split("\(", self._test_string, maxsplit=1)
-            function_args = function_args[:-1]
-        except ValueError:
-            function = self._test_string
-            function_args = ""
-
-        methods = self._atta.get_supported_methods()
-        info_dict = methods.get(function)
-        if not info_dict:
-            self._messages.append("ERROR: '%s' method not found." % function)
-            self._error = True
-            return
-
-        self._method = info_dict.get("ATSPI") or info_dict.get("ATK")
-        iface = self._method.get_container().get_name()
-        if not iface in Atspi.Accessible.get_interfaces(self._obj):
-            self._messages.append("ERROR: %s interface not implemented by obj" % iface)
-            self._error = True
-            return
-
-        expectedargs = self._method.get_arguments()
-        actualargs = list(filter(lambda x: x != "", function_args.split(",")))
-        argtypes = list(map(self._get_arg_type, expectedargs))
-        if len(expectedargs) > len(actualargs):
-            expected = ", ".join(map(lambda x: x.__name__, argtypes))
-            self._messages.append("ERROR: Expected arg types: %s" % expected)
-            self._error = True
-            return
-
-        for i, argtype in enumerate(argtypes):
-            arg = actualargs[i]
-            try:
-                self._args.append(argtype(arg))
-            except:
-                info = self._get_arg_info(expectedargs[i])
-                self._messages.append("ERROR: Argument %i should be %s (got %s)\n" % (i, info, arg))
-                self._error = True
-
-    @classmethod
-    def _get_arg_type(cls, arg):
-        typeinfo = arg.get_type()
-        typetag = typeinfo.get_tag()
-        return gi._gi.TypeTag(typetag)
-
-    @classmethod
-    def _get_arg_info(cls, arg):
-        name = arg.get_name()
-        argtype = cls._get_arg_type(arg)
-        return "%s %s" % (argtype.__name__, name)
-
-    @classmethod
-    def get_method_details(cls, method):
-        symbol = method.get_symbol()
-        method_args = list(map(cls._get_arg_info, method.get_arguments()))
-        string = "%s(%s)" % (symbol, ", ".join(method_args))
-        if method.is_deprecated():
-            string = "DEPRECATED: %s" % string
-        return string
-
-    def _get_value(self):
-        if self._error:
-            return None
-
-        try:
-            value = self._method.invoke(self._obj, *self._args)
-        except:
-            symbol = self._method.get_symbol()
-            self._messages.append("ERROR: Exception calling %s" % symbol)
-            issue = self.KNOWN_ISSUES.get(symbol)
-            if issue:
-                self._messages.append(issue)
-            else:
-                self._on_exception()
-        else:
-            return self._atta.value_to_string(value)
-
-        return None
-
-    def run(self):
-        self._get_result()
-        return self._status, " ".join(self._messages), str(self)
 
 
 class EventAssertion(Assertion, AttaEventAssertion):
@@ -209,7 +116,7 @@ class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
         methods = []
         for function_info_dict in supported_methods.values():
             method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
-            methods.append(ResultAssertion.get_method_details(method))
+            methods.append(self._atta.value_to_string(method))
         info["supported methods"] = sorted(methods)
 
         info = self._atta.value_to_string(info)
@@ -536,7 +443,7 @@ class AtkAtta(Atta):
             atspi_methods = {m.get_symbol(): m for m in atspi_info.get_methods()}
 
             for atk_symbol, atk_function_info in atk_methods.items():
-                if atk_symbol in implementor_only:
+                if atk_symbol in implementor_only or atk_function_info.is_deprecated():
                     continue
 
                 value = {"ATK": atk_function_info}
@@ -550,9 +457,44 @@ class AtkAtta(Atta):
             # to use them. Example: To test atk_table_cell_get_position() we need both
             # atspi_table_cell_get_row_index() and atspi_table_cell_get_column_index().
             for symbol, function_info in atspi_methods.items():
-                self._supported_methods[symbol] = {"ATSPI": function_info}
+                if not function_info.is_deprecated():
+                    self._supported_methods[symbol] = {"ATSPI": function_info}
 
         return {k: v for k, v in self._supported_methods.items() if _include(v)}
+
+    def string_to_method_and_arguments(self, callable_as_string, **kwargs):
+        """Converts callable_as_string into the appropriate callable platform method
+        and list of arguments with the appropriate types."""
+
+        try:
+            method_string, args_string = re.split("\(", callable_as_string, maxsplit=1)
+            args_string = args_string[:-1]
+        except ValueError:
+            method_string = callable_as_string
+            args_list = []
+        else:
+            args_list = list(filter(lambda x: x != "", args_string.split(",")))
+
+        supported_methods = self.get_supported_methods()
+        info_dict = supported_methods.get(method_string, {})
+        method = info_dict.get(kwargs.get("api", "ATSPI"))
+        if not method:
+            raise NameError("No known platform method for %s" % method_name)
+
+        in_args = filter(lambda x: x.get_direction() == Direction.IN, method.get_arguments())
+        arg_types = list(map(lambda x: TypeTag(x.get_type().get_tag()), in_args))
+        if len(arg_types) != len(args_list):
+            string = self._atta.value_to_string(method)
+            raise TypeError("Incorrect argument count for %s" % string)
+
+        args = [arg_types[i](args_list[i]) for i in range(len(arg_types))]
+        return method, args
+
+    def get_result(self, method, arguments, **kwargs):
+        """Returns the result of calling method with the specified arguments."""
+
+        arguments.insert(0, kwargs.get("obj"))
+        return method.invoke(*arguments)
 
     def get_supported_properties(self, obj=None, **kwargs):
         """Returns a name:callable dict of supported platform properties."""
@@ -620,6 +562,18 @@ class AtkAtta(Atta):
             detail2 = value.detail2
             any_data = self.value_to_string(value.any_data)
             return "%s(%i,%i,%s) by %s %s" % (value.type, detail1, detail2, any_data, role, objid)
+
+        if value_type == FunctionInfo:
+            method_args = []
+            for arg in value.get_arguments():
+                arg_name = arg.get_name()
+                arg_type = TypeTag(arg.get_type().get_tag())
+                method_args.append("%s %s" % (arg_type.__name__, arg_name))
+
+            string = "%s(%s)" % (value.get_symbol(), ", ".join(method_args))
+            if value.is_deprecated():
+                string = "DEPRECATED: %s" % string
+            return string
 
         return super().value_to_string(value, **kwargs)
 

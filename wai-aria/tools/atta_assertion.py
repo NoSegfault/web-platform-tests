@@ -155,9 +155,24 @@ class AttaResultAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        self._method = None
+        self._args = []
 
-    def get_method_result(self):
-        return None
+        try:
+            result = self._atta.string_to_method_and_arguments(self._test_string)
+        except Exception as error:
+            self._messages.append("ERROR: %s" % error)
+        else:
+            self._method, self._args = result
+
+    def _get_value(self):
+        try:
+            value = self._atta.get_result(self._method, self._args, obj=self._obj)
+        except Exception as error:
+            self._messages.append("ERROR: %s" % error)
+            return None
+
+        return value
 
 
 class AttaDumpInfoAssertion(AttaAssertion):

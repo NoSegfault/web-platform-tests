@@ -12,7 +12,6 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import argparse
-import json
 import re
 import sys
 import threading
@@ -425,10 +424,7 @@ class AtkAtta(Atta):
     def get_supported_properties(self, obj=None, **kwargs):
         """Returns a name:callable dict of supported platform properties."""
 
-        if self._supported_properties:
-            return self._supported_properties
-
-        self._supported_properties = {
+        supported_properties = {
             "accessible": lambda x: x is not None,
             "childCount": Atspi.Accessible.get_child_count,
             "description": Atspi.Accessible.get_description,
@@ -441,7 +437,7 @@ class AtkAtta(Atta):
             "states": Atspi.Accessible.get_state_set,
         }
 
-        return self._supported_properties
+        return supported_properties
 
     def get_supported_relation_types(self, obj=None, **kwargs):
         """Returns a list of supported platform relation types."""

@@ -63,7 +63,6 @@ class Atta:
         self._event_history = []
         self._listeners = {}
         self._supported_methods = {}
-        self._supported_properties = {}
         self._supported_relation_types = []
 
         if not sys.version_info[0] == 3:
@@ -77,7 +76,6 @@ class Atta:
             return
 
         self._supported_methods = self.get_supported_methods()
-        self._supported_properties = self.get_supported_properties()
         self._supported_relation_types = self.get_supported_relation_types()
         self._enabled = True
 

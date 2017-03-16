@@ -314,6 +314,11 @@ class Atta:
 
         self._print(self.LOG_DEBUG, "_deregister_listener() not implemented")
 
+    def _get_assertion_test_class(self, assertion, **kwargs):
+        """Returns the appropriate Assertion class for assertion."""
+
+        return AttaAssertion.get_test_class(assertion)
+
     def _create_platform_assertions(self, assertions, **kwargs):
         """Performs platform-specific changes needed to harness assertions."""
 

@@ -164,6 +164,21 @@ class Atta:
             self._register_listener(event_type, self._on_test_event, **kwargs)
             self._monitored_event_types.append(event_type)
 
+    def _run_test(self, obj, assertion, **kwargs):
+        """Runs a single assertion on obj, returning a results dict."""
+
+        test_class = AttaAssertion.get_test_class(assertion)
+        if test_class is None:
+            result = AttaAssertion.STATUS_FAIL
+            message = "ERROR: %s is not a valid assertion" % assertion
+            log = message
+        else:
+            test = test_class(obj, assertion, self)
+            result, message, log = test.run()
+
+        self._print(self.LOG_INFO, "%s: %s" % (" ".join(map(str, assertion)), result))
+        return {"result": result, "message": message, "log": log}
+
     def run_tests(self, obj_id, assertions):
         """Runs the assertions on the object with the specified id, returning
         a dict with the results, the status of the run, and any messages."""
@@ -303,13 +318,6 @@ class Atta:
         """Performs platform-specific changes needed to harness assertions."""
 
         return assertions
-
-    def _run_test(self, obj, assertion, **kwargs):
-        """Runs a single assertion on obj, returning a results dict."""
-
-        log = "_run_test() not implemented"
-        self._print(self.LOG_DEBUG, log)
-        return {"result": AttaAssertion.STATUS_FAIL, "message": log, "log": log}
 
     def _get_id(self, obj, **kwargs):
         """Returns the element id associated with obj or an empty string upon failure."""

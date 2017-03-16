@@ -112,6 +112,14 @@ class AtkAtta(Atta):
 
         super().start(**kwargs)
 
+    def _run_test(self, obj, assertion, **kwargs):
+        """Runs a single assertion on obj, returning a results dict."""
+
+        if obj:
+            Atspi.Accessible.clear_cache(obj)
+
+        return super()._run_test(obj, assertion, **kwargs)
+
     def shutdown(self, signum=None, frame=None, **kwargs):
         """Shuts down this ATTA (i.e. after all tests have been run)."""
 
@@ -192,6 +200,11 @@ class AtkAtta(Atta):
         if listener:
             Atspi.EventListener.deregister(listener, event_type)
 
+    def _get_assertion_test_class(self, assertion, **kwargs):
+        """Returns the appropriate Assertion class for assertion."""
+
+        return Assertion.get_test_class(assertion)
+
     def _create_platform_assertions(self, assertions, **kwargs):
         """Performs platform-specific changes needed to harness assertions."""
 
@@ -214,22 +227,6 @@ class AtkAtta(Atta):
         combined_event_assertions = ["event", "event", "contains", properties]
         platform_assertions.append(combined_event_assertions)
         return platform_assertions
-
-    def _run_test(self, obj, assertion, **kwargs):
-        test_class = Assertion.get_test_class(assertion)
-
-        if obj:
-            Atspi.Accessible.clear_cache(obj)
-
-        if test_class is None:
-            result_value = Assertion.STATUS_FAIL
-            messages = "ERROR: %s is not a valid assertion" % assertion
-            log = messages
-        else:
-            test = test_class(obj, assertion, self)
-            result_value, messages, log = test.run()
-
-        return {"result": result_value, "message": str(messages), "log": log}
 
     def _get_id(self, obj, **kwargs):
         """Returns the element id associated with obj or an empty string upon failure."""

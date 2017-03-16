@@ -55,6 +55,23 @@ class AttaAssertion:
         self._messages = []
         self._status = self.STATUS_NOT_RUN
 
+    @classmethod
+    def get_test_class(cls, assertion):
+        if cls.CLASS_TBD in assertion:
+            return AttaDumpInfoAssertion
+
+        test_class = assertion[0]
+        if test_class == cls.CLASS_PROPERTY:
+            return AttaPropertyAssertion
+        if test_class == cls.CLASS_EVENT:
+            return AttaEventAssertion
+        if test_class == cls.CLASS_RELATION:
+            return AttaRelationAssertion
+        if test_class == cls.CLASS_RESULT:
+            return AttaResultAssertion
+
+        return None
+
     def __str__(self):
         label_width = max(list(map(len, self._labels))) + 2
         self._text_wrapper.subsequent_indent = " " * (label_width+1)
@@ -120,6 +137,15 @@ class AttaEventAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        self._matching_events = []
+
+    def _get_result(self):
+        if self._matching_events:
+            self._status = self.STATUS_PASS
+            return True
+
+        self._status = self.STATUS_FAIL
+        return False
 
 
 class AttaPropertyAssertion(AttaAssertion):

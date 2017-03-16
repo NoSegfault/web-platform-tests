@@ -27,40 +27,27 @@ gi.require_version("Atspi", "2.0")
 from gi.repository import Atk, Atspi
 
 from atta_base import Atta
-from atta_assertion import *
+from atta_assertion import AttaAssertion, AttaEventAssertion
 
 
 class Assertion(AttaAssertion):
 
-    def __init__(self, obj, assertion, atta):
-        super().__init__(obj, assertion, atta)
-
     @classmethod
     def get_test_class(cls, assertion):
-        if cls.CLASS_TBD in assertion:
-            return AttaDumpInfoAssertion
-
         test_class = assertion[0]
-        if test_class == cls.CLASS_PROPERTY:
-            return AttaPropertyAssertion
         if test_class == cls.CLASS_EVENT:
             return EventAssertion
-        if test_class == cls.CLASS_RELATION:
-            return AttaRelationAssertion
-        if test_class == cls.CLASS_RESULT:
-            return AttaResultAssertion
 
-        print("ERROR: Unhandled test class: %s (assertion: %s)" % (test_class, assertion))
-        return None
+        return super().get_test_class(assertion)
 
 
-class EventAssertion(Assertion, AttaEventAssertion):
+class EventAssertion(AttaEventAssertion):
 
-    def __init__(self, obj, assertion, atta, events):
+    def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        events = self._atta.get_event_history()
         self._actual_value = list(map(self._atta.value_to_string, events))
         self._obj_events = list(filter(lambda x: x.source == obj, events))
-        self._matching_events = []
 
         # At the moment, the assumption is that we are only testing that
         # we have an event which matches the asserted event properties.
@@ -83,18 +70,6 @@ class EventAssertion(Assertion, AttaEventAssertion):
             matches = filter(lambda x: x.any_data == any_data, matches)
 
         self._matching_events = list(matches)
-
-    def _get_result(self):
-        if self._matching_events:
-            self._status = self.STATUS_PASS
-            return True
-
-        self._status = self.STATUS_FAIL
-        return False
-
-    def run(self):
-        self._get_result()
-        return self._status, " ".join(self._messages), str(self)
 
 
 class AtkAtta(Atta):
@@ -250,9 +225,6 @@ class AtkAtta(Atta):
             result_value = Assertion.STATUS_FAIL
             messages = "ERROR: %s is not a valid assertion" % assertion
             log = messages
-        elif test_class == EventAssertion:
-            test = test_class(obj, assertion, self, self._event_history)
-            result_value, messages, log = test.run()
         else:
             test = test_class(obj, assertion, self)
             result_value, messages, log = test.run()

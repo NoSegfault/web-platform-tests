@@ -391,6 +391,11 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_supported_relation_types() not implemented")
         return []
 
+    def get_event_history(self, **kwargs):
+        """Returns the list of accessibility events recorded by this ATTA."""
+
+        return self._event_history
+
     def string_to_value(self, string, **kwargs):
         """Returns the value (e.g. a platform constant) represented by string."""
 

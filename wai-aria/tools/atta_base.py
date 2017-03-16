@@ -354,6 +354,12 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_relation_targets() not implemented")
         return []
 
+    def get_client_side_method(self, server_side_method, **kwargs):
+        """Returns the client-side API method for server_side_method."""
+
+        self._print(self.LOG_DEBUG, "get_client_side_method() not implemented")
+        return server_side_method
+
     def get_supported_methods(self, obj=None, **kwargs):
         """Returns a name:callable dict of supported platform methods."""
 

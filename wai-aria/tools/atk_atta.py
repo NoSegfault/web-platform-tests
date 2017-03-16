@@ -38,7 +38,7 @@ class Assertion(AttaAssertion):
     @classmethod
     def get_test_class(cls, assertion):
         if cls.CLASS_TBD in assertion:
-            return DumpInfoAssertion
+            return AttaDumpInfoAssertion
 
         test_class = assertion[0]
         if test_class == cls.CLASS_PROPERTY:
@@ -95,35 +95,6 @@ class EventAssertion(Assertion, AttaEventAssertion):
     def run(self):
         self._get_result()
         return self._status, " ".join(self._messages), str(self)
-
-
-class DumpInfoAssertion(Assertion, AttaDumpInfoAssertion):
-
-    def __init__(self, obj, assertion, atta):
-        assertion = [""] * 4
-        super().__init__(obj, assertion, atta)
-
-    def run(self):
-        info = dict.fromkeys(["properties", "relation targets", "supported methods"], {})
-
-        for prop, getter in self._atta.get_supported_properties(self._obj).items():
-            info["properties"][prop] = getter(self._obj)
-
-        for relation_type in self._atta.get_supported_relation_types(self._obj):
-            targets = self._atta.get_relation_targets(self._obj, relation_type)
-            info["relation targets"][relation_type] = targets
-
-        methods = []
-        supported_methods = self._atta.get_supported_methods(self._obj)
-        for function_info_dict in supported_methods.values():
-            method = function_info_dict.get("ATK") or function_info_dict.get("ATSPI")
-            methods.append(self._atta.value_to_string(method))
-        info["supported methods"] = sorted(methods)
-
-        info = self._atta.value_to_string(info)
-        log = json.dumps(info, indent=4, sort_keys=True)
-        self._status = self.STATUS_FAIL
-        return self._status, " ".join(self._messages), log
 
 
 class AtkAtta(Atta):
@@ -347,48 +318,6 @@ class AtkAtta(Atta):
 
         return parent
 
-    @staticmethod
-    def _find_matching_symbol(atk_symbol, atspi_symbols):
-        """Returns the symbol in atspi_symbols which is equivalent to atk_symbol."""
-
-        # Things which are unique or hard to reliably map via heuristic.
-        mappings = {
-            "atk_selection_add_selection": "atspi_selection_select_child",
-            "atk_selection_ref_selection": "atspi_selection_get_selected_child",
-        }
-
-        mapped = mappings.get(atk_symbol)
-        if mapped in atspi_symbols:
-            return atspi_symbols[atspi_symbols.index(mapped)]
-
-        # Ideally, the symbols are the same, not counting the API name.
-        candidate_symbol = atk_symbol.replace("atk", "atspi")
-        if candidate_symbol in atspi_symbols:
-            return atspi_symbols[atspi_symbols.index(candidate_symbol)]
-
-        # AT-SPI2 tends to use "get" when ATK uses "ref".
-        replaced = candidate_symbol.replace("_ref_", "_get_")
-        if replaced in atspi_symbols:
-            return atspi_symbols[atspi_symbols.index(replaced)]
-
-        replaced = candidate_symbol.replace("_ref_at", "_get_accessible_at")
-        if replaced in atspi_symbols:
-            return atspi_symbols[atspi_symbols.index(replaced)]
-
-        # They sometimes split words differently ("key_binding", "keybinding").
-        collapsed = candidate_symbol.replace("_", "")
-        matches = list(map(lambda x: x.replace("_", ""), atspi_symbols))
-        if collapsed in matches:
-            return atspi_symbols[matches.index(collapsed)]
-
-        # AT-SPI2 tends to use "get n" when ATK uses "get ... count".
-        if "_get_" in atk_symbol and "_count" in atk_symbol:
-            matches = list(filter(lambda x: "get_n_" in x, atspi_symbols))
-            if len(matches) == 1:
-                return atspi_symbols[atspi_symbols.index(matches[0])]
-
-        return None
-
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
@@ -411,57 +340,82 @@ class AtkAtta(Atta):
         else:
             obj_interfaces = self.get_property_value(obj, "interfaces")
 
-        def _include(info_dict):
-            method = info_dict.get("ATK") or info_dict.get("ATSPI")
-            interface = method.get_container().get_name()
-            return interface in obj_interfaces
+        def _include(method):
+            return method.get_container().get_name() in obj_interfaces
 
         if self._supported_methods:
             return {k: v for k, v in self._supported_methods.items() if _include(v)}
             return self._supported_methods
 
-        # These setters have corresponding getters in ATK, which we can test
-        # via a matching AT-SPI2 getter. More importantly, they lack matching
-        # setters in AT-SPI2, so we cannot set these property values via ATTA.
-        implementor_only = [
-            "atk_action_set_description",
-            "atk_document_set_attribute_value",
-            "atk_image_set_image_description",
-            "atk_table_set_caption",
-            "atk_table_set_column_description",
-            "atk_table_set_column_header",
-            "atk_table_set_row_description",
-            "atk_table_set_row_header",
-            "atk_table_set_summary",
-        ]
-
         gir = gi.Repository.get_default()
-
         for iface in self._interfaces:
             atk_info = gir.find_by_name("Atk", iface)
-            atspi_info = gir.find_by_name("Atspi", iface)
-            atk_methods = {m.get_symbol(): m for m in atk_info.get_methods()}
-            atspi_methods = {m.get_symbol(): m for m in atspi_info.get_methods()}
-
+            atk_methods = {m.get_symbol(): m for m in atk_info.get_methods() if not m.is_deprecated()}
             for atk_symbol, atk_function_info in atk_methods.items():
-                if atk_symbol in implementor_only or atk_function_info.is_deprecated():
-                    continue
-
-                value = {"ATK": atk_function_info}
-                atspi_symbols = list(atspi_methods.keys())
-                atspi_symbol = self._find_matching_symbol(atk_symbol, atspi_symbols)
-                if atspi_symbol:
-                    value["ATSPI"] = atspi_methods.pop(atspi_symbol)
-                self._supported_methods[atk_symbol] = value
-
-            # These items weren't matched cleanly with an ATK method, but we may need
-            # to use them. Example: To test atk_table_cell_get_position() we need both
-            # atspi_table_cell_get_row_index() and atspi_table_cell_get_column_index().
-            for symbol, function_info in atspi_methods.items():
-                if not function_info.is_deprecated():
-                    self._supported_methods[symbol] = {"ATSPI": function_info}
+                if self.get_client_side_method(atk_function_info):
+                    self._supported_methods[atk_symbol] = atk_function_info
 
         return {k: v for k, v in self._supported_methods.items() if _include(v)}
+
+    def get_client_side_method(self, server_side_method, **kwargs):
+        """Returns the client-side API method for server_side_method."""
+
+        interface = server_side_method.get_container().get_name()
+
+        gir = gi.Repository.get_default()
+        info = gir.find_by_name("Atspi", interface)
+        if not info:
+            return None
+
+        server_side_symbol = server_side_method.get_symbol()
+        client_side_methods = {m.get_symbol(): m for m in info.get_methods()}
+        client_side_symbols = list(client_side_methods.keys())
+
+        # Things which are unique or hard to reliably map via heuristic.
+        mappings = {
+            "atk_selection_add_selection": "atspi_selection_select_child",
+            "atk_selection_ref_selection": "atspi_selection_get_selected_child",
+            "atk_selection_remove_selection": "atspi_selection_deselect_selected_child",
+            "atk_selection_select_all_selection": "atspi_selection_select_all",
+            "atk_value_set_value": "atspi_value_set_current_value",
+            "atk_value_get_increment": "atspi_value_get_minimum_increment",
+        }
+
+        mapped = mappings.get(server_side_symbol)
+        if mapped in client_side_symbols:
+            return client_side_methods.get(mapped)
+
+        # Ideally, the symbols are the same, not counting the API name.
+        candidate_symbol = server_side_symbol.replace("atk", "atspi")
+        if candidate_symbol in client_side_symbols:
+            return client_side_methods.get(candidate_symbol)
+
+        # AT-SPI2 tends to use "get" when ATK uses "ref"
+        replaced = candidate_symbol.replace("_ref_", "_get_")
+        if replaced in client_side_symbols:
+            return client_side_methods.get(replaced)
+
+        # AT-SPI2 tends to use "get_accessible_at" when ATK uses "ref_at"
+        replaced = candidate_symbol.replace("_ref_at", "_get_accessible_at")
+        if replaced in client_side_symbols:
+            return client_side_methods.get(replaced)
+
+        # They sometimes split words differently ("key_binding", "keybinding").
+        collapsed = candidate_symbol.replace("_", "")
+        matches = list(map(lambda x: x.replace("_", ""), client_side_symbols))
+        if collapsed in matches:
+            index = matches.index(collapsed)
+            return client_side_methods.get(client_side_symbols[index])
+
+        # AT-SPI2 tends to use "get n" when ATK uses "get ... count".
+        if "_get_" in server_side_symbol and "_count" in server_side_symbol:
+            matches = list(filter(lambda x: "get_n_" in x, client_side_symbols))
+            if len(matches) == 1:
+                return client_side_methods.get(matches[0])
+            if len(matches) > 1:
+                print("INFO: unexpected extra matches", matches)
+
+        return None
 
     def string_to_method_and_arguments(self, callable_as_string, **kwargs):
         """Converts callable_as_string into the appropriate callable platform method
@@ -477,8 +431,7 @@ class AtkAtta(Atta):
             args_list = list(filter(lambda x: x != "", args_string.split(",")))
 
         supported_methods = self.get_supported_methods()
-        info_dict = supported_methods.get(method_string, {})
-        method = info_dict.get(kwargs.get("api", "ATSPI"))
+        method = supported_methods.get(method_string, {})
         if not method:
             raise NameError("No known platform method for %s" % method_name)
 
@@ -493,6 +446,9 @@ class AtkAtta(Atta):
 
     def get_result(self, method, arguments, **kwargs):
         """Returns the result of calling method with the specified arguments."""
+
+        if method.get_namespace() == "Atk":
+            method = self.get_client_side_method(method)
 
         arguments.insert(0, kwargs.get("obj"))
         return method.invoke(*arguments)

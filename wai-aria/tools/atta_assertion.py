@@ -9,6 +9,7 @@
 # For license information, see:
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
+import json
 import re
 import traceback
 
@@ -169,6 +170,8 @@ class AttaResultAssertion(AttaAssertion):
     def _get_value(self):
         try:
             value = self._atta.get_result(self._method, self._args, obj=self._obj)
+        except AttributeError:
+            return None
         except Exception as error:
             self._messages.append("ERROR: %s" % error)
             return None
@@ -179,4 +182,24 @@ class AttaResultAssertion(AttaAssertion):
 class AttaDumpInfoAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
+        assertion = [""] * 4
         super().__init__(obj, assertion, atta)
+
+    def run(self):
+        info = dict.fromkeys(["properties", "relation targets", "supported methods"])
+
+        properties = self._atta.get_supported_properties(self._obj)
+        info["properties"] = {prop: getter(self._obj) for prop, getter in properties.items()}
+
+        relation_types = self._atta.get_supported_relation_types(self._obj)
+        getter = lambda x: self._atta.get_relation_targets(self._obj, x)
+        info["relation targets"] = {rtype: getter(rtype) for rtype in relation_types}
+
+        supported_methods = self._atta.get_supported_methods(self._obj)
+        methods = list(map(self._atta.value_to_string, supported_methods.values()))
+        info["supported methods"] = sorted(methods)
+
+        info = self._atta.value_to_string(info)
+        log = json.dumps(info, indent=4, sort_keys=True)
+        self._status = self.STATUS_FAIL
+        return self._status, " ".join(self._messages), log

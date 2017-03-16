@@ -489,7 +489,7 @@ class AtkAtta(Atta):
         return self._supported_relation_types
 
     def string_to_value(self, string, **kwargs):
-        """Returns value (e.g. a platform contstant) represented by string."""
+        """Returns the value (e.g. a platform constant) represented by string."""
 
         values_maps = {
             "RELATION": map(Atspi.RelationType, range(Atspi.RelationType.LAST_DEFINED)),
@@ -520,7 +520,7 @@ class AtkAtta(Atta):
         return super().type_to_string(value, **kwargs)
 
     def value_to_string(self, value, **kwargs):
-        """Returns the string representation of value (e.g. a platform contstant)."""
+        """Returns the string representation of value (e.g. a platform constant)."""
 
         value_type = type(value)
         if value_type == Atspi.Accessible:

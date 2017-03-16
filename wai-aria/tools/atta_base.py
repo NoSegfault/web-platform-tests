@@ -392,7 +392,7 @@ class Atta:
         return []
 
     def string_to_value(self, string, **kwargs):
-        """Returns value (e.g. a platform contstant) represented by string."""
+        """Returns the value (e.g. a platform constant) represented by string."""
 
         self._print(self.LOG_DEBUG, "string_to_value() not implemented")
         return None
@@ -417,7 +417,7 @@ class Atta:
         return "Undefined"
 
     def value_to_string(self, value, **kwargs):
-        """Returns the string representation of value (e.g. a platform contstant)."""
+        """Returns the string representation of value (e.g. a platform constant)."""
 
         value_type = type(value)
 

@@ -349,15 +349,8 @@ class Atta:
     def get_property_value(self, obj, property_name, **kwargs):
         """Returns the value of property_name for obj."""
 
-        if not obj and property_name != "accessible":
-            raise AttributeError("Object not found")
-
-        getters = self.get_supported_properties(**kwargs)
-        getter = getters.get(property_name)
-        if getter is None:
-            raise ValueError("Unsupported property: %s" % property_name)
-
-        return getter(obj)
+        self._print(self.LOG_DEBUG, "get_property_value() not implemented")
+        return None
 
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
@@ -390,11 +383,11 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_result_for_method_and_arguments() not implemented")
         return None
 
-    def get_supported_properties(self, obj=None, **kwargs):
-        """Returns a name:callable dict of supported platform properties."""
+    def get_supported_properties(self, obj, **kwargs):
+        """Returns a list of supported platform properties for obj."""
 
         self._print(self.LOG_DEBUG, "get_supported_properties() not implemented")
-        return {}
+        return []
 
     def get_supported_relation_types(self, obj=None, **kwargs):
         """Returns a list of supported platform relation types."""

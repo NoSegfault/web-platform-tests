@@ -215,7 +215,8 @@ class AttaDumpInfoAssertion(AttaAssertion):
         info = dict.fromkeys(["properties", "relation targets", "supported methods"])
 
         properties = self._atta.get_supported_properties(self._obj)
-        info["properties"] = {prop: getter(self._obj) for prop, getter in properties.items()}
+        getter = lambda x: self._atta.get_property_value(self._obj, x)
+        info["properties"] = {prop: getter(prop) for prop in properties}
 
         relation_types = self._atta.get_supported_relation_types(self._obj)
         getter = lambda x: self._atta.get_relation_targets(self._obj, x)

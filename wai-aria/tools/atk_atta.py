@@ -94,6 +94,19 @@ class AtkAtta(Atta):
         ifaces = [x.get_name() for x in info.get_interfaces()]
         self._interfaces = list(filter(lambda x: gir.find_by_name("Atk", x), ifaces))
 
+        self._supported_properties = {
+            "accessible": lambda x: x is not None,
+            "childCount": Atspi.Accessible.get_child_count,
+            "description": Atspi.Accessible.get_description,
+            "name": Atspi.Accessible.get_name,
+            "interfaces": Atspi.Accessible.get_interfaces,
+            "objectAttributes": Atspi.Accessible.get_attributes_as_array,
+            "parent": Atspi.Accessible.get_parent,
+            "relations": Atspi.Accessible.get_relation_set,
+            "role": Atspi.Accessible.get_role,
+            "states": Atspi.Accessible.get_state_set,
+        }
+
         super().__init__(host, port, name, version, api, Atta.LOG_INFO)
 
     def start(self, **kwargs):
@@ -286,6 +299,18 @@ class AtkAtta(Atta):
 
         return parent
 
+    def get_property_value(self, obj, property_name, **kwargs):
+        """Returns the value of property_name for obj."""
+
+        if not obj and property_name != "accessible":
+            raise AttributeError("Object not found")
+
+        getter = self._supported_properties.get(property_name)
+        if getter is None:
+            raise ValueError("Unsupported property: %s" % property_name)
+
+        return getter(obj)
+
     def get_relation_targets(self, obj, relation_type, **kwargs):
         """Returns the elements of pointed to by relation_type for obj."""
 
@@ -421,23 +446,10 @@ class AtkAtta(Atta):
         arguments.insert(0, kwargs.get("obj"))
         return method.invoke(*arguments)
 
-    def get_supported_properties(self, obj=None, **kwargs):
-        """Returns a name:callable dict of supported platform properties."""
+    def get_supported_properties(self, obj, **kwargs):
+        """Returns a list of supported platform properties for obj."""
 
-        supported_properties = {
-            "accessible": lambda x: x is not None,
-            "childCount": Atspi.Accessible.get_child_count,
-            "description": Atspi.Accessible.get_description,
-            "name": Atspi.Accessible.get_name,
-            "interfaces": Atspi.Accessible.get_interfaces,
-            "objectAttributes": Atspi.Accessible.get_attributes_as_array,
-            "parent": Atspi.Accessible.get_parent,
-            "relations": Atspi.Accessible.get_relation_set,
-            "role": Atspi.Accessible.get_role,
-            "states": Atspi.Accessible.get_state_set,
-        }
-
-        return supported_properties
+        return self._supported_properties.keys()
 
     def get_supported_relation_types(self, obj=None, **kwargs):
         """Returns a list of supported platform relation types."""

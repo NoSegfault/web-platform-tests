@@ -152,6 +152,8 @@ class AttaPropertyAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        if self._expected_value == "<nil>":
+            self._expected_value = "None"
 
     def _get_value(self):
         try:

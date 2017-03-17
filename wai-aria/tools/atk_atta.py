@@ -443,6 +443,9 @@ class AtkAtta(Atta):
         if method.get_namespace() == "Atk":
             method = self.get_client_side_method(method)
 
+        if method and method.get_symbol() == "atspi_table_cell_get_position":
+            raise Exception("Method call disabled: https://bugzilla.mozilla.org/show_bug.cgi?id=1348340")
+
         arguments.insert(0, kwargs.get("obj"))
         return method.invoke(*arguments)
 

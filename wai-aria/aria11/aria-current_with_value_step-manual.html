@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>aria-current with value step</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_LINK"
                ],
                [
                   "property",
-                  "objectAttributes",
+                  "states",
                   "contains",
-                  "rowcount:3"
+                  "STATE_ACTIVE"
                ],
                [
-                  "result",
-                  "atk_table_get_n_columns()",
+                  "property",
+                  "active",
                   "is",
-                  "3"
+                  "step"
                ]
             ],
             "AXAPI" : [
@@ -41,13 +41,13 @@
                   "property",
                   "role",
                   "is",
-                  "AXTable"
+                  "AXLink"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXAriaCurrent",
                   "is",
-                  "3"
+                  "step"
                ]
             ],
             "IAccessible2" : [
@@ -55,13 +55,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_LINK + STATE_LINKED"
                ],
                [
                   "property",
-                  "rowcount",
+                  "active",
                   "is",
-                  "3"
+                  "step"
                ]
             ],
             "MSAA" : [
@@ -69,27 +69,27 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_LINK + STATE_LINKED"
                ],
                [
                   "property",
-                  "rowcount",
+                  "active",
                   "is",
-                  "3"
+                  "step"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
+                  "role",
                   "is",
-                  "Table"
+                  "HyperLink"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "current",
                   "is",
-                  "3"
+                  "step"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +111,15 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "aria-current with value step"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
-  </div>
+  <p>This test examines the ARIA properties for aria-current with value step.</p>
+      <div id="test" role="link" aria-current="step">1</div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

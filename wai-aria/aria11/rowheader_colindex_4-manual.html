@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>rowheader colindex 4</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_ROW_HEADER"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "colindex:4"
                ],
                [
                   "result",
-                  "atk_table_get_n_columns()",
+                  "atk_table_cell_get_position()",
                   "is",
-                  "3"
+                  "4"
                ]
             ],
             "AXAPI" : [
@@ -41,11 +41,11 @@
                   "property",
                   "role",
                   "is",
-                  "AXTable"
+                  "AXCell"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXARIAColumnIndex",
                   "is",
                   "3"
                ]
@@ -55,13 +55,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_ROWHEADER"
                ],
                [
                   "property",
-                  "rowcount",
+                  "colindex",
                   "is",
-                  "3"
+                  "4"
                ]
             ],
             "MSAA" : [
@@ -69,13 +69,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_ROWHEADER"
                ],
                [
                   "property",
-                  "rowcount",
+                  "colindex",
                   "is",
-                  "3"
+                  "4"
                ]
             ],
             "UIA" : [
@@ -83,11 +83,11 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "HeaderItem"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "Column",
                   "is",
                   "3"
                ]
@@ -111,17 +111,17 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "rowheader colindex 4"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
+  <p>This test examines the ARIA properties for rowheader colindex 4.</p>
+    <div role="table">
+    <div role="row">
+       <div id="test" role="rowheader" aria-colindex="4" aria-colcount="8">test cell</div>
     </div>
   </div>
 

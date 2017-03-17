@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>figure</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,47 +21,41 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_PANEL"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
-               ],
-               [
-                  "result",
-                  "atk_table_get_n_columns()",
-                  "is",
-                  "3"
+                  "xml-roles:figure"
                ]
             ],
             "AXAPI" : [
                [
                   "property",
-                  "role",
+                  "AXRole",
                   "is",
-                  "AXTable"
+                  "AXGrop"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXSubrole",
                   "is",
-                  "3"
+                  "<nil>"
+               ],
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "figure"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_TABLE"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:figure"
                ]
             ],
             "MSAA" : [
@@ -69,13 +63,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "ROLE_SYSTEM_GROUPING"
                ]
             ],
             "UIA" : [
@@ -83,13 +71,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "Group"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "Localized Control Type",
                   "is",
-                  "3"
+                  "figure"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +99,19 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "figure"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
-  </div>
+  <p>This test examines the ARIA properties for figure.</p>
+  
+    <img src="foo.jpg" aria-label="fake image"/>
+    <img src="baz.jpg" aria-label="really fake imge">
+
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

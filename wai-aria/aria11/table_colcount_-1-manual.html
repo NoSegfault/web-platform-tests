@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>table colcount -1</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -27,13 +27,13 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "colcount:(UA calculated:0)"
                ],
                [
                   "result",
                   "atk_table_get_n_columns()",
                   "is",
-                  "3"
+                  "(UA calculated:0)"
                ]
             ],
             "AXAPI" : [
@@ -45,9 +45,9 @@
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXARIAColumnCount",
                   "is",
-                  "3"
+                  "(UA calculated:0)"
                ]
             ],
             "IAccessible2" : [
@@ -59,9 +59,9 @@
                ],
                [
                   "property",
-                  "rowcount",
+                  "colcount",
                   "is",
-                  "3"
+                  "(UA calculated:0)"
                ]
             ],
             "MSAA" : [
@@ -73,9 +73,9 @@
                ],
                [
                   "property",
-                  "rowcount",
+                  "colcount",
                   "is",
-                  "3"
+                  "(UA calculated:0)"
                ]
             ],
             "UIA" : [
@@ -87,9 +87,9 @@
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "Table.ColumnCount",
                   "is",
-                  "3"
+                  "(UA calculated:0)"
                ]
             ],
             "WAIFAKE" : [
@@ -111,17 +111,17 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "table colcount -1"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
+  <p>This test examines the ARIA properties for table colcount -1.</p>
+    <div role="table">
+    <div role="row">
+       <div id="test" role="cell" aria-colindex="4" aria-colcount="-1">test cell</div>
     </div>
   </div>
 

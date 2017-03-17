@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <title>TBD</title>
+    <link rel="stylesheet" href="/resources/testharness.css">
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "title" : "Relations plus a TBD",
+   "steps" : [
+      {
+         "type" : "test",
+         "title" : "Verify labelled-by relation exists",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABELLED_BY"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABELLED_BY",
+                  "is",
+                  "[label]"
+               ],
+               [
+                  "TBD",
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Verify label-for relation exists",
+         "element" : "label",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABEL_FOR"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABEL_FOR",
+                  "is",
+                  "[test]"
+               ],
+               [
+                  "TBD",
+               ]
+            ]
+         },
+      },
+   ]
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test demonstrates results of setting properties.</p>
+  <div id="label">Make a selection:</div>
+  <div id="test" role="listbox" aria-label="Choose one" aria-multiselectable="true" tabindex="0" aria-labelledby="label">
+    <div id="item1" role="option">First</div>
+    <div id="item2" role="option" aria-selected="false">Second</div>
+  </div>
+  <div id="other" tabindex="0">Focusable element for testing</div>
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

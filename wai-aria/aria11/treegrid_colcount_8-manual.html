@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>treegrid colcount 8</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_TREE_TABLE"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "colcount:8"
                ],
                [
                   "result",
                   "atk_table_get_n_columns()",
                   "is",
-                  "3"
+                  "8"
                ]
             ],
             "AXAPI" : [
@@ -45,9 +45,9 @@
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXARIAColumnCount",
                   "is",
-                  "3"
+                  "8"
                ]
             ],
             "IAccessible2" : [
@@ -55,13 +55,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_OUTLINE"
                ],
                [
                   "property",
-                  "rowcount",
+                  "colcount",
                   "is",
-                  "3"
+                  "8"
                ]
             ],
             "MSAA" : [
@@ -69,13 +69,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_OUTLINE"
                ],
                [
                   "property",
-                  "rowcount",
+                  "colcount",
                   "is",
-                  "3"
+                  "8"
                ]
             ],
             "UIA" : [
@@ -83,13 +83,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "DataGrid"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "DataGrid.ColumnCount",
                   "is",
-                  "3"
+                  "8"
                ]
             ],
             "WAIFAKE" : [
@@ -111,17 +111,17 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "treegrid colcount 8"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
+  <p>This test examines the ARIA properties for treegrid colcount 8.</p>
+    <div role="treegrid">
+    <div role="row">
+       <div id="test" role="cell" aria-colindex="4" aria-colcount="8">test cell</div>
     </div>
   </div>
 

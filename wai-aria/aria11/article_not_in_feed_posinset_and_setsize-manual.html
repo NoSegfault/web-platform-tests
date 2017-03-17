@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>grid rowcount 3</title>
+    <title>article not in feed posinset and setsize</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,59 +21,89 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_ARTICLE"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "xml-roles:grid"
+                  "xml-roles:article"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "posinset:4"
                ],
                [
-                  "result",
-                  "atk_table_get_n_columns()",
-                  "is",
-                  "3"
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "setsize:8"
                ]
             ],
             "AXAPI" : [
                [
                   "property",
-                  "role",
+                  "AXRole",
                   "is",
-                  "AXTable"
+                  "AXGroup"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXSubrole",
                   "is",
-                  "3"
+                  "AXDocumentArticle"
+               ],
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "article"
+               ],
+               [
+                  "property",
+                  "AXARIAPosInSet",
+                  "is",
+                  "4"
+               ],
+               [
+                  "property",
+                  "AXARIASetSize",
+                  "is",
+                  "8"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:article"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "xml-roles:grid"
+                  "posinset:4"
                ],
                [
                   "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "objectAttributes",
+                  "contains",
+                  "setsize:8"
+               ],
+               [
+                  "result",
+                  "groupPosition()",
+                  "contains",
+                  "similarItemsInGroup:8"
+               ],
+               [
+                  "result",
+                  "groupPosition()",
+                  "contains",
+                  "positionInGroup:4"
                ]
             ],
             "MSAA" : [
@@ -81,33 +111,39 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_DOCUMENT"
                ],
                [
                   "property",
-                  "objectAttributes",
+                  "states",
                   "contains",
-                  "xml-roles:grid"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "STATE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
+                  "control type",
                   "is",
-                  "DataGrid"
+                  "Group"
                ],
                [
                   "property",
-                  "DataGrid.RowCount",
+                  "localize control type",
                   "is",
-                  "3"
+                  "article"
+               ],
+               [
+                  "property",
+                  "AriaProperties",
+                  "contains",
+                  "posinset:4"
+               ],
+               [
+                  "property",
+                  "AriaProperties",
+                  "contains",
+                  "setsize:8"
                ]
             ],
             "WAIFAKE" : [
@@ -129,21 +165,15 @@
          "type" : "test"
       }
    ],
-   "title" : "grid rowcount 3"
+   "title" : "article not in feed posinset and setsize"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for grid rowcount 3.</p>
-    <div role='grid' id='test' aria-rowcount='3' aria-colcount='2'>
-   <div role='row'>
-      <span role='gridcell'>
-        <button>hello</button>
-     </span>
-   </div>
-  </div>
+  <p>This test examines the ARIA properties for article not in feed posinset and setsize.</p>
+    <div id="test" role="article" aria-posinset="4" aria-setsize="8">test cell</div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

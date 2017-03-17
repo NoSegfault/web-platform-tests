@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>cell aria-rowspan 2 on div</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_TABLE_CELL"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "rowspan:2"
                ],
                [
                   "result",
-                  "atk_table_get_n_columns()",
+                  "atk_table_cell_get_row_column_span()",
                   "is",
-                  "3"
+                  "2"
                ]
             ],
             "AXAPI" : [
@@ -41,13 +41,13 @@
                   "property",
                   "role",
                   "is",
-                  "AXTable"
+                  "AXCell"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXRowIndexRange.len",
                   "is",
-                  "3"
+                  "2"
                ]
             ],
             "IAccessible2" : [
@@ -55,13 +55,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_CELL"
                ],
                [
                   "property",
-                  "rowcount",
+                  "rowspan",
                   "is",
-                  "3"
+                  "2"
                ]
             ],
             "MSAA" : [
@@ -69,13 +69,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_CELL"
                ],
                [
                   "property",
-                  "rowcount",
+                  "rowspan",
                   "is",
-                  "3"
+                  "2"
                ]
             ],
             "UIA" : [
@@ -83,13 +83,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "TableItem"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "TableItem.RowSpan",
                   "is",
-                  "3"
+                  "2"
                ]
             ],
             "WAIFAKE" : [
@@ -111,17 +111,17 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "cell aria-rowspan 2 on div"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
+  <p>This test examines the ARIA properties for cell aria-rowspan 2 on div.</p>
+    <div role="table">
+    <div role="row">
+       <div id="test" role="cell" aria-rowspan="2">test cell</div>
     </div>
   </div>
 

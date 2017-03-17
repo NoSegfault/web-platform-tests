@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>table rowcount -1</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -27,13 +27,13 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "rowcount:(UA calculated:1)"
                ],
                [
                   "result",
                   "atk_table_get_n_columns()",
                   "is",
-                  "3"
+                  "(UA calculated:1)"
                ]
             ],
             "AXAPI" : [
@@ -47,7 +47,7 @@
                   "property",
                   "AXARIARowCount",
                   "is",
-                  "3"
+                  "(UA calculated:1)"
                ]
             ],
             "IAccessible2" : [
@@ -61,7 +61,7 @@
                   "property",
                   "rowcount",
                   "is",
-                  "3"
+                  "(UA calculated:1)"
                ]
             ],
             "MSAA" : [
@@ -75,7 +75,7 @@
                   "property",
                   "rowcount",
                   "is",
-                  "3"
+                  "(UA calculated:1)"
                ]
             ],
             "UIA" : [
@@ -89,7 +89,7 @@
                   "property",
                   "Table.RowCount",
                   "is",
-                  "3"
+                  "(UA calculated:1)"
                ]
             ],
             "WAIFAKE" : [
@@ -111,18 +111,20 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "table rowcount -1"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
+  <p>This test examines the ARIA properties for table rowcount -1.</p>
+    <div role='table' id='test' aria-rowcount='-1' aria-colcount='2'>
+   <div role='row'>
+      <span role='cell'>
+        <button>hello</button>
+     </span>
+   </div>
   </div>
 
   <div id="manualMode"></div>

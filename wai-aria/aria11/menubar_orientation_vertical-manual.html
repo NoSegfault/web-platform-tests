@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>menubar orientation vertical</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,47 +21,47 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_MENU_BAR"
                ],
                [
                   "property",
-                  "objectAttributes",
+                  "states",
                   "contains",
-                  "rowcount:3"
-               ],
-               [
-                  "result",
-                  "atk_table_get_n_columns()",
-                  "is",
-                  "3"
+                  "STATE_VERTICAL"
                ]
             ],
             "AXAPI" : [
                [
                   "property",
-                  "role",
+                  "AXRole",
                   "is",
-                  "AXTable"
+                  "AXMenuBar"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXSubrole",
                   "is",
-                  "3"
+                  "<nil>"
+               ],
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "menu bar"
+               ],
+               [
+                  "property",
+                  "AXOrientation",
+                  "is",
+                  "AXVerticalOrientation"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_TABLE"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "states",
+                  "contains",
+                  "IA2_STATE_VERTICAL"
                ]
             ],
             "MSAA" : [
@@ -69,13 +69,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "ROLE_SYSTEM_MENUBAR"
                ]
             ],
             "UIA" : [
@@ -83,13 +77,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "MenuBar"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "IUIAutomationElement.Orientation",
                   "is",
-                  "3"
+                  "vertical"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +105,18 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "menubar orientation vertical"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
-  </div>
+  <p>This test examines the ARIA properties for menubar orientation vertical.</p>
+    <ul id="test" role="menubar" aria-orientation="vertical">
+    <li role="menuitem">File</file>
+    <li role="menuitem">Edit</file>
+  </ul>
 
   <div id="manualMode"></div>
   <div id="log"></div>

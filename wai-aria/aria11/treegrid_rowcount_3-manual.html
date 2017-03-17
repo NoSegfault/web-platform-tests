@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>treegrid rowcount 3</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,7 +21,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_TREE_TABLE"
                ],
                [
                   "property",
@@ -55,7 +55,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_OUTLINE"
                ],
                [
                   "property",
@@ -69,7 +69,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_OUTLINE"
                ],
                [
                   "property",
@@ -83,11 +83,11 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Table"
+                  "DataGrid"
                ],
                [
                   "property",
-                  "Table.RowCount",
+                  "DataGrid.RowCount",
                   "is",
                   "3"
                ]
@@ -111,18 +111,20 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "treegrid rowcount 3"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
+  <p>This test examines the ARIA properties for treegrid rowcount 3.</p>
+    <div role='treegrid' id='test' aria-rowcount='3' aria-colcount='2'>
+   <div role='row'>
+      <span role='gridcell'>
+        <button>hello</button>
+     </span>
+   </div>
   </div>
 
   <div id="manualMode"></div>

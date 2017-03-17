@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>table rowcount 3</title>
+    <title>button haspopup true</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,47 +21,59 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_TABLE"
+                  "ROLE_PUSH_BUTTON"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "rowcount:3"
+                  "haspopup=\"true"
                ],
                [
-                  "result",
-                  "atk_table_get_n_columns()",
-                  "is",
-                  "3"
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_HASPOPUP"
                ]
             ],
             "AXAPI" : [
                [
                   "property",
-                  "role",
+                  "AXRole",
                   "is",
-                  "AXTable"
+                  "AXButton"
                ],
                [
                   "property",
-                  "AXARIARowCount",
+                  "AXSubRole",
                   "is",
-                  "3"
+                  "<nil>"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "button"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXShowMenu"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXPress"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_TABLE"
-               ],
-               [
-                  "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "objectAttributes",
+                  "contains",
+                  "haspopup=\"true"
                ]
             ],
             "MSAA" : [
@@ -69,27 +81,27 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_TABLE"
+                  "ROLE_SYSTEM_BUTTONMENU"
                ],
                [
                   "property",
-                  "rowcount",
-                  "is",
-                  "3"
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_HASPOPUP"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
+                  "IUIAutomationElement.ControlType",
                   "is",
-                  "Table"
+                  "Button"
                ],
                [
                   "property",
-                  "Table.RowCount",
-                  "is",
-                  "3"
+                  "controlPatterns",
+                  "contains",
+                  "ExpandCollapse"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +123,18 @@
          "type" : "test"
       }
    ],
-   "title" : "table rowcount 3"
+   "title" : "button haspopup true"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for table rowcount 3.</p>
-    <div role='table' id='test' aria-rowcount='3' aria-colcount='2'>
-    <div role='row'>
-      <span role='cell'>cheese</span>
-    </div>
+  <p>This test examines the ARIA properties for button haspopup true.</p>
+    <div role="button" aria-haspopup="true">
+  OK
   </div>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

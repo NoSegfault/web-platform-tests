@@ -149,6 +149,7 @@ class Atta:
         """Sets the test details the ATTA should be looking for. The ATTA should
         update its "ready" status upon finding that file."""
 
+        self._print(self.LOG_INFO, "Start test run: %s (%s)" % (name, url))
         self._next_test = name, url
         self._ready = False
 

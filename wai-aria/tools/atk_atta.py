@@ -547,6 +547,7 @@ class AtkAtta(Atta):
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""
 
+        self._print(self.LOG_INFO, "Document loaded: %s" % self._get_uri(data.source))
         if self.is_ready(data.source):
             application = Atspi.Accessible.get_application(data.source)
             Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)

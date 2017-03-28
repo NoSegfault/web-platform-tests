@@ -343,10 +343,9 @@ class AtkAtta(Atta):
         gir = gi.Repository.get_default()
         for iface in self._interfaces:
             atk_info = gir.find_by_name("Atk", iface)
-            atk_methods = {m.get_symbol(): m for m in atk_info.get_methods() if not m.is_deprecated()}
-            for atk_symbol, atk_function_info in atk_methods.items():
-                if self.get_client_side_method(atk_function_info):
-                    self._supported_methods[atk_symbol] = atk_function_info
+            for method in atk_info.get_methods():
+                if self.get_client_side_method(method):
+                    self._supported_methods[method.get_symbol()] = method
 
         return {k: v for k, v in self._supported_methods.items() if _include(v)}
 
@@ -426,7 +425,7 @@ class AtkAtta(Atta):
         supported_methods = self.get_supported_methods()
         method = supported_methods.get(method_string, {})
         if not method:
-            raise NameError("No known platform method for %s" % method_string)
+            raise NameError("%s is not supported" % method_string)
 
         in_args = filter(lambda x: x.get_direction() == Direction.IN, method.get_arguments())
         arg_types = list(map(lambda x: x.get_type().get_tag(), in_args))

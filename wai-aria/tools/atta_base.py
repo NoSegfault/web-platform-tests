@@ -166,7 +166,7 @@ class Atta:
     def _run_test(self, obj, assertion, **kwargs):
         """Runs a single assertion on obj, returning a results dict."""
 
-        test_class = AttaAssertion.get_test_class(assertion)
+        test_class = self._get_assertion_test_class(assertion)
         if test_class is None:
             result = AttaAssertion.STATUS_FAIL
             message = "ERROR: %s is not a valid assertion" % assertion

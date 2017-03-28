@@ -429,12 +429,13 @@ class AtkAtta(Atta):
             raise NameError("No known platform method for %s" % method_name)
 
         in_args = filter(lambda x: x.get_direction() == Direction.IN, method.get_arguments())
-        arg_types = list(map(lambda x: self.platform_type_to_python_type(x.get_tag()), in_args))
+        arg_types = list(map(lambda x: x.get_type().get_tag(), in_args))
         if len(arg_types) != len(args_list):
             string = self._atta.value_to_string(method)
             raise TypeError("Incorrect argument count for %s" % string)
 
-        args = [arg_types[i](args_list[i]) for i in range(len(arg_types))]
+        py_types = list(map(self.platform_type_to_python_type, arg_types))
+        args = [py_types[i](arg) for i, arg in enumerate(args_list)]
         return method, args
 
     def get_result(self, method, arguments, **kwargs):

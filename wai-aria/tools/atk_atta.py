@@ -426,7 +426,7 @@ class AtkAtta(Atta):
         supported_methods = self.get_supported_methods()
         method = supported_methods.get(method_string, {})
         if not method:
-            raise NameError("No known platform method for %s" % method_name)
+            raise NameError("No known platform method for %s" % method_string)
 
         in_args = filter(lambda x: x.get_direction() == Direction.IN, method.get_arguments())
         arg_types = list(map(lambda x: x.get_type().get_tag(), in_args))
@@ -572,7 +572,7 @@ class AtkAtta(Atta):
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""
 
-        self._print(self.LOG_INFO, "Document loaded: %s" % self._get_uri(data.source))
+        self._print(self.LOG_INFO, self._get_uri(data.source), "LOADED: ")
         if self.is_ready(data.source):
             application = Atspi.Accessible.get_application(data.source)
             Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)

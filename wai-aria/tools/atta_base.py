@@ -43,6 +43,11 @@ class Atta:
         LOG_ERROR: "ERROR",
     }
 
+    FORMAT_NORMAL = "\x1b[1m%(label)s\x1b[22m%(msg)s\x1b[0m"
+    FORMAT_GOOD = "\x1b[32;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
+    FORMAT_WARNING = "\x1b[33;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
+    FORMAT_BAD = "\x1b[31;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
+
     def __init__(self, host, port, name, version, api, log_level=None):
         """Initializes this ATTA."""
 
@@ -85,11 +90,24 @@ class Atta:
 
         return "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
 
-    def _print(self, level, string, **kwargs):
+    def _print(self, level, string, label=None, formatting=None, **kwargs):
         """Prints the string, typically to stdout."""
 
-        if level >= self._log_level:
-            print("%s: %s" % (self.LOG_LEVELS.get(level), string))
+        if level < self._log_level:
+            return
+
+        if label is None:
+            label = "%s: " % self.LOG_LEVELS.get(level)
+
+        if formatting is None:
+            if level == self.LOG_ERROR:
+                formatting = self.FORMAT_BAD
+            elif level == self.LOG_WARNING:
+                formatting = self.FORMAT_WARNING
+            else:
+                formatting = self.FORMAT_NORMAL
+
+        print(formatting % {"label": label, "msg": string})
 
     def start(self, **kwargs):
         """Starts this ATTA (i.e. before running a series of tests)."""
@@ -102,7 +120,7 @@ class Atta:
         signal.signal(signal.SIGINT, self.shutdown)
         signal.signal(signal.SIGTERM, self.shutdown)
 
-        self._print(self.LOG_INFO, "Starting server on http://%s:%s/" % (self._host, self._port))
+        self._print(self.LOG_INFO, "Starting on http://%s:%s/" % (self._host, self._port), "SERVER: ")
         self._server = HTTPServer((self._host, self._port), AttaRequestHandler)
         AttaRequestHandler.set_atta(self)
 
@@ -141,7 +159,7 @@ class Atta:
         self._ready = uri and uri == test_uri
         if self._ready:
             self._current_document = document
-            self._print(self.LOG_INFO, "Test is '%s' (%s)" % (test_name, test_uri))
+            self._print(self.LOG_INFO, "Test is '%s' (%s)" % (test_name, test_uri), "READY: ")
 
         return self._ready
 
@@ -149,7 +167,7 @@ class Atta:
         """Sets the test details the ATTA should be looking for. The ATTA should
         update its "ready" status upon finding that file."""
 
-        self._print(self.LOG_INFO, "Start test run: %s (%s)" % (name, url))
+        self._print(self.LOG_INFO, "%s (%s)" % (name, url), "START TEST RUN: ")
         self._next_test = name, url
         self._ready = False
 
@@ -175,7 +193,18 @@ class Atta:
             test = test_class(obj, assertion, self)
             result, message, log = test.run()
 
-        self._print(self.LOG_INFO, "%s: %s" % (" ".join(map(str, assertion)), result))
+        label = "%s: " % result
+        string = " ".join(map(str, assertion))
+        if result == AttaAssertion.STATUS_PASS:
+            formatting = self.FORMAT_GOOD
+        elif result == AttaAssertion.STATUS_FAIL:
+            formatting = self.FORMAT_BAD
+            if message:
+                string = "%s (%s)" % (string, message)
+        else:
+            formatting = self.FORMAT_WARNING
+
+        self._print(self.LOG_INFO, string, label, formatting)
         return {"result": result, "message": message, "log": log}
 
     def run_tests(self, obj_id, assertions):
@@ -233,7 +262,7 @@ class Atta:
             signal_string = "on signal %s" % str(signum)
         except:
             signal_string = ""
-        self._print(self.LOG_INFO, "Shutting down server %s" % signal_string)
+        self._print(self.LOG_INFO, "Shutting down %s" % signal_string, "SERVER:")
 
         if self._server is not None:
             thread = threading.Thread(target=self._server.shutdown)

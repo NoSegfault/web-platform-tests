@@ -25,14 +25,8 @@
                ],
                [
                   "property",
-                  "objectAttributes",
-                  "contains",
-                  "haspopup=\"false"
-               ],
-               [
-                  "property",
                   "states",
-                  "contains",
+                  "doesNotContain",
                   "STATE_HASPOPUP"
                ]
             ],
@@ -73,7 +67,7 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "haspopup=\"false"
+                  "haspopup:false"
                ]
             ],
             "MSAA" : [
@@ -131,7 +125,7 @@
   </head>
   <body>
   <p>This test examines the ARIA properties for button haspopup false.</p>
-    <div id="test" role="button" aria-haspopup="true">
+    <div id="test" role="button" aria-haspopup="false">
   OK
   </div>
 

@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Relation Test</title>
+    <link rel="stylesheet" href="/resources/testharness.css">
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "title" : "Verify relations",
+   "steps" : [
+      {
+         "type" : "test",
+         "title" : "Listbox - relation info",
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_LIST_BOX"
+               ],
+               [
+                  "property",
+                  "relations",
+                  "doesNotContain",
+                  "RELATION_LABEL_FOR"
+               ],
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABELLED_BY"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABELLED_BY",
+                  "is",
+                  "[label]"
+               ]
+            ]
+         },
+      },
+      {
+         "type" : "test",
+         "title" : "Label div - relation info",
+         "element" : "label",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "ROLE_SECTION"
+               ],
+               [
+                  "property",
+                  "relations",
+                  "contains",
+                  "RELATION_LABEL_FOR"
+               ],
+               [
+                  "property",
+                  "relations",
+                  "doesNotContain",
+                  "RELATION_LABELLED_BY"
+               ],
+               [
+                  "relation",
+                  "RELATION_LABEL_FOR",
+                  "is",
+                  "[test]"
+               ]
+            ]
+         },
+      },
+   ]
+}
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test demonstrates results of setting properties.</p>
+  <div id="label">Make a selection:</div>
+  <div id="test" role="listbox" aria-label="Choose one" aria-labelledby="label" tabindex="0">
+    <div id="item1" role="option">First</div>
+    <div id="item2" role="option" aria-selected="false">Second</div>
+  </div>
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

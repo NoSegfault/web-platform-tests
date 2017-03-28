@@ -429,7 +429,7 @@ class AtkAtta(Atta):
             raise NameError("No known platform method for %s" % method_name)
 
         in_args = filter(lambda x: x.get_direction() == Direction.IN, method.get_arguments())
-        arg_types = list(map(lambda x: TypeTag(x.get_type().get_tag()), in_args))
+        arg_types = list(map(lambda x: self.platform_type_to_python_type(x.get_tag()), in_args))
         if len(arg_types) != len(args_list):
             string = self._atta.value_to_string(method)
             raise TypeError("Incorrect argument count for %s" % string)
@@ -484,6 +484,32 @@ class AtkAtta(Atta):
 
         return None
 
+    def platform_type_to_python_type(self, platform_type, **kwargs):
+        """Returns the python type associated with the specified platform type."""
+
+        types_map =  {
+            TypeTag.BOOLEAN: bool,
+            TypeTag.INT8: int,
+            TypeTag.UINT8: int,
+            TypeTag.INT16: int,
+            TypeTag.UINT16: int,
+            TypeTag.INT32: int,
+            TypeTag.UINT32: int,
+            TypeTag.INT64: int,
+            TypeTag.UINT64: int,
+            TypeTag.FLOAT: float,
+            TypeTag.DOUBLE: float,
+            TypeTag.GLIST: list,
+            TypeTag.GSLIST: list,
+            TypeTag.ARRAY: list,
+            TypeTag.GHASH: dict,
+            TypeTag.UTF8: str,
+            TypeTag.FILENAME: str,
+            TypeTag.UNICHAR: str,
+        }
+
+        return types_map.get(platform_type, str)
+
     def type_to_string(self, value, **kwargs):
         """Returns the type of value as a harness-compliant string."""
 
@@ -533,9 +559,7 @@ class AtkAtta(Atta):
         if value_type == FunctionInfo:
             method_args = []
             for arg in value.get_arguments():
-                arg_name = arg.get_name()
-                arg_type = TypeTag(arg.get_type().get_tag())
-                method_args.append("%s %s" % (arg_type.__name__, arg_name))
+                method_args.append("%s %s" % (arg.get_type().get_tag_as_string(), arg.get_name()))
 
             string = "%s(%s)" % (value.get_symbol(), ", ".join(method_args))
             if value.is_deprecated():

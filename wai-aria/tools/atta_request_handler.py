@@ -10,6 +10,7 @@
 # https://www.w3.org/Consortium/Legal/2008/04-testsuite-copyright.html
 
 import json
+import threading
 import time
 import traceback
 
@@ -20,10 +21,16 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
     """Optional request handler for python3 Accessible Technology Test Adapters."""
 
     _atta = None
+    _timeout = 5
+    _running_tests = False
 
     @classmethod
     def set_atta(cls, atta):
         cls._atta = atta
+
+    @classmethod
+    def is_running_tests(cls):
+        return cls._running_tests
 
     def do_GET(self):
         self.dispatch()
@@ -43,14 +50,16 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         elif self.path.endswith("end"):
             self.end_test_run()
         else:
-            print("UNHANDLED PATH: %s" % self.path)
-            self.send_error()
+            self.send_error(400, "UNHANDLED PATH: %s" % self.path)
 
     def send_error(self, code, message=None):
-        self.send_response(404)
+        if message is None:
+            message = "Error: bad request"
+
+        self.send_response(code, message)
         self.send_header("Content-Type", "text/plain")
         self.add_headers()
-        self.wfile.write(bytes("Error: bad request\n", "utf-8"))
+        self.wfile.write(bytes("%s\n" % message, "utf-8"))
 
     @staticmethod
     def dump_json(obj):
@@ -91,11 +100,12 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         response["error"] = "; ".join(errors)
         return response
 
-    def _send_response(self, response):
+    def _send_response(self, response, status_code=200):
         if response.get("statusText") is None:
             response["statusText"] = ""
 
-        self.send_response(200)
+        message = response.get("statusText")
+        self.send_response(status_code, message)
         self.add_aria_headers()
         dump = self.dump_json(response)
         try:
@@ -105,8 +115,36 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self.wfile._wbuf = []
             self.wfile._wbuf_len = 0
 
+    def _wait(self, start_time, method, response={}):
+        if method.__call__():
+            return False
+
+        if time.time() - start_time > self._timeout:
+            msg = "Timeout waiting for %s() to return True" % method.__name__
+            response.update({"status": "ERROR", "statusText": msg})
+            self._send_response(response, 500)
+            return False
+
+        return True
+
+    def _wait_for_run_request(self):
+        class Timer(threading.Thread):
+            def __init__(self, timeout):
+                super().__init__(daemon=True)
+                self.timeout = time.time() + timeout
+
+            def run(self):
+                while not AttaRequestHandler.is_running_tests():
+                    if time.time() > self.timeout:
+                        print("ERROR: 'test' request not received from ATTAcomm.js.")
+                        return
+
+        thread = Timer(self._timeout)
+        thread.start()
+
     def start_test_run(self):
         print("==================================")
+        AttaRequestHandler._running_tests = False
         response = {}
         params = self.get_params("test", "url")
         error = params.get("error")
@@ -116,16 +154,21 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self._send_response(response)
             return
 
-        if self._atta is None:
-            print("RUNNING ATTA NOT FOUND. TEST MUST BE RUN MANUALLY.")
-        else:
-            response.update(self._atta.get_info())
-            self._atta.start_test_run(name=params.get("test"), url=params.get("url"))
-            while not self._atta.is_ready():
-                time.sleep(0.5)
+        if not (self._atta and self._atta.is_enabled()):
+            response["status"] = "ERROR"
+            response["statusText"] = "ENABLED ATTA NOT FOUND. TEST MUST BE RUN MANUALLY."
+            self._send_response(response)
+            return
+
+        start_time = time.time()
+        response.update(self._atta.get_info())
+        self._atta.start_test_run(name=params.get("test"), url=params.get("url"))
+        while self._wait(start_time, self._atta.is_ready, response):
+            time.sleep(0.5)
 
         response["status"] = "READY"
         self._send_response(response)
+        self._wait_for_run_request()
 
     def start_listen(self):
         params = self.get_params("events")
@@ -146,6 +189,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         self._send_response(response)
 
     def run_tests(self):
+        AttaRequestHandler._running_tests = True
         params = self.get_params("title", "id", "data")
         response = {}
         if self._atta is not None:
@@ -168,3 +212,4 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         self._atta.end_test_run()
         response = {"status": "DONE"}
         self._send_response(response)
+        AttaRequestHandler._running_tests = False

@@ -174,6 +174,7 @@ class Atta:
     def start_listen(self, event_types, **kwargs):
         """Causes the ATTA to start listening for the specified events."""
 
+        self._print(self.LOG_INFO, "%s" % event_types, "START LISTEN: ")
         self._monitored_event_types = []
         self._event_history = []
 
@@ -211,6 +212,8 @@ class Atta:
         """Runs the assertions on the object with the specified id, returning
         a dict with the results, the status of the run, and any messages."""
 
+        self._print(self.LOG_INFO, "element id '%s' " % obj_id, "RUN TESTS: ")
+
         if not self.is_enabled():
             return {"status": self.STATUS_ERROR,
                     "message": self.FAILURE_ATTA_NOT_ENABLED,
@@ -235,6 +238,7 @@ class Atta:
     def stop_listen(self, **kwargs):
         """Causes the ATTA to stop listening for the specified events."""
 
+        self._print(self.LOG_INFO, "%s" % self._monitored_event_types, "STOP LISTEN: ")
         for event_type in self._monitored_event_types:
             self._deregister_listener(event_type, self._on_test_event, **kwargs)
 
@@ -243,6 +247,9 @@ class Atta:
 
     def end_test_run(self, **kwargs):
         """Cleans up cached information at the end of a test run."""
+
+        name, url = self._next_test
+        self._print(self.LOG_INFO, "%s (%s)" % (name, url), "STOP TEST RUN: ")
 
         self._current_document = None
         self._next_test = None, ""

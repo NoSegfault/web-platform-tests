@@ -27,13 +27,13 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "colcount:(UA calculated:0)"
+                  "colcount:-1"
                ],
                [
                   "result",
                   "atk_table_get_n_columns()",
                   "is",
-                  "(UA calculated:0)"
+                  "1"
                ]
             ],
             "AXAPI" : [
@@ -119,9 +119,9 @@
   </head>
   <body>
   <p>This test examines the ARIA properties for table colcount -1.</p>
-    <div role="table">
+    <div role="table" id="test" aria-colcount="-1">
     <div role="row">
-       <div id="test" role="cell" aria-colindex="4" aria-colcount="-1">test cell</div>
+       <div role="cell" aria-colindex="4" >test cell</div>
     </div>
   </div>
 

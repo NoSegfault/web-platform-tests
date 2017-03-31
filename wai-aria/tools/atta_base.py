@@ -212,14 +212,14 @@ class Atta:
         """Runs the assertions on the object with the specified id, returning
         a dict with the results, the status of the run, and any messages."""
 
-        self._print(self.LOG_INFO, "element id '%s' " % obj_id, "RUN TESTS: ")
-
         if not self.is_enabled():
+            self._print(self.LOG_WARNING, "ATTA is not enabled", "RUN TESTS: ")
             return {"status": self.STATUS_ERROR,
                     "message": self.FAILURE_ATTA_NOT_ENABLED,
                     "results": []}
 
         if not self.is_ready():
+            self._print(self.LOG_WARNING, "ATTA is not ready", "RUN TESTS: ")
             return {"status": self.STATUS_ERROR,
                     "message": self.FAILURE_ATTA_NOT_READY,
                     "results": []}
@@ -227,13 +227,14 @@ class Atta:
         to_run = self._create_platform_assertions(assertions)
         obj = self._get_element_with_id(self._current_document, obj_id)
         if not obj:
+            self._print(self.LOG_ERROR, "Accessible element '%s' not found" % obj_id, "RUN TESTS: ")
             return {"status": self.STATUS_ERROR,
                     "message": self.FAILURE_ELEMENT_NOT_FOUND,
                     "results": []}
 
+        self._print(self.LOG_INFO, "Element id '%s' " % obj_id, "RUN TESTS: ")
         results = [self._run_test(obj, a) for a in to_run]
-        return {"status": self.STATUS_OK,
-                "results": results}
+        return {"status": self.STATUS_OK, "results": results}
 
     def stop_listen(self, **kwargs):
         """Causes the ATTA to stop listening for the specified events."""

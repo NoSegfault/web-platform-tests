@@ -225,14 +225,14 @@ class Atta:
                     "results": []}
 
         to_run = self._create_platform_assertions(assertions)
+        self._print(self.LOG_INFO, "%i assertion(s) for '%s' " % (len(to_run), obj_id), "RUN TESTS: ")
+
         obj = self._get_element_with_id(self._current_document, obj_id)
         if not obj:
-            self._print(self.LOG_ERROR, "Accessible element '%s' not found" % obj_id, "RUN TESTS: ")
-            return {"status": self.STATUS_ERROR,
-                    "message": self.FAILURE_ELEMENT_NOT_FOUND,
-                    "results": []}
+            # We may be testing that an object is not exposed (e.g. because it is hidden).
+            # But we may instead have a test-file error or an accessibility bug. So warn.
+            self._print(self.LOG_WARNING, "Accessible element not found", "RUN TESTS: ")
 
-        self._print(self.LOG_INFO, "Element id '%s' " % obj_id, "RUN TESTS: ")
         results = [self._run_test(obj, a) for a in to_run]
         return {"status": self.STATUS_OK, "results": results}
 

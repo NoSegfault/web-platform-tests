@@ -199,7 +199,10 @@ class Atta:
         if result == AttaAssertion.STATUS_PASS:
             formatting = self.FORMAT_GOOD
         elif result == AttaAssertion.STATUS_FAIL:
-            formatting = self.FORMAT_BAD
+            if not (test_class and test.is_known_issue()):
+                formatting = self.FORMAT_BAD
+            else:
+                formatting = self.FORMAT_WARNING
             if message:
                 string = "%s (%s)" % (string, message)
         else:
@@ -322,6 +325,12 @@ class Atta:
 
         return None
 
+    def _get_rendering_engine(self, **kwargs):
+        """Returns a string with details of the user agent's rendering engine."""
+
+        self._print(self.LOG_DEBUG, "_get_rendering_engine() not implemented")
+        return ""
+
     def _get_system_api_version(self, **kwargs):
         """Returns a string with the installed version of the accessibility API."""
 
@@ -407,6 +416,12 @@ class Atta:
 
         self._print(self.LOG_DEBUG, "get_supported_methods() not implemented")
         return {}
+
+    def get_bug(self, expected_result, actual_result, **kwargs):
+        """Returns a string containing bug information for an assertion."""
+
+        self._print(self.LOG_DEBUG, "get_bug() not implemented")
+        return ""
 
     def string_to_method_and_arguments(self, callable_as_string, **kwargs):
         """Converts callable_as_string into the appropriate callable platform method

@@ -54,6 +54,7 @@ class AttaAssertion:
         self._actual_value = None
         self._messages = []
         self._status = self.STATUS_NOT_RUN
+        self._bug = ""
 
     @classmethod
     def get_test_class(cls, assertion):
@@ -71,6 +72,9 @@ class AttaAssertion:
             return AttaResultAssertion
 
         return None
+
+    def is_known_issue(self):
+        return bool(self._bug)
 
     def __str__(self):
         label_width = max(list(map(len, self._labels))) + 2
@@ -122,6 +126,9 @@ class AttaAssertion:
             self._status = self.STATUS_PASS
         else:
             self._status = self.STATUS_FAIL
+            self._bug = self._atta.get_bug(self._expected_value, self._actual_value)
+            if self._bug:
+                self._messages.append(self._bug)
 
         return result
 

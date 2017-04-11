@@ -146,6 +146,19 @@ class AtkAtta(Atta):
 
         super().shutdown(signum, frame, **kwargs)
 
+    def _get_rendering_engine(self, **kwargs):
+        """Returns a string with details of the user agent's rendering engine."""
+
+        if not self._current_document:
+            return ""
+
+        try:
+            attrs = Atspi.Accessible.get_attributes(self._current_document) or {}
+        except:
+            return ""
+
+        return attrs.get("toolkit") or self._current_document.get_toolkit_name()
+
     def _get_system_api_version(self, **kwargs):
         """Returns a string with the installed version of the accessibility API."""
 
@@ -408,6 +421,26 @@ class AtkAtta(Atta):
                 print("INFO: unexpected extra matches", matches)
 
         return None
+
+    def get_bug(self, expected_result, actual_result, **kwargs):
+        """Returns a string containing bug information for an assertion."""
+
+        engine = self._get_rendering_engine()
+        if engine != "Gecko":
+            return ""
+
+        if expected_result == "ROLE_TREE_ITEM" and actual_result == "ROLE_LIST_ITEM":
+            return "https://bugzil.la/1355423"
+        if expected_result.startswith("placeholder-text"):
+            return "https://bugzil.la/1303429"
+        if expected_result == "STATE_HAS_POPUP":
+            return "https://bugzil.la/1355447"
+        if expected_result.startswith("haspopup") and isinstance(actual_result, list):
+            items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
+            if items and items[0].endswith("true"):
+                return "https://bugzil.la/1355449"
+
+        return ""
 
     def string_to_method_and_arguments(self, callable_as_string, **kwargs):
         """Converts callable_as_string into the appropriate callable platform method

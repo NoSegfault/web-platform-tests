@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>tablist orientation vertical</title>
+    <title>treegrid orientation horizontal</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,7 +21,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PAGE_TAB_LIST"
+                  "ROLE_TREE"
                ],
                [
                   "property",
@@ -32,8 +32,8 @@
                [
                   "property",
                   "states",
-                  "contains",
-                  "STATE_VERTICAL"
+                  "contians",
+                  "STATE_HORIZONTAL"
                ]
             ],
             "AXAPI" : [
@@ -41,7 +41,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXTabGrup"
+                  "AXTable"
                ],
                [
                   "property",
@@ -53,27 +53,33 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "tabgroup"
+                  "table"
                ],
                [
                   "property",
                   "AXOrientation",
                   "is",
-                  "AXVerticalOrientation"
+                  "AXHorizontalOrientation"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
                   "states",
-                  "contains",
+                  "doesNotContain",
                   "IA2_STATE_VERTICAL"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
+                  "contains",
                   "IA2_STATE_HORIZONTAL"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "IAccessibleTable2"
                ]
             ],
             "MSAA" : [
@@ -81,7 +87,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PAGETABLIST"
+                  "ROLE_SYSTEM_OUTLINE"
                ]
             ],
             "UIA" : [
@@ -89,19 +95,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Tab"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "selection pattern"
+                  "DataGrid"
                ],
                [
                   "property",
                   "Orientation",
                   "is",
-                  "vertical"
+                  "horizontal"
                ]
             ],
             "WAIFAKE" : [
@@ -123,18 +123,19 @@
          "type" : "test"
       }
    ],
-   "title" : "tablist orientation vertical"
+   "title" : "treegrid orientation horizontal"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for tablist orientation vertical.</p>
-    <div role="tablist" aria-orientation="vertical" id="test">
-      <div role="tab" tabindex="0">Tab1</div><div role="tab" tabindex="-1">Tab2</div>
-  </div>
-  <div role="tabpanel"></div>
+  <p>This test examines the ARIA properties for treegrid orientation horizontal.</p>
+    <div role="treegrid" tabindex="0" aria-orientation="horizontal" aria-activedescendant="foo" id="test">
+      <div role="row">
+       <div role="cell" id="foo">c1</div>
+       <div role="cell">c2</div>
+    </div>
   </div>
 
   <div id="manualMode"></div>

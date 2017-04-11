@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>tablist orientation vertical</title>
+    <title>region with name</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PAGE_TAB_LIST"
+                  "ROLE_LANDMARK"
                ],
                [
                   "property",
-                  "interfaces",
+                  "objectAttributes",
                   "contains",
-                  "Selection"
-               ],
-               [
-                  "property",
-                  "states",
-                  "contains",
-                  "STATE_VERTICAL"
+                  "xml-roles:region"
                ]
             ],
             "AXAPI" : [
@@ -41,67 +35,59 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXTabGrup"
+                  "AXGroup"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXLandmarkRegion"
                ],
                [
                   "property",
-                  "AXRoleDescription",
+                  "AXDescription",
                   "is",
-                  "tabgroup"
-               ],
-               [
-                  "property",
-                  "AXOrientation",
-                  "is",
-                  "AXVerticalOrientation"
+                  "region"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
+                  "objectAttributes",
                   "contains",
-                  "IA2_STATE_VERTICAL"
+                  "xml-roles:region"
                ],
-               [
-                  "property",
-                  "states",
-                  "doesNotContain",
-                  "IA2_STATE_HORIZONTAL"
-               ]
-            ],
-            "MSAA" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PAGETABLIST"
+                  "IA2_ROLE_LANDMARK"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
+                  "Control Group",
                   "is",
-                  "Tab"
+                  "Group"
                ],
                [
                   "property",
-                  "interfaces",
-                  "contains",
-                  "selection pattern"
+                  "localizedControlType",
+                  "is",
+                  "region"
                ],
                [
                   "property",
-                  "Orientation",
+                  "landmarkType",
                   "is",
-                  "vertical"
+                  "Custom"
+               ],
+               [
+                  "property",
+                  "localizedLandmarkType",
+                  "is",
+                  "region"
                ]
             ],
             "WAIFAKE" : [
@@ -123,19 +109,17 @@
          "type" : "test"
       }
    ],
-   "title" : "tablist orientation vertical"
+   "title" : "region with name"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for tablist orientation vertical.</p>
-    <div role="tablist" aria-orientation="vertical" id="test">
-      <div role="tab" tabindex="0">Tab1</div><div role="tab" tabindex="-1">Tab2</div>
-  </div>
-  <div role="tabpanel"></div>
-  </div>
+  <p>This test examines the ARIA properties for region with name.</p>
+  
+    <article>This is article 1</article>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

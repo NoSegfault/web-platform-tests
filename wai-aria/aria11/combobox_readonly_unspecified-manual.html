@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>tablist orientation vertical</title>
+    <title>combobox readonly unspecified</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PAGE_TAB_LIST"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "Selection"
+                  "ROLE_COMBO_BOX"
                ],
                [
                   "property",
                   "states",
                   "contains",
-                  "STATE_VERTICAL"
+                  "STATE_EXPANDABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_HAS_POPUP"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_EDITABLE"
                ]
             ],
             "AXAPI" : [
@@ -41,7 +47,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXTabGrup"
+                  "AXComboBox"
                ],
                [
                   "property",
@@ -53,27 +59,27 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "tabgroup"
+                  "combo box"
                ],
                [
-                  "property",
-                  "AXOrientation",
+                  "result",
+                  "AXValue:accessibilityIsAttributeSettable()",
                   "is",
-                  "AXVerticalOrientation"
+                  "YES"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
-                  "contains",
-                  "IA2_STATE_VERTICAL"
+                  "objectAttribute",
+                  "checkable",
+                  "true"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "IA2_STATE_HORIZONTAL"
+                  "contains",
+                  "IA2_STATE_SYSTEM_EDITABLE"
                ]
             ],
             "MSAA" : [
@@ -81,7 +87,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PAGETABLIST"
+                  "ROLE_SYSTEM_COMBOBOX"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_HASPOPUP"
                ]
             ],
             "UIA" : [
@@ -89,19 +101,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Tab"
+                  "Combobox"
                ],
                [
                   "property",
-                  "interfaces",
-                  "contains",
-                  "selection pattern"
-               ],
-               [
-                  "property",
-                  "Orientation",
+                  "Value.IsReadOnly",
                   "is",
-                  "vertical"
+                  "false"
                ]
             ],
             "WAIFAKE" : [
@@ -123,19 +129,20 @@
          "type" : "test"
       }
    ],
-   "title" : "tablist orientation vertical"
+   "title" : "combobox readonly unspecified"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for tablist orientation vertical.</p>
-    <div role="tablist" aria-orientation="vertical" id="test">
-      <div role="tab" tabindex="0">Tab1</div><div role="tab" tabindex="-1">Tab2</div>
-  </div>
-  <div role="tabpanel"></div>
-  </div>
+  <p>This test examines the ARIA properties for combobox readonly unspecified.</p>
+      <div id="test" role="combobox" aria-owns="myID" aria-expanded="true" aria-haspopup="listbox"><span role="textbox">option 3</span></div>
+    <div role="listbox" id="myID">
+      <div role="option">option 1</div>
+      <div role="option">option 2</div>
+      <div role="option">option 3</div>
+    </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

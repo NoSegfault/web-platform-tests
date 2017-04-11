@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>tablist orientation vertical</title>
+    <title>checkbox readonly false</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PAGE_TAB_LIST"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "Selection"
+                  "ROLE_CHECKBOX"
                ],
                [
                   "property",
                   "states",
                   "contains",
-                  "STATE_VERTICAL"
+                  "STATE_CHECKABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_EDITABLE"
                ]
             ],
             "AXAPI" : [
@@ -41,39 +41,39 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXTabGrup"
+                  "AXCheckBox"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXCheckBox"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "tabgroup"
+                  "check box"
                ],
                [
-                  "property",
-                  "AXOrientation",
+                  "result",
+                  "AXValue:accessibilityIsAttributeSettable()",
                   "is",
-                  "AXVerticalOrientation"
+                  "YES"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
-                  "contains",
-                  "IA2_STATE_VERTICAL"
+                  "objectAttribute",
+                  "checkable",
+                  "true"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "IA2_STATE_HORIZONTAL"
+                  "contains",
+                  "IA2_STATE_SYSTEM_EDITABLE"
                ]
             ],
             "MSAA" : [
@@ -81,7 +81,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PAGETABLIST"
+                  "ROLE_SYSTEM_CHECKBUTTON"
                ]
             ],
             "UIA" : [
@@ -89,19 +89,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Tab"
+                  "Checkbox"
                ],
                [
                   "property",
-                  "interfaces",
-                  "contains",
-                  "selection pattern"
-               ],
-               [
-                  "property",
-                  "Orientation",
+                  "Value.IsReadOnly",
                   "is",
-                  "vertical"
+                  "false"
                ]
             ],
             "WAIFAKE" : [
@@ -123,19 +117,15 @@
          "type" : "test"
       }
    ],
-   "title" : "tablist orientation vertical"
+   "title" : "checkbox readonly false"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for tablist orientation vertical.</p>
-    <div role="tablist" aria-orientation="vertical" id="test">
-      <div role="tab" tabindex="0">Tab1</div><div role="tab" tabindex="-1">Tab2</div>
-  </div>
-  <div role="tabpanel"></div>
-  </div>
+  <p>This test examines the ARIA properties for checkbox readonly false.</p>
+    <div id="test" aria-readonly="false" role="checkbox">test cell</div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

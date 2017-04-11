@@ -24,7 +24,7 @@ import json
 
 debug = True
 myAPI = 'WAIFAKE'
-#myAPI = "ATK"
+# myAPI = "ATK"
 myAPIversion = 0.1
 myprotocol = 'http'
 myhost = 'localhost'

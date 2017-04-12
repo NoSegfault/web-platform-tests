@@ -437,8 +437,30 @@ class AtkAtta(Atta):
         if engine != "Gecko":
             return ""
 
-        if expected_result == "STATE_ACTIVE" and "aria-current" in test_name:
-            return "https://bugzil.la/1355921"
+        if expected_result.startswith("STATE") and expected_result not in actual_result:
+            if expected_result.endswith("ACTIVE") and "aria-current" in test_name:
+                return "https://bugzil.la/1355921"
+            if expected_result.endswith("HAS_POPUP"):
+                return "https://bugzil.la/1355447"
+            if expected_result.endswith("READ_ONLY"):
+                return "https://bugzil.la/1356018"
+
+        if expected_result.startswith("ROLE"):
+            if expected_result.endswith("TREE_ITEM") and actual_result.endswith("LIST_ITEM"):
+                return "https://bugzil.la/1355423"
+            if expected_result.endswith("ARTICLE") and actual_result.endswith("DOCUMENT_FRAME"):
+                return "https://bugzil.la/1305446"
+            if expected_result.endswith("PANEL") and "figure" in test_name:
+                return "https://bugzil.la/1356049"
+
+        if len(expected_result.split(":")) == 2 and isinstance(actual_result, list):
+            if expected_result.startswith("placeholder-text"):
+                return "https://bugzil.la/1303429"
+
+            if expected_result.startswith("haspopup"):
+                items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
+                if items and items[0].endswith("true"):
+                    return "https://bugzil.la/1355449"
 
         if "separator" in test_name and "focusable" in test_name:
             if expected_result == "Value":
@@ -451,20 +473,6 @@ class AtkAtta(Atta):
                     pass
                 else:
                     return "https://bugzil.la/1355954"
-
-        if expected_result == "ROLE_TREE_ITEM" and actual_result == "ROLE_LIST_ITEM":
-            return "https://bugzil.la/1355423"
-
-        if expected_result.startswith("placeholder-text"):
-            return "https://bugzil.la/1303429"
-
-        if expected_result == "STATE_HAS_POPUP":
-            return "https://bugzil.la/1355447"
-
-        if expected_result.startswith("haspopup") and isinstance(actual_result, list):
-            items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
-            if items and items[0].endswith("true"):
-                return "https://bugzil.la/1355449"
 
         return ""
 

@@ -452,6 +452,8 @@ class AtkAtta(Atta):
                 return "https://bugzil.la/1305446"
             if expected_result.endswith("PANEL") and "figure" in test_name:
                 return "https://bugzil.la/1356049"
+            if expected_result.endswith("LANDMARK") and "region" in test_name:
+                return "https://bugzil.la/1210630"
 
         if len(expected_result.split(":")) == 2 and isinstance(actual_result, list):
             if expected_result.startswith("placeholder-text"):

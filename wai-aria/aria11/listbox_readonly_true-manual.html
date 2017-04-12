@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>button haspopup unspecified</title>
+    <title>listbox readonly true</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PUSH_BUTTON"
+                  "ROLE_LIST_BOX"
                ],
                [
                   "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "interfaces",
+                  "contains",
+                  "Selection"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_HAS_POPUP"
+                  "contains",
+                  "STATE_READ_ONLY"
                ]
             ],
             "AXAPI" : [
@@ -41,11 +41,11 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXButton"
+                  "AXList"
                ],
                [
                   "property",
-                  "AXSubRole",
+                  "AXSubrole",
                   "is",
                   "<nil>"
                ],
@@ -53,27 +53,20 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "button"
+                  "list"
                ],
                [
-                  "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXShowMenu"
+                  "result",
+                  "AXValue:accessibilityIsAttributeSettable()",
+                  "is",
+                  "NO"
                ],
                [
+                  "IAccessible2",
                   "property",
-                  "actions",
+                  "states",
                   "doesNotContain",
-                  "AXPress"
-               ]
-            ],
-            "IAccessible2" : [
-               [
-                  "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "IA2_STATE_SYSTEM_EDITABLE"
                ]
             ],
             "MSAA" : [
@@ -81,27 +74,27 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PUSHBUTTON"
+                  "ROLE_SYSTEM_LIST"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_HASPOPUP"
+                  "contains",
+                  "STATE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "IUIAutomationElement.ControlType",
+                  "Control Type",
                   "is",
-                  "Button"
+                  "List"
                ],
                [
-                  "Control Pattern",
-                  "ExpandCollapse",
-                  "exists",
-                  "false"
+                  "property",
+                  "Value.IsReadOnly",
+                  "is",
+                  "true"
                ]
             ],
             "WAIFAKE" : [
@@ -123,18 +116,19 @@
          "type" : "test"
       }
    ],
-   "title" : "button haspopup unspecified"
+   "title" : "listbox readonly true"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for button haspopup unspecified.</p>
-    <div id="test" role="button">
-  OK
-  </div>
-
+  <p>This test examines the ARIA properties for listbox readonly true.</p>
+      <div id="test" aria-readonly="true" role="listbox">
+      <div role="option">option 1</div>
+      <div role="option">option 2</div>
+      <div role="option">option 3</div>
+    </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

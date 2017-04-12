@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>button haspopup unspecified</title>
+    <title>combobox haspopup true</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,31 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PUSH_BUTTON"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "ROLE_COMBO_BOX"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
+                  "contains",
+                  "STATE_EXPANDABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_EXPANDED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
                   "STATE_HAS_POPUP"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "haspopup:true"
                ]
             ],
             "AXAPI" : [
@@ -41,30 +53,36 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXButton"
+                  "AXComboBox"
                ],
                [
                   "property",
-                  "AXSubRole",
+                  "AXSubrole",
                   "is",
                   "<nil>"
                ],
                [
                   "property",
-                  "AXRoleDescription",
+                  "AXDescription",
                   "is",
-                  "button"
+                  "combo box"
+               ],
+               [
+                  "property",
+                  "AXExpanded",
+                  "is",
+                  "YES"
                ],
                [
                   "property",
                   "actions",
-                  "doesNotContain",
+                  "contains",
                   "AXShowMenu"
                ],
                [
                   "property",
                   "actions",
-                  "doesNotContain",
+                  "contains",
                   "AXPress"
                ]
             ],
@@ -72,8 +90,8 @@
                [
                   "property",
                   "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "contains",
+                  "haspopup:true"
                ]
             ],
             "MSAA" : [
@@ -81,27 +99,39 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PUSHBUTTON"
+                  "ROLE_SYSTEM_COMBOBOX"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
+                  "contains",
                   "STATE_SYSTEM_HASPOPUP"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_EXPANDED"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "IUIAutomationElement.ControlType",
+                  "Control Type",
                   "is",
-                  "Button"
+                  "Combobox"
                ],
                [
-                  "Control Pattern",
-                  "ExpandCollapse",
-                  "exists",
-                  "false"
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "ExpandCollapse pattern"
+               ],
+               [
+                  "property",
+                  "ExpandCollapse.ExpandCollapseState",
+                  "is",
+                  "Expanded"
                ]
             ],
             "WAIFAKE" : [
@@ -123,17 +153,20 @@
          "type" : "test"
       }
    ],
-   "title" : "button haspopup unspecified"
+   "title" : "combobox haspopup true"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for button haspopup unspecified.</p>
-    <div id="test" role="button">
-  OK
-  </div>
+  <p>This test examines the ARIA properties for combobox haspopup true.</p>
+    <div aria-label="Tag" id="test" aria-haspopup="true" role="combobox" aria-expanded="true" aria-owns="owned_dialog">
+    <input type="text" aria-autocomplete="list" aria-controls="owned_dialog" aria-activedescendant="selected_cell">
+   <div role="radiogroup">
+      <div role="radio" id="selected_radio" tabindex="-1">R1</div><div role="radio" tabindex="-1">R2</div>
+   </div>
+   <div role="button" tabindex="0">ok</div>
 
 
   <div id="manualMode"></div>

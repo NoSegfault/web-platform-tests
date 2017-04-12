@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>button haspopup unspecified</title>
+    <title>menuitemcheckbox readonly false</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PUSH_BUTTON"
+                  "ROLE_CHECK_MENU_ITEM"
                ],
                [
                   "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "states",
+                  "contains",
+                  "STATE_CHECKABLE"
                ],
                [
                   "property",
                   "states",
                   "doesNotContain",
-                  "STATE_HAS_POPUP"
+                  "STATE_READ_ONLY"
                ]
             ],
             "AXAPI" : [
@@ -41,11 +41,11 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXButton"
+                  "AXMenuItem"
                ],
                [
                   "property",
-                  "AXSubRole",
+                  "AXSubrole",
                   "is",
                   "<nil>"
                ],
@@ -53,27 +53,27 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "button"
+                  "menu item"
                ],
                [
-                  "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXShowMenu"
-               ],
-               [
-                  "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXPress"
+                  "result",
+                  "AXValue:accessibilityIsAttributeSettable()",
+                  "is",
+                  "YES"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "states",
+                  "contains",
+                  "IA2_STATE_SYSTEM_EDITABLE"
+               ],
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "IA2_ROLE_CHECK_MENU_ITEM"
                ]
             ],
             "MSAA" : [
@@ -81,26 +81,26 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PUSHBUTTON"
-               ],
-               [
-                  "property",
-                  "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_HASPOPUP"
+                  "ROLE_SYSTEM_CHECKBUTTON or ROLE_SYSTEM_MENUITEM"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "IUIAutomationElement.ControlType",
+                  "Control Type",
                   "is",
-                  "Button"
+                  "MenuItem"
                ],
                [
-                  "Control Pattern",
-                  "ExpandCollapse",
-                  "exists",
+                  "property",
+                  "controlPatterns",
+                  "contains",
+                  "Toggle"
+               ],
+               [
+                  "property",
+                  "Value.IsReadOnly",
+                  "is",
                   "false"
                ]
             ],
@@ -123,18 +123,17 @@
          "type" : "test"
       }
    ],
-   "title" : "button haspopup unspecified"
+   "title" : "menuitemcheckbox readonly false"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for button haspopup unspecified.</p>
-    <div id="test" role="button">
-  OK
-  </div>
-
+  <p>This test examines the ARIA properties for menuitemcheckbox readonly false.</p>
+      <div role="menu">
+      <div role="menuitemcheckbox" aria-readonly="false" id="test">option 1</div>
+    </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

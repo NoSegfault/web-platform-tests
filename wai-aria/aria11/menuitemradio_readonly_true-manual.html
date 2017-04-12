@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>button haspopup unspecified</title>
+    <title>menuitemradio readonly true</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PUSH_BUTTON"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "doesNotContain",
-                  "haspopup"
+                  "ROLE_RADIO_MENU_ITEM"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_HAS_POPUP"
+                  "contains",
+                  "STATE_CHECKABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_READ_ONLY"
                ]
             ],
             "AXAPI" : [
@@ -41,11 +41,11 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXButton"
+                  "AXMenuItem"
                ],
                [
                   "property",
-                  "AXSubRole",
+                  "AXSubrole",
                   "is",
                   "<nil>"
                ],
@@ -53,27 +53,27 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "button"
+                  "menu item"
                ],
                [
-                  "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXShowMenu"
-               ],
-               [
-                  "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXPress"
+                  "result",
+                  "AXValue:accessibilityIsAttributeSettable()",
+                  "is",
+                  "NO"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "objectAttributes",
+                  "states",
                   "doesNotContain",
-                  "haspopup"
+                  "IA2_STATE_SYSTEM_EDITABLE"
+               ],
+               [
+                  "property",
+                  "role",
+                  "is",
+                  "IA2_ROLE_RADIO_MENU_ITEM"
                ]
             ],
             "MSAA" : [
@@ -81,27 +81,39 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PUSHBUTTON"
+                  "ROLE_SYSTEM_RADIOBUTTON or ROLE_SYSTEM_MENUITEM"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_HASPOPUP"
+                  "contains",
+                  "STATE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "IUIAutomationElement.ControlType",
+                  "Control Type",
                   "is",
-                  "Button"
+                  "MenuItem"
                ],
                [
-                  "Control Pattern",
-                  "ExpandCollapse",
-                  "exists",
-                  "false"
+                  "property",
+                  "controlPatterns",
+                  "contains",
+                  "Toggle"
+               ],
+               [
+                  "property",
+                  "controlPatterns",
+                  "contains",
+                  "SelectItem"
+               ],
+               [
+                  "property",
+                  "Value.IsReadOnly",
+                  "is",
+                  "true"
                ]
             ],
             "WAIFAKE" : [
@@ -123,18 +135,17 @@
          "type" : "test"
       }
    ],
-   "title" : "button haspopup unspecified"
+   "title" : "menuitemradio readonly true"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for button haspopup unspecified.</p>
-    <div id="test" role="button">
-  OK
-  </div>
-
+  <p>This test examines the ARIA properties for menuitemradio readonly true.</p>
+      <div role="menu">
+      <div role="menuitemradio" aria-readonly="true" id="test">option 1</div>
+    </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

@@ -159,7 +159,7 @@ class Atta:
         self._ready = uri and uri == test_uri
         if self._ready:
             self._current_document = document
-            self._print(self.LOG_INFO, "Test is '%s' (%s)" % (test_name, test_uri), "READY: ")
+            self._print(self.LOG_DEBUG, "Test is '%s' (%s)" % (test_name, test_uri), "READY: ")
 
         return self._ready
 
@@ -174,7 +174,7 @@ class Atta:
     def start_listen(self, event_types, **kwargs):
         """Causes the ATTA to start listening for the specified events."""
 
-        self._print(self.LOG_INFO, "%s" % event_types, "START LISTEN: ")
+        self._print(self.LOG_DEBUG, "%s" % event_types, "START LISTEN: ")
         self._monitored_event_types = []
         self._event_history = []
 
@@ -228,7 +228,7 @@ class Atta:
                     "results": []}
 
         to_run = self._create_platform_assertions(assertions)
-        self._print(self.LOG_INFO, "%i assertion(s) for '%s' " % (len(to_run), obj_id), "RUN TESTS: ")
+        self._print(self.LOG_DEBUG, "%i assertion(s) for '%s' " % (len(to_run), obj_id), "RUN TESTS: ")
 
         obj = self._get_element_with_id(self._current_document, obj_id)
         if not obj:
@@ -242,7 +242,7 @@ class Atta:
     def stop_listen(self, **kwargs):
         """Causes the ATTA to stop listening for the specified events."""
 
-        self._print(self.LOG_INFO, "%s" % self._monitored_event_types, "STOP LISTEN: ")
+        self._print(self.LOG_DEBUG, "%s" % self._monitored_event_types, "STOP LISTEN: ")
         for event_type in self._monitored_event_types:
             self._deregister_listener(event_type, self._on_test_event, **kwargs)
 
@@ -253,7 +253,7 @@ class Atta:
         """Cleans up cached information at the end of a test run."""
 
         name, url = self._next_test
-        self._print(self.LOG_INFO, "%s (%s)" % (name, url), "STOP TEST RUN: ")
+        self._print(self.LOG_DEBUG, "%s (%s)" % (name, url), "STOP TEST RUN: ")
 
         self._current_document = None
         self._next_test = None, ""

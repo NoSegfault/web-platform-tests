@@ -296,10 +296,16 @@ class AtkAtta(Atta):
         try:
             count = Atspi.Accessible.get_child_count(obj)
         except:
-            print(self._on_exception())
+            self._print(self.LOG_ERROR, self._on_exception())
             return []
 
-        return [Atspi.Accessible.get_child_at_index(obj, i) for i in range(count)]
+        try:
+            children = [Atspi.Accessible.get_child_at_index(obj, i) for i in range(count)]
+        except:
+            self._print(self.LOG_ERROR, self._on_exception())
+            return []
+
+        return children
 
     def _get_parent(self, obj, **kwargs):
         """Returns the parent of obj or None upon failure."""
@@ -307,7 +313,7 @@ class AtkAtta(Atta):
         try:
             parent = Atspi.Accessible.get_parent(obj)
         except:
-            print(self._on_exception())
+            self._print(self.LOG_ERROR, self._on_exception())
             return None
 
         return parent
@@ -417,24 +423,44 @@ class AtkAtta(Atta):
             matches = list(filter(lambda x: "get_n_" in x, client_side_symbols))
             if len(matches) == 1:
                 return client_side_methods.get(matches[0])
-            if len(matches) > 1:
-                print("INFO: unexpected extra matches", matches)
 
         return None
 
     def get_bug(self, expected_result, actual_result, **kwargs):
         """Returns a string containing bug information for an assertion."""
 
+        test_name = self._next_test[0]
+        if not test_name:
+            return ""
+
         engine = self._get_rendering_engine()
         if engine != "Gecko":
             return ""
 
+        if expected_result == "STATE_ACTIVE" and "aria-current" in test_name:
+            return "https://bugzil.la/1355921"
+
+        if "separator" in test_name and "focusable" in test_name:
+            if expected_result == "Value":
+                return "https://bugzil.la/1355954"
+
+            if actual_result == "None":
+                try:
+                    value = float(expected_result)
+                except ValueError:
+                    pass
+                else:
+                    return "https://bugzil.la/1355954"
+
         if expected_result == "ROLE_TREE_ITEM" and actual_result == "ROLE_LIST_ITEM":
             return "https://bugzil.la/1355423"
+
         if expected_result.startswith("placeholder-text"):
             return "https://bugzil.la/1303429"
+
         if expected_result == "STATE_HAS_POPUP":
             return "https://bugzil.la/1355447"
+
         if expected_result.startswith("haspopup") and isinstance(actual_result, list):
             items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
             if items and items[0].endswith("true"):
@@ -582,7 +608,12 @@ class AtkAtta(Atta):
             return value_name
 
         if value_type == Atspi.Event:
-            role = self.value_to_string(Atspi.Accessible.get_role(value.source))
+            try:
+                role = self.value_to_string(Atspi.Accessible.get_role(value.source))
+            except:
+                self._print(self.LOG_ERROR, self._on_exception())
+                role = "[DEAD]"
+
             objid = "(id=%s)" % (self.value_to_string(value.source) or "")
             detail1 = value.detail1
             detail2 = value.detail2
@@ -604,7 +635,7 @@ class AtkAtta(Atta):
     def _on_load_complete(self, data, **kwargs):
         """Callback for the platform's signal that a document has loaded."""
 
-        self._print(self.LOG_INFO, self._get_uri(data.source), "LOADED: ")
+        self._print(self.LOG_DEBUG, self._get_uri(data.source), "LOADED: ")
         if self.is_ready(data.source):
             application = Atspi.Accessible.get_application(data.source)
             Atspi.Accessible.set_cache_mask(application, Atspi.Cache.DEFAULT)
@@ -627,7 +658,6 @@ if __name__ == "__main__":
     atta_host = options.get("host") or "localhost"
     atta_port = options.get("port") or "4119"
 
-    print("Attempting to start AtkAtta")
     atk_atta = AtkAtta(atta_host, atta_port)
     if not atk_atta.is_enabled():
         sys.exit(1)

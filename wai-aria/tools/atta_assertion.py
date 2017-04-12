@@ -98,6 +98,18 @@ class AttaAssertion:
         error = traceback.format_exc(limit=1, chain=False)
         self._messages.append(re.sub("\s+", " ", error))
 
+    def _compare(self, a, b):
+        if a == b:
+            return 0
+
+        try:
+            float_a = float(a)
+            float_b = float(b)
+        except:
+            return None
+
+        return min(max(float_a - float_b, -1), 1)
+
     def _get_result(self):
         value = self._get_value()
         if self._expectation == self.EXPECTATION_IS_TYPE:
@@ -106,9 +118,17 @@ class AttaAssertion:
             self._actual_value = self._atta.value_to_string(value)
 
         if self._expectation == self.EXPECTATION_IS:
-            result = self._expected_value == self._actual_value
+            result = self._compare(self._actual_value, self._expected_value) == 0
         elif self._expectation == self.EXPECTATION_IS_NOT:
-            result = self._expected_value != self._actual_value
+            result = self._compare(self._actual_value, self._expected_value) != 0
+        elif self._expectation == self.EXPECTATION_IS_LESS_THAN:
+            result = self._compare(self._actual_value, self._expected_value) == -1
+        elif self._expectation == self.EXPECTATION_IS_GREATER_THAN:
+            result = self._compare(self._actual_value, self._expected_value) == 1
+        elif self._expectation == self.EXPECTATION_IS_LESS_THAN_OR_EQUAL:
+            result = self._compare(self._actual_value, self._expected_value) in [0, -1]
+        elif self._expectation == self.EXPECTATION_IS_GREATER_THAN_OR_EQUAL:
+            result = self._compare(self._actual_value, self._expected_value) in [0, 1]
         elif self._expectation == self.EXPECTATION_CONTAINS:
             result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:

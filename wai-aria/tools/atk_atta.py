@@ -451,10 +451,8 @@ class AtkAtta(Atta):
                 return "https://bugzil.la/1357100"
             if expected_result.startswith("valuetext") and "separator" in test_name:
                 return "https://bugzil.la/1355954"
-            if expected_result.startswith("haspopup") and isinstance(actual_result, list):
-                items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
-                if items and items[0].endswith("true"):
-                    return "https://bugzil.la/1355449"
+            if expected_result.startswith("haspopup"):
+                return "https://bugzil.la/1355449"
 
         if "property role" in assertion_string:
             if expected_result.endswith("TREE_ITEM") and actual_result.endswith("LIST_ITEM"):

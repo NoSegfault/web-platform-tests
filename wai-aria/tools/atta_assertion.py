@@ -132,7 +132,8 @@ class AttaAssertion:
         elif self._expectation == self.EXPECTATION_CONTAINS:
             result = self._actual_value and self._expected_value in self._actual_value
         elif self._expectation == self.EXPECTATION_DOES_NOT_CONTAIN:
-            result = self._actual_value and self._expected_value not in self._actual_value
+            result = isinstance(self._actual_value, list) \
+                     and self._expected_value not in self._actual_value
         elif self._expectation == self.EXPECTATION_IS_ANY:
             result = self._actual_value in self._expected_value
         elif self._expectation == self.EXPECTATION_IS_TYPE:

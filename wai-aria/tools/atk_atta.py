@@ -445,14 +445,20 @@ class AtkAtta(Atta):
                 return "https://bugzil.la/1355954"
 
         if "property objectAttributes" in assertion_string:
-            if expected_result.startswith("placeholder-text"):
-                return "https://bugzil.la/1303429"
-            if expected_result.startswith("level") and "heading" in test_name:
-                return "https://bugzil.la/1357100"
-            if expected_result.startswith("valuetext") and "separator" in test_name:
-                return "https://bugzil.la/1355954"
-            if expected_result.startswith("haspopup"):
-                return "https://bugzil.la/1355449"
+            if "contains" in assertion_string:
+                if expected_result.startswith("placeholder-text"):
+                    return "https://bugzil.la/1303429"
+                if expected_result.startswith("level") and "heading" in test_name:
+                    return "https://bugzil.la/1357100"
+                if expected_result.startswith("valuetext") and "separator" in test_name:
+                    return "https://bugzil.la/1355954"
+                if expected_result.startswith("haspopup"):
+                    return "https://bugzil.la/1355449"
+            if "doesNotContain" in assertion_string:
+                if expected_result.startswith("rowspan"):
+                    return "https://bugzil.la/1357153"
+                if expected_result.startswith("colspan"):
+                    return "https://bugzil.la/1357153"
 
         if "property role" in assertion_string:
             if expected_result.endswith("TREE_ITEM") and actual_result.endswith("LIST_ITEM"):

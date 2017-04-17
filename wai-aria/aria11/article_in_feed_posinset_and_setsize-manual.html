@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>button haspopup foo</title>
+    <title>article in feed posinset and setsize</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PUSH_BUTTON"
+                  "ROLE_ARTICLE"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "haspopup:false"
+                  "xml-roles:article"
                ],
                [
                   "property",
-                  "states",
-                  "doesNotContain",
-                  "STATE_HAS_POPUP"
+                  "objectAttributes",
+                  "contains",
+                  "posinset:4"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "setsize:8"
                ]
             ],
             "AXAPI" : [
@@ -41,31 +47,31 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXButton"
+                  "AXGroup"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXDocumentArticle"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "button"
+                  "article"
                ],
                [
                   "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXShowMenu"
+                  "AXARIAPosInSet",
+                  "is",
+                  "4"
                ],
                [
                   "property",
-                  "actions",
-                  "doesNotContain",
-                  "AXPress"
+                  "AXARIASetSize",
+                  "is",
+                  "8"
                ]
             ],
             "IAccessible2" : [
@@ -73,7 +79,31 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "haspopup:false"
+                  "xml-roles:article"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "posinset:4"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "setsize:8"
+               ],
+               [
+                  "result",
+                  "groupPosition()",
+                  "contains",
+                  "similarItemsInGroup:8"
+               ],
+               [
+                  "result",
+                  "groupPosition()",
+                  "contains",
+                  "positionInGroup:4"
                ]
             ],
             "MSAA" : [
@@ -81,27 +111,39 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_PUSHBUTTON"
+                  "ROLE_SYSTEM_DOCUMENT"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_HASPOPUP"
+                  "contains",
+                  "STATE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "IUIAutomationElement.ControlType",
+                  "control type",
                   "is",
-                  "Button"
+                  "Group"
                ],
                [
                   "property",
-                  "controlPatterns",
-                  "doesNotContain",
-                  "ExpandCollapse"
+                  "localize control type",
+                  "is",
+                  "article"
+               ],
+               [
+                  "property",
+                  "AriaProperties",
+                  "contains",
+                  "posinset:4"
+               ],
+               [
+                  "property",
+                  "AriaProperties",
+                  "contains",
+                  "setsize:8"
                ]
             ],
             "WAIFAKE" : [
@@ -123,18 +165,17 @@
          "type" : "test"
       }
    ],
-   "title" : "button haspopup foo"
+   "title" : "article in feed posinset and setsize"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for button haspopup foo.</p>
-    <div id="test" role="button" aria-haspopup="foo">
-  OK
+  <p>This test examines the ARIA properties for article in feed posinset and setsize.</p>
+    <div role="feed">
+     <div id="test" role="article" aria-posinset="4" aria-setsize="8">test cell</div>
   </div>
-
 
   <div id="manualMode"></div>
   <div id="log"></div>

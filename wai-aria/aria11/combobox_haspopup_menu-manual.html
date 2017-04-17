@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>feed</title>
+    <title>combobox haspopup menu</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,13 +21,31 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PANEL"
+                  "ROLE_COMBO_BOX"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_EXPANDABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_EXPANDED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_HAS_POPUP"
                ],
                [
                   "property",
                   "objectAttributes",
                   "contains",
-                  "xml-roles:feed"
+                  "haspopup:menu"
                ]
             ],
             "AXAPI" : [
@@ -35,7 +53,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXGrop"
+                  "AXComboBox"
                ],
                [
                   "property",
@@ -47,7 +65,25 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "group"
+                  "combo box"
+               ],
+               [
+                  "property",
+                  "AXExpanded",
+                  "is",
+                  "true"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXShowMenu"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXPress"
                ]
             ],
             "IAccessible2" : [
@@ -55,7 +91,7 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "xml-roles:feed"
+                  "haspopup:menu"
                ]
             ],
             "MSAA" : [
@@ -63,7 +99,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GROUPING"
+                  "ROLE_SYSTEM_COMBOBOX"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_HASPOPUP"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_EXPANDED"
                ]
             ],
             "UIA" : [
@@ -71,13 +119,19 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Group"
+                  "Combobox"
                ],
                [
                   "property",
-                  "Localized Control Type",
+                  "interfaces",
+                  "contains",
+                  "ExpandCollapse pattern"
+               ],
+               [
+                  "property",
+                  "ExpandCollapse.ExpandCollapseState",
                   "is",
-                  "feed"
+                  "Expanded"
                ]
             ],
             "WAIFAKE" : [
@@ -99,18 +153,19 @@
          "type" : "test"
       }
    ],
-   "title" : "feed"
+   "title" : "combobox haspopup menu"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for feed.</p>
-    <section role="feed" id="test">
-    <article>This is article 1</article>
-    <div role="article">This is article 2</div>
-  </section>
+  <p>This test examines the ARIA properties for combobox haspopup menu.</p>
+    <div aria-label="Tag" aria-haspopup="menu" id="test" role="combobox" aria-expanded="true" aria-owns="owned_menu">
+    <input type="text" aria-autocomplete="list" aria-controls="owned_menu" aria-activedescendant="selected_cell">
+   <div role="menuitem">foo</div>
+   <div role="menuitem">baz</div>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

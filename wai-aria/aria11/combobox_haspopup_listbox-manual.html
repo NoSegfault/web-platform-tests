@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>status (HAS QUESTION)</title>
+    <title>combobox haspopup listbox</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,25 +21,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_STATUSBAR"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "contains",
-                  "container-live:polite"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "contains",
-                  "live:polite"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "contains",
-                  "container-live-role:status"
+                  "ROLE_COMBO_BOX"
                ],
                [
                   "property",
@@ -50,8 +32,20 @@
                [
                   "property",
                   "states",
-                  "doesNotContain",
+                  "contains",
                   "STATE_EXPANDED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_HAS_POPUP"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "haspopup:listbox"
                ]
             ],
             "AXAPI" : [
@@ -59,25 +53,37 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXGroup"
+                  "AXComboBox"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "AXApplicationStatus"
+                  "<nil>"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "status"
+                  "combo box"
                ],
                [
                   "property",
                   "AXExpanded",
                   "is",
-                  "YES"
+                  "true"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXShowMenu"
+               ],
+               [
+                  "property",
+                  "action",
+                  "contains",
+                  "AXPress"
                ]
             ],
             "IAccessible2" : [
@@ -85,19 +91,7 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "container-live:polite"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "contains",
-                  "live:polite"
-               ],
-               [
-                  "property",
-                  "objectAttributes",
-                  "contains",
-                  "container-live-role:status"
+                  "haspopup:listbox"
                ]
             ],
             "MSAA" : [
@@ -105,7 +99,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_STATUSBAR"
+                  "ROLE_SYSTEM_COMBOBOX"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_HASPOPUP"
                ],
                [
                   "property",
@@ -118,26 +118,20 @@
                [
                   "property",
                   "Control Type",
-                  "isNot",
-                  "Group"
+                  "is",
+                  "Combobox"
                ],
                [
                   "property",
-                  "Localized Control Type",
-                  "isNot",
-                  "status"
-               ],
-               [
-                  "property",
-                  "LiveSettingProperty",
-                  "isNot",
-                  "1"
-               ],
-               [
-                  "property",
-                  "ExpandCollapse",
+                  "interfaces",
                   "contains",
-                  "ExpandCollapseState:expanded"
+                  "ExpandCollapse pattern"
+               ],
+               [
+                  "property",
+                  "ExpandCollapse.ExpandCollapseState",
+                  "is",
+                  "Expanded"
                ]
             ],
             "WAIFAKE" : [
@@ -159,15 +153,19 @@
          "type" : "test"
       }
    ],
-   "title" : "status (HAS QUESTION)"
+   "title" : "combobox haspopup listbox"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for status (HAS QUESTION).</p>
-    <div role='status' id='test' aria-expanded='false'> </div>
+  <p>This test examines the ARIA properties for combobox haspopup listbox.</p>
+    <div aria-label="Tag" aria-haspopup="listbox" id="test" role="combobox" aria-expanded="true" aria-owns="owned_listbox">
+    <input type="text" aria-autocomplete="list" aria-controls="owned_listbox" aria-activedescendant="selected_cell">
+   <div role="option">foo</div>
+   <div role="option">baz</div>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

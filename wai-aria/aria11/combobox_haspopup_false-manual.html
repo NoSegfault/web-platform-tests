@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>feed</title>
+    <title>combobox haspopup false</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,13 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_PANEL"
+                  "ROLE_COMBO_BOX"
                ],
                [
                   "property",
-                  "objectAttributes",
+                  "states",
                   "contains",
-                  "xml-roles:feed"
+                  "STATE_EXPANDABLE"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_EXPANDED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_HAS_POPUP"
                ]
             ],
             "AXAPI" : [
@@ -35,7 +47,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXGrop"
+                  "AXComboBox"
                ],
                [
                   "property",
@@ -47,7 +59,25 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "group"
+                  "combo box"
+               ],
+               [
+                  "property",
+                  "AXExpanded",
+                  "is",
+                  "true"
+               ],
+               [
+                  "property",
+                  "actions",
+                  "doesNotContain",
+                  "AXShowMenu"
+               ],
+               [
+                  "property",
+                  "actions",
+                  "doesNotContain",
+                  "AXPress"
                ]
             ],
             "IAccessible2" : [
@@ -55,7 +85,7 @@
                   "property",
                   "objectAttributes",
                   "contains",
-                  "xml-roles:feed"
+                  "haspopup:false"
                ]
             ],
             "MSAA" : [
@@ -63,7 +93,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_GROUPING"
+                  "ROLE_SYSTEM_COMBOBOX"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_SYSTEM_HASPOPUP"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_EXPANDED"
                ]
             ],
             "UIA" : [
@@ -71,13 +113,19 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Group"
+                  "Combobox"
                ],
                [
                   "property",
-                  "Localized Control Type",
+                  "interfaces",
+                  "contains",
+                  "ExpandCollapse pattern"
+               ],
+               [
+                  "property",
+                  "ExpandCollapse.ExpandCollapseState",
                   "is",
-                  "feed"
+                  "Expanded"
                ]
             ],
             "WAIFAKE" : [
@@ -99,18 +147,21 @@
          "type" : "test"
       }
    ],
-   "title" : "feed"
+   "title" : "combobox haspopup false"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for feed.</p>
-    <section role="feed" id="test">
-    <article>This is article 1</article>
-    <div role="article">This is article 2</div>
-  </section>
+  <p>This test examines the ARIA properties for combobox haspopup false.</p>
+    <div aria-label="Tag" id="test" aria-haspopup="false" role="combobox" aria-expanded="true" aria-owns="owned_dialog">
+    <input type="text" aria-autocomplete="list" aria-controls="owned_dialog" aria-activedescendant="selected_cell">
+   <div role="radiogroup">
+      <div role="radio" id="selected_radio" tabindex="-1">R1</div><div role="radio" tabindex="-1">R2</div>
+   </div>
+   <div role="button" tabindex="0">ok</div>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

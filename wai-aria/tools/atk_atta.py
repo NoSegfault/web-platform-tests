@@ -534,7 +534,8 @@ class AtkAtta(Atta):
             method = self.get_client_side_method(method)
 
         if method and method.get_symbol() == "atspi_table_cell_get_position":
-            raise Exception("Method call disabled: https://bugzilla.mozilla.org/show_bug.cgi?id=1348340")
+            msg = "You must have AT-SPI2 version 2.24.1 or later: https://bugzil.la/1348340."
+            self._print(self.LOG_WARNING, msg)
 
         arguments.insert(0, kwargs.get("obj"))
         return method.invoke(*arguments)

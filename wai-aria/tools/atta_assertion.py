@@ -146,7 +146,7 @@ class AttaAssertion:
             self._status = self.STATUS_PASS
         else:
             self._status = self.STATUS_FAIL
-            self._bug = self._atta.get_bug(self._expected_value, self._actual_value)
+            self._bug = self._atta.get_bug(self._as_string, self._expected_value, self._actual_value)
             if self._bug:
                 self._messages.append(self._bug)
 

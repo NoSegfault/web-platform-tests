@@ -417,7 +417,7 @@ class Atta:
         self._print(self.LOG_DEBUG, "get_supported_methods() not implemented")
         return {}
 
-    def get_bug(self, expected_result, actual_result, **kwargs):
+    def get_bug(self, assertion_string, expected_result, actual_result, **kwargs):
         """Returns a string containing bug information for an assertion."""
 
         self._print(self.LOG_DEBUG, "get_bug() not implemented")

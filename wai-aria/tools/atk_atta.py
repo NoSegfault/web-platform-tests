@@ -426,7 +426,7 @@ class AtkAtta(Atta):
 
         return None
 
-    def get_bug(self, expected_result, actual_result, **kwargs):
+    def get_bug(self, assertion_string, expected_result, actual_result, **kwargs):
         """Returns a string containing bug information for an assertion."""
 
         test_name = self._next_test[0]
@@ -437,15 +437,26 @@ class AtkAtta(Atta):
         if engine != "Gecko":
             return ""
 
-        if expected_result.startswith("STATE") and expected_result not in actual_result:
-            if expected_result.endswith("ACTIVE") and "aria-current" in test_name:
-                return "https://bugzil.la/1355921"
-            if expected_result.endswith("HAS_POPUP"):
-                return "https://bugzil.la/1355447"
-            if expected_result.endswith("READ_ONLY"):
-                return "https://bugzil.la/1356018"
+        # TODO: Give this smarts. At the present time it is a quick-and-dirty way to be
+        # sure all of the bugs we need to file related to ARIA 1.1 have been filed.
 
-        if expected_result.startswith("ROLE"):
+        if "property interfaces" in assertion_string:
+            if "Value" in assertion_string and "separator" in test_name:
+                return "https://bugzil.la/1355954"
+
+        if "property objectAttributes" in assertion_string:
+            if expected_result.startswith("placeholder-text"):
+                return "https://bugzil.la/1303429"
+            if expected_result.startswith("level") and "heading" in test_name:
+                return "https://bugzil.la/1357100"
+            if expected_result.startswith("valuetext") and "separator" in test_name:
+                return "https://bugzil.la/1355954"
+            if expected_result.startswith("haspopup") and isinstance(actual_result, list):
+                items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
+                if items and items[0].endswith("true"):
+                    return "https://bugzil.la/1355449"
+
+        if "property role" in assertion_string:
             if expected_result.endswith("TREE_ITEM") and actual_result.endswith("LIST_ITEM"):
                 return "https://bugzil.la/1355423"
             if expected_result.endswith("ARTICLE") and actual_result.endswith("DOCUMENT_FRAME"):
@@ -455,26 +466,32 @@ class AtkAtta(Atta):
             if expected_result.endswith("LANDMARK") and "region" in test_name:
                 return "https://bugzil.la/1210630"
 
-        if len(expected_result.split(":")) == 2 and isinstance(actual_result, list):
-            if expected_result.startswith("placeholder-text"):
-                return "https://bugzil.la/1303429"
+        if "property states" in assertion_string:
+            if expected_result.endswith("VERTICAL") or expected_result.endswith("HORIZONTAL"):
+                return "https://bugzil.la/1357042"
+            if expected_result not in actual_result:
+                if expected_result.endswith("ACTIVE") and "aria-current" in test_name:
+                    return "https://bugzil.la/1355921"
+                if expected_result.endswith("HAS_POPUP"):
+                    return "https://bugzil.la/1355447"
+                if expected_result.endswith("READ_ONLY"):
+                    return "https://bugzil.la/1356018"
 
-            if expected_result.startswith("haspopup"):
-                items = list(filter(lambda x: x.startswith("haspopup"), actual_result))
-                if items and items[0].endswith("true"):
-                    return "https://bugzil.la/1355449"
+        if "result atk_table_cell_get_row_column_span" in assertion_string:
+            if "row_span" in expected_result or "column_span" in expected_result:
+                return "https://bugzil.la/1357013"
 
-        if "separator" in test_name and "focusable" in test_name:
-            if expected_result == "Value":
+        if "result atk_table_get_n_rows" in assertion_string \
+           or "atk_table_get_n_columns" in assertion_string:
+            return "https://bugzil.la/1356997"
+
+        if "result atk_value_get" in assertion_string:
+            if "separator" in test_name and "focusable" in test_name:
                 return "https://bugzil.la/1355954"
-
-            if actual_result == "None":
-                try:
-                    value = float(expected_result)
-                except ValueError:
-                    pass
-                else:
-                    return "https://bugzil.la/1355954"
+            if "slider" in test_name or "scrollbar" in test_name:
+                return "https://bugzil.la/1357071"
+            if "spinbutton" in test_name:
+                return "https://bugzil.la/1357097"
 
         return ""
 

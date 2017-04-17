@@ -481,9 +481,11 @@ class AtkAtta(Atta):
                 if expected_result.endswith("READ_ONLY"):
                     return "https://bugzil.la/1356018"
 
-        if "result atk_table_cell_get_row_column_span" in assertion_string:
-            if "row_span" in expected_result or "column_span" in expected_result:
+        if "result atk_table_cell_get" in assertion_string:
+            if "row_span=" in expected_result or "column_span=" in expected_result:
                 return "https://bugzil.la/1357013"
+            if "row=" in expected_result or "column=" in expected_result:
+                return "https://bugzil.la/1357188"
 
         if "result atk_table_get_n_rows" in assertion_string \
            or "atk_table_get_n_columns" in assertion_string:

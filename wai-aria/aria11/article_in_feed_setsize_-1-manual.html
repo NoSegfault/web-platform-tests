@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>columnheader aria-colspan 2 on th html colspan 3</title>
+    <title>article in feed setsize -1</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_COLUMN_HEADER"
+                  "ROLE_ARTICLE"
                ],
                [
                   "property",
                   "objectAttributes",
-                  "doesNotContain",
-                  "colspan:2"
+                  "contains",
+                  "xml-roles:article"
                ],
                [
-                  "result",
-                  "atk_table_cell_get_row_column_span()",
+                  "property",
+                  "objectAttributes",
                   "contains",
-                  "column_span=3"
+                  "setsize:-1"
                ]
             ],
             "AXAPI" : [
@@ -41,27 +41,45 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXCell"
+                  "AXGroup"
                ],
                [
                   "property",
-                  "AXColumnIndexRange.length",
+                  "AXSubrole",
                   "is",
-                  "3"
+                  "AXDocumentArticle"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "article"
+               ],
+               [
+                  "property",
+                  "AXARIASetSize",
+                  "is",
+                  "-1"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_SYSTEM_COLUMNHEADER"
+                  "objectAttributes",
+                  "contains",
+                  "xml-roles:article"
                ],
                [
                   "property",
-                  "colspan",
-                  "is",
-                  "3"
+                  "objectAttributes",
+                  "contains",
+                  "setsize:-1"
+               ],
+               [
+                  "result",
+                  "groupPosition()",
+                  "contains",
+                  "similarItemsInGroup:-1"
                ]
             ],
             "MSAA" : [
@@ -69,27 +87,33 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_COLUMNHEADER"
+                  "ROLE_SYSTEM_DOCUMENT"
                ],
                [
                   "property",
-                  "colspan",
-                  "is",
-                  "3"
+                  "states",
+                  "contains",
+                  "STATE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
+                  "control type",
                   "is",
-                  "HeaderItem"
+                  "Group"
                ],
                [
                   "property",
-                  "HeaderItem.ColumnSpan",
+                  "localize control type",
                   "is",
-                  "3"
+                  "article"
+               ],
+               [
+                  "property",
+                  "AriaProperties",
+                  "contains",
+                  "setsize:-1"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +135,17 @@
          "type" : "test"
       }
    ],
-   "title" : "columnheader aria-colspan 2 on th html colspan 3"
+   "title" : "article in feed setsize -1"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for columnheader aria-colspan 2 on th html colspan 3.</p>
-    <table>
-    <tr>
-      <th id="test" role="columnheader" colspan="3" aria-colspan="2">test cell</th>
-    </tr>
-  </table>
+  <p>This test examines the ARIA properties for article in feed setsize -1.</p>
+    <div role="feed">
+     <div id="test" role="article" aria-setsize="-1">test cell</div>
+  </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

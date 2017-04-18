@@ -74,7 +74,7 @@ class EventAssertion(AttaEventAssertion):
 class AtkAtta(Atta):
     """Accessible Technology Test Adapter to test ATK support."""
 
-    def __init__(self, host, port, name="ATTA for ATK", version="0.1", api="ATK"):
+    def __init__(self, host, port, ansi_formatting, name="ATTA for ATK", version="0.1", api="ATK"):
         """Initializes this ATTA."""
 
         self._api_min_version = "2.20.0"
@@ -107,7 +107,7 @@ class AtkAtta(Atta):
             "states": Atspi.Accessible.get_state_set,
         }
 
-        super().__init__(host, port, name, version, api, Atta.LOG_INFO)
+        super().__init__(host, port, name, version, api, Atta.LOG_INFO, ansi_formatting)
 
     def start(self, **kwargs):
         """Starts this ATTA (i.e. before running a series of tests)."""
@@ -685,14 +685,16 @@ def get_cmdline_options():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", action="store")
     parser.add_argument("--port", action="store")
+    parser.add_argument("--ansi-formatting", action="store_true")
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
     options = get_cmdline_options()
     atta_host = options.get("host") or "localhost"
     atta_port = options.get("port") or "4119"
+    ansi_formatting = options.get("ansi_formatting") or False
 
-    atk_atta = AtkAtta(atta_host, atta_port)
+    atk_atta = AtkAtta(atta_host, atta_port, ansi_formatting)
     if not atk_atta.is_enabled():
         sys.exit(1)
 

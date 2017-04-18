@@ -43,17 +43,19 @@ class Atta:
         LOG_ERROR: "ERROR",
     }
 
+    FORMAT_NONE = "%(label)s%(msg)s"
     FORMAT_NORMAL = "\x1b[1m%(label)s\x1b[22m%(msg)s\x1b[0m"
     FORMAT_GOOD = "\x1b[32;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
     FORMAT_WARNING = "\x1b[33;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
     FORMAT_BAD = "\x1b[31;1m%(label)s\x1b[22m%(msg)s\x1b[0m"
 
-    def __init__(self, host, port, name, version, api, log_level=None):
+    def __init__(self, host, port, name, version, api, log_level=None, ansi_formatting=False):
         """Initializes this ATTA."""
 
         self._log_level = log_level or self.LOG_DEBUG
         self._host = host
         self._port = int(port)
+        self._ansi_formatting = ansi_formatting
         self._server = None
         self._server_thread = None
         self._atta_name = name
@@ -100,7 +102,9 @@ class Atta:
             label = "%s: " % self.LOG_LEVELS.get(level)
 
         if formatting is None:
-            if level == self.LOG_ERROR:
+            if not self._ansi_formatting:
+                formatting = self.FORMAT_NONE
+            elif level == self.LOG_ERROR:
                 formatting = self.FORMAT_BAD
             elif level == self.LOG_WARNING:
                 formatting = self.FORMAT_WARNING
@@ -196,7 +200,9 @@ class Atta:
 
         label = "%s: " % result
         string = " ".join(map(str, assertion))
-        if result == AttaAssertion.STATUS_PASS:
+        if not self._ansi_formatting:
+            formatting = self.FORMAT_NONE
+        elif result == AttaAssertion.STATUS_PASS:
             formatting = self.FORMAT_GOOD
         elif result == AttaAssertion.STATUS_FAIL:
             if not (test_class and test.is_known_issue()):

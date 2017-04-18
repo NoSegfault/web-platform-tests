@@ -439,8 +439,14 @@ class Atta:
     def get_result(self, method, arguments, **kwargs):
         """Returns the result of calling method with the specified arguments."""
 
-        self._print(self.LOG_DEBUG, "get_result_for_method_and_arguments() not implemented")
+        self._print(self.LOG_DEBUG, "get_result() not implemented")
         return None
+
+    def get_supported_actions(self, obj, **kwargs):
+        """Returns a list of names of supported actions for obj."""
+
+        self._print(self.LOG_DEBUG, "get_supported_actions() not implemented")
+        return []
 
     def get_supported_properties(self, obj, **kwargs):
         """Returns a list of supported platform properties for obj."""

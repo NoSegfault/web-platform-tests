@@ -542,6 +542,16 @@ class AtkAtta(Atta):
         arguments.insert(0, kwargs.get("obj"))
         return method.invoke(*arguments)
 
+    def get_supported_actions(self, obj, **kwargs):
+        """Returns a list of names of supported actions for obj."""
+
+        try:
+            count = Atspi.Action.get_n_actions(obj)
+        except:
+            return []
+
+        return [Atspi.Action.get_action_name(obj, i) for i in range(count)]
+
     def get_supported_properties(self, obj, **kwargs):
         """Returns a list of supported platform properties for obj."""
 

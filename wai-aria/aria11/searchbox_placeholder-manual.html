@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>searchbox placeholder</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_LIST_BOX"
+                  "ROLE_ENTRY"
                ],
                [
                   "property",
                   "interfaces",
                   "contains",
-                  "Selection"
+                  "EditableText"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "contains",
+                  "STATE_SINGLE_LINE"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "placeholder-text:DD/MM/YYYY"
                ]
             ],
             "AXAPI" : [
@@ -41,33 +47,45 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXList"
+                  "AXTextField"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXSearchField"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "list"
+                  "search text field"
                ],
                [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
+                  "property",
+                  "AXPlaceholderValue",
                   "is",
-                  "true"
+                  "DD/MM/YYYY"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
                   "states",
+                  "doesNotContain",
+                  "IA2_STATE_SINGLE_LINE"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
                   "contains",
-                  "IA2_STATE_SYSTEM_EDITABLE"
+                  "placeholder-text:DD/MM/YYYY"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "text-input-type:search"
                ]
             ],
             "MSAA" : [
@@ -75,7 +93,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "ROLE_SYSTEM_TEXT"
                ]
             ],
             "UIA" : [
@@ -83,13 +101,19 @@
                   "property",
                   "Control Type",
                   "is",
-                  "List"
+                  "Edit"
                ],
                [
                   "property",
-                  "Value.IsReadOnly",
+                  "Localized Control Type",
                   "is",
-                  "false"
+                  "search box"
+               ],
+               [
+                  "result",
+                  "AriaProperties.placeholder",
+                  "is",
+                  "DD/MM/YYYY"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +135,17 @@
          "type" : "test"
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "searchbox placeholder"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
-    </div>
+  <p>This test examines the ARIA properties for searchbox placeholder.</p>
+    <div contenteditable="true" role="searchbox" aria-placeholder="DD/MM/YYYY" id="test">
+  "DD/MM/YYYY"
+  </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>div element without role roledescription valid</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_LIST_BOX"
+                  "ROLE_SECTION"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "doesNotContain",
+                  "roledescription"
                ],
                [
                   "property",
                   "interfaces",
                   "contains",
-                  "Selection"
+                  "Text"
                ],
                [
                   "property",
-                  "states",
-                  "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "interfaces",
+                  "contains",
+                  "Hypertext"
                ]
             ],
             "AXAPI" : [
@@ -41,7 +47,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXList"
+                  "AXGroup"
                ],
                [
                   "property",
@@ -53,21 +59,27 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "list"
-               ],
-               [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
-                  "is",
-                  "true"
+                  "group"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
+                  "IAccessible2_2.localizedExtendedRole",
                   "contains",
-                  "IA2_STATE_SYSTEM_EDITABLE"
+                  "null"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "IAccessibleText2"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "IAccessibleHypertext2"
                ]
             ],
             "MSAA" : [
@@ -75,7 +87,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "ROLE_SYSTEM_GROUPING"
                ]
             ],
             "UIA" : [
@@ -83,13 +95,7 @@
                   "property",
                   "Control Type",
                   "is",
-                  "List"
-               ],
-               [
-                  "property",
-                  "Value.IsReadOnly",
-                  "is",
-                  "false"
+                  "Group"
                ]
             ],
             "WAIFAKE" : [
@@ -111,19 +117,17 @@
          "type" : "test"
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "div element without role roledescription valid"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
-    </div>
+  <p>This test examines the ARIA properties for div element without role roledescription valid.</p>
+    <div aria-roledescription="" id="test">
+  Go Fish
+  </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

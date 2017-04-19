@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>dialog modal unspecified</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_LIST_BOX"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "Selection"
+                  "ROLE_DIALOG"
                ],
                [
                   "property",
                   "states",
                   "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "STATE_MODAL"
                ]
             ],
             "AXAPI" : [
@@ -41,23 +35,23 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXList"
+                  "AXGroup"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXApplicationDialog"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "list"
+                  "web dialog"
                ],
                [
                   "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
+                  "All content of id=\"Test2\" and id=\"Test\" and their subtrees are exposed.",
                   "is",
                   "true"
                ]
@@ -66,8 +60,8 @@
                [
                   "property",
                   "states",
-                  "contains",
-                  "IA2_STATE_SYSTEM_EDITABLE"
+                  "doesNotContain",
+                  "IA2_STATE_MODAL"
                ]
             ],
             "MSAA" : [
@@ -75,7 +69,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "ROLE_SYSTEM_DIALOG"
                ]
             ],
             "UIA" : [
@@ -83,11 +77,11 @@
                   "property",
                   "Control Type",
                   "is",
-                  "List"
+                  "Pane"
                ],
                [
-                  "property",
-                  "Value.IsReadOnly",
+                  "result",
+                  "Window.isModal",
                   "is",
                   "false"
                ]
@@ -111,19 +105,19 @@
          "type" : "test"
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "dialog modal unspecified"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
-    </div>
+  <p>This test examines the ARIA properties for dialog modal unspecified.</p>
+    <h1 id="Test2">Modal Dialog Box Test</h1>
+  <div role="dialog" id="test">
+    You have an error.
+    <input type="button" value="ok"/>
+  </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

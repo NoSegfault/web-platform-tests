@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>searchbox required false</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,19 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_LIST_BOX"
+                  "ROLE_ENTRY"
                ],
                [
                   "property",
-                  "interfaces",
+                  "states",
                   "contains",
-                  "Selection"
+                  "STATE_SINGLE_LINE"
                ],
                [
                   "property",
                   "states",
                   "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "STATE_REQUIRED"
                ]
             ],
             "AXAPI" : [
@@ -41,33 +41,39 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXList"
+                  "AXTextField"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "<nil>"
+                  "AXSearchField"
                ],
                [
                   "property",
-                  "AXRoleDescription",
+                  "AXRequired",
                   "is",
-                  "list"
-               ],
-               [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
-                  "is",
-                  "true"
+                  "false"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
-                  "contains",
-                  "IA2_STATE_SYSTEM_EDITABLE"
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_TEXT"
+               ],
+               [
+                  "property",
+                  "attribute",
+                  "is",
+                  "text-input-type:search"
+               ],
+               [
+                  "state",
+                  "IA2_STATE_REQUIRED",
+                  "is",
+                  "false"
                ]
             ],
             "MSAA" : [
@@ -75,7 +81,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "ROLE_SYSTEM_TEXT"
+               ],
+               [
+                  "property",
+                  "attribute",
+                  "is",
+                  "text-input-type:search"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "STATE_REQUIRED"
                ]
             ],
             "UIA" : [
@@ -83,11 +101,17 @@
                   "property",
                   "Control Type",
                   "is",
-                  "List"
+                  "Edit"
                ],
                [
                   "property",
-                  "Value.IsReadOnly",
+                  "Localized Control Type",
+                  "is",
+                  "search box"
+               ],
+               [
+                  "property",
+                  "IsrequiredForForm",
                   "is",
                   "false"
                ]
@@ -111,19 +135,16 @@
          "type" : "test"
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "searchbox required false"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
-    </div>
+  <p>This test examines the ARIA properties for searchbox required false.</p>
+    <div id="test" role="searchbox" aria-required="false">
+  </div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

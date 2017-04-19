@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>aria-current with value changes</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -19,77 +19,57 @@
             "ATK" : [
                [
                   "property",
-                  "role",
-                  "is",
-                  "ROLE_LIST_BOX"
-               ],
-               [
-                  "property",
-                  "interfaces",
-                  "contains",
-                  "Selection"
-               ],
-               [
-                  "property",
                   "states",
                   "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "STATE_ACTIVE"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "current:false"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-changed:active"
                ]
             ],
             "AXAPI" : [
                [
                   "property",
-                  "AXRole",
-                  "is",
-                  "AXList"
-               ],
-               [
-                  "property",
-                  "AXSubrole",
-                  "is",
-                  "<nil>"
-               ],
-               [
-                  "property",
-                  "AXRoleDescription",
-                  "is",
-                  "list"
-               ],
-               [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
-                  "is",
-                  "true"
+                  "AXARIACurrent",
+                  "contains",
+                  "false"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
+                  "objectAttributes",
                   "contains",
-                  "IA2_STATE_SYSTEM_EDITABLE"
-               ]
-            ],
-            "MSAA" : [
+                  "current:false"
+               ],
                [
-                  "property",
-                  "role",
+                  "event",
+                  "type",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "IA2_EVENT_OBJECT_ATTRIBUTE_CHANGED"
                ]
             ],
             "UIA" : [
                [
                   "property",
-                  "Control Type",
-                  "is",
-                  "List"
+                  "objectAttributes",
+                  "contains",
+                  "current:false"
                ],
                [
-                  "property",
-                  "Value.IsReadOnly",
+                  "event",
+                  "type",
                   "is",
-                  "false"
+                  "PropertyChangedEvent"
                ]
             ],
             "WAIFAKE" : [
@@ -109,21 +89,27 @@
          },
          "title" : "step 1",
          "type" : "test"
+      },
+      {
+         "attribute" : "aria-current",
+         "element" : "test",
+         "title" : "step 2",
+         "type" : "attribute",
+         "value" : "\"false\""
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "aria-current with value changes"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
-    </div>
+  <p>This test examines the ARIA properties for aria-current with value changes.</p>
+    <ul role="list">
+    <li id="test" role="listitem" aria-current="true">1</li>
+    <li role="listitem" aria-current="false">2</li>
+  </ul>
 
   <div id="manualMode"></div>
   <div id="log"></div>

@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>application activedescendant</title>
+    <title>searchbox activedescendant value changes</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -14,7 +14,7 @@
     {
    "steps" : [
       {
-         "element" : "test: focus",
+         "element" : "test:focus",
          "test" : {
             "WAIFAKE" : [
                [
@@ -35,6 +35,13 @@
          "type" : "test"
       },
       {
+         "attribute" : "aria-activedescendant",
+         "element" : "test",
+         "title" : "step 2",
+         "type" : "attribute",
+         "value" : "\"bob\""
+      },
+      {
          "element" : "test",
          "test" : {
             "ATK" : [
@@ -42,7 +49,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_EMBEDDED"
+                  "ROLE_ENTRY"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_SINGLE_LINE"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "EditableText"
                ],
                [
                   "property",
@@ -74,25 +93,31 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXGroup"
+                  "AXTextField"
                ],
                [
                   "property",
                   "AXSubrole",
                   "is",
-                  "AXWebApplication"
+                  "AXSearchField"
                ],
                [
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "web application"
+                  "search text field"
                ],
                [
                   "property",
                   "AXFocused",
                   "is",
                   "false"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "AXSelectedChildrenChanged"
                ],
                [
                   "result",
@@ -107,12 +132,26 @@
                   "true"
                ]
             ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "text-input-type:search"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "IA2_EVENT_ACTIVE_DESCENDANT_CHANGED"
+               ]
+            ],
             "MSAA" : [
                [
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_APPLICATION"
+                  "ROLE_SYSTEM_TEXT"
                ],
                [
                   "property",
@@ -132,13 +171,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "Pane"
+                  "Edit"
                ],
                [
                   "property",
                   "Localized Control Type",
                   "is",
-                  "application"
+                  "search box"
                ],
                [
                   "property",
@@ -168,7 +207,7 @@
                ]
             ]
          },
-         "title" : "step 2",
+         "title" : "step 3",
          "type" : "test"
       },
       {
@@ -186,6 +225,18 @@
                   "states",
                   "contains",
                   "STATE_FOCUSABLE"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "object:state-change:focused"
+               ],
+               [
+                  "event",
+                  "detail1",
+                  "is",
+                  "0"
                ]
             ],
             "AXAPI" : [
@@ -200,6 +251,12 @@
                   "AXUIElementIsAttributeSettable(AXFocused)",
                   "is",
                   "true"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "AXFocusedUIElementChanged"
                ]
             ],
             "MSAA" : [
@@ -234,6 +291,12 @@
                   "IUIAutomationElement.UIA_HasKeyboardFocusPropertyId",
                   "is",
                   "true"
+               ],
+               [
+                  "event",
+                  "type",
+                  "is",
+                  "UIA_AutomationFocusChangedEventId"
                ]
             ],
             "WAIFAKE" : [
@@ -251,22 +314,22 @@
                ]
             ]
          },
-         "title" : "step 3",
+         "title" : "step 4",
          "type" : "test"
       }
    ],
-   "title" : "application activedescendant"
+   "title" : "searchbox activedescendant value changes"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for application activedescendant.</p>
-     <div id='test' tabindex="0" aria-activedescendant="bob" role='application'>
-     <div id='bob' class='bobber'>Hello world</div>
+  <p>This test examines the ARIA properties for searchbox activedescendant value changes.</p>
+     <div id='test' tabindex="0" role='searchbox'>
+     <div id='bob'>Hello world</div>
   </div>
- then role:application, aria-activedescendant: bob
+ then role:searchbox, aria-activedescendant: bob
 
   <div id="manualMode"></div>
   <div id="log"></div>

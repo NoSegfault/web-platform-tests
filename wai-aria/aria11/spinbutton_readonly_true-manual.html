@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>listbox readonly false</title>
+    <title>spinbutton readonly true</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,18 +21,18 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_LIST_BOX"
+                  "ROLE_SPIN_BUTTON"
                ],
                [
                   "property",
                   "interfaces",
                   "contains",
-                  "Selection"
+                  "Value"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
+                  "contains",
                   "STATE_READ_ONLY"
                ]
             ],
@@ -41,7 +41,7 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXList"
+                  "AXIncrementor"
                ],
                [
                   "property",
@@ -53,20 +53,32 @@
                   "property",
                   "AXRoleDescription",
                   "is",
-                  "list"
+                  "stepper"
                ],
                [
                   "result",
                   "AXUIElementIsAttributeSettable(AXValue)",
                   "is",
-                  "true"
+                  "false"
                ]
             ],
             "IAccessible2" : [
                [
                   "property",
-                  "states",
+                  "role",
+                  "is",
+                  "ROLE_SYSTEM_SPINBUTTON"
+               ],
+               [
+                  "property",
+                  "interfaces",
                   "contains",
+                  "IAcesssibleValue"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
                   "IA2_STATE_SYSTEM_EDITABLE"
                ]
             ],
@@ -75,7 +87,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_LIST"
+                  "ROLE_SYSTEM_SPINBUTTON"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "IAcesssibleValue"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "IA2_STATE_SYSTEM_EDITABLE"
                ]
             ],
             "UIA" : [
@@ -83,13 +107,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "List"
+                  "Spinner"
                ],
                [
                   "property",
                   "Value.IsReadOnly",
                   "is",
-                  "false"
+                  "true"
                ]
             ],
             "WAIFAKE" : [
@@ -111,18 +135,15 @@
          "type" : "test"
       }
    ],
-   "title" : "listbox readonly false"
+   "title" : "spinbutton readonly true"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for listbox readonly false.</p>
-      <div id="test" aria-readonly="false" role="listbox">
-      <div role="option">option 1</div>
-      <div role="option">option 2</div>
-      <div role="option">option 3</div>
+  <p>This test examines the ARIA properties for spinbutton readonly true.</p>
+      <div id="test" role="spinbutton" aria-readonly="true">
     </div>
 
   <div id="manualMode"></div>

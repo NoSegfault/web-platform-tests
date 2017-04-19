@@ -515,7 +515,7 @@ class AtkAtta(Atta):
             args_list = list(filter(lambda x: x != "", args_string.split(",")))
 
         supported_methods = self.get_supported_methods()
-        method = supported_methods.get(method_string, {})
+        method = supported_methods.get(method_string)
         if not method:
             raise NameError("%s is not supported" % method_string)
 

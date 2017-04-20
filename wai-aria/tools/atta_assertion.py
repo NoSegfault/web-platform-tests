@@ -82,7 +82,7 @@ class AttaAssertion:
 
         def _wrap(towrap):
             if isinstance(towrap, list):
-                towrap = ",\n".join(towrap)
+                towrap = ",\n".join(map(str, towrap))
             return "\n".join(self._text_wrapper.wrap(str(towrap)))
 
         return "\n\n{self._labels[0]:>{width}} {self._as_string}" \
@@ -165,7 +165,18 @@ class AttaEventAssertion(AttaAssertion):
 
     def __init__(self, obj, assertion, atta):
         super().__init__(obj, assertion, atta)
+        events = self._atta.get_event_history()
+        self._actual_value = list(map(self._atta.value_to_string, events))
+
+        # At the moment, the assumption is that we are only testing that
+        # we have an event which matches the asserted event properties.
         self._matching_events = []
+        for event in filter(lambda x: x.get("obj") == obj, events):
+            for key, value in self._expected_value.items():
+                if str(event.get(key)) != value:
+                    break
+            else:
+                self._matching_events.append(event)
 
     def _get_result(self):
         if self._matching_events:

@@ -26,49 +26,6 @@ gi.require_version("Atspi", "2.0")
 from gi.repository import Atk, Atspi
 
 from atta_base import Atta
-from atta_assertion import AttaAssertion, AttaEventAssertion
-
-
-class Assertion(AttaAssertion):
-
-    @classmethod
-    def get_test_class(cls, assertion):
-        test_class = assertion[0]
-        if test_class == cls.CLASS_EVENT:
-            return EventAssertion
-
-        return super().get_test_class(assertion)
-
-
-class EventAssertion(AttaEventAssertion):
-
-    def __init__(self, obj, assertion, atta):
-        super().__init__(obj, assertion, atta)
-        events = self._atta.get_event_history()
-        self._actual_value = list(map(self._atta.value_to_string, events))
-        self._obj_events = list(filter(lambda x: x.source == obj, events))
-
-        # At the moment, the assumption is that we are only testing that
-        # we have an event which matches the asserted event properties.
-
-        e_type = self._expected_value.get("type")
-        if e_type is not None:
-            matches = filter(lambda x: x.type == e_type, events)
-
-        detail1 = self._expected_value.get("detail1")
-        if detail1 is not None:
-            matches = filter(lambda x: x.detail1 == int(detail1), matches)
-
-        detail2 = self._expected_value.get("detail2")
-        if detail2 is not None:
-            matches = filter(lambda x: x.detail2 == int(detail2), matches)
-
-        any_data = self._expected_value.get("any_data")
-        if any_data is not None:
-            # TODO: We need to know any_data's type and adjust accordingly
-            matches = filter(lambda x: x.any_data == any_data, matches)
-
-        self._matching_events = list(matches)
 
 
 class AtkAtta(Atta):
@@ -224,34 +181,6 @@ class AtkAtta(Atta):
         listener = self._listeners.get(callback)
         if listener:
             Atspi.EventListener.deregister(listener, event_type)
-
-    def _get_assertion_test_class(self, assertion, **kwargs):
-        """Returns the appropriate Assertion class for assertion."""
-
-        return Assertion.get_test_class(assertion)
-
-    def _create_platform_assertions(self, assertions, **kwargs):
-        """Performs platform-specific changes needed to harness assertions."""
-
-        is_event = lambda x: x and x[0] == "event"
-        event_assertions = list(filter(is_event, assertions))
-        if not event_assertions:
-            return assertions
-
-        platform_assertions = list(filter(lambda x: x not in event_assertions, assertions))
-
-        # The properties associated with accessible events are currently given to
-        # us as individual subtests. Unlike other assertions, event properties are
-        # not independent of one another. Because these should be tested as an all-
-        # or-nothing assertion, we'll combine the subtest values into a dictionary
-        # passed along with each subtest.
-        properties = {}
-        for test, name, verb, value in event_assertions:
-            properties[name] = value
-
-        combined_event_assertions = ["event", "event", "contains", properties]
-        platform_assertions.append(combined_event_assertions)
-        return platform_assertions
 
     def _get_id(self, obj, **kwargs):
         """Returns the element id associated with obj or an empty string upon failure."""
@@ -687,8 +616,18 @@ class AtkAtta(Atta):
     def _on_test_event(self, data, **kwargs):
         """Callback for platform accessibility events the ATTA is testing."""
 
-        if self._in_current_document(data.source):
-            self._event_history.append(data)
+        if not self._in_current_document(data.source):
+            return
+
+        event_as_dict = {
+            "obj": data.source,
+            "type": data.type,
+            "detail1": data.detail1,
+            "detail2": data.detail2,
+            "any_data": data.any_data
+        }
+
+        self._event_history.append(event_as_dict)
 
 
 def get_cmdline_options():

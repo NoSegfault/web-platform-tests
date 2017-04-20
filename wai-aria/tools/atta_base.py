@@ -376,7 +376,25 @@ class Atta:
     def _create_platform_assertions(self, assertions, **kwargs):
         """Performs platform-specific changes needed to harness assertions."""
 
-        return assertions
+        is_event = lambda x: x and x[0] == "event"
+        event_assertions = list(filter(is_event, assertions))
+        if not event_assertions:
+            return assertions
+
+        platform_assertions = list(filter(lambda x: x not in event_assertions, assertions))
+
+        # The properties associated with accessible events are currently given to
+        # us as individual subtests. Unlike other assertions, event properties are
+        # not independent of one another. Because these should be tested as an all-
+        # or-nothing assertion, we'll combine the subtest values into a dictionary
+        # passed along with each subtest.
+        properties = {}
+        for test, name, verb, value in event_assertions:
+            properties[name] = value
+
+        combined_event_assertions = ["event", "event", "contains", properties]
+        platform_assertions.append(combined_event_assertions)
+        return platform_assertions
 
     def _get_id(self, obj, **kwargs):
         """Returns the element id associated with obj or an empty string upon failure."""

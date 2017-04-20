@@ -580,19 +580,6 @@ class AtkAtta(Atta):
                 value_name = value_name.replace("ROLE_STATUS_BAR", "ROLE_STATUSBAR")
             return value_name
 
-        if value_type == Atspi.Event:
-            try:
-                role = self.value_to_string(Atspi.Accessible.get_role(value.source))
-            except:
-                self._print(self.LOG_ERROR, self._on_exception())
-                role = "[DEAD]"
-
-            objid = "(id=%s)" % (self.value_to_string(value.source) or "")
-            detail1 = value.detail1
-            detail2 = value.detail2
-            any_data = self.value_to_string(value.any_data)
-            return "%s(%i,%i,%s) by %s %s" % (value.type, detail1, detail2, any_data, role, objid)
-
         if value_type == FunctionInfo:
             method_args = []
             for arg in value.get_arguments():

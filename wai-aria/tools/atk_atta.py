@@ -562,7 +562,7 @@ class AtkAtta(Atta):
 
         value_type = type(value)
         if value_type == Atspi.Accessible:
-            return self._get_id(value, **kwargs)
+            return self._get_id(value, **kwargs) or Atspi.Accessible.get_role_name(value)
 
         if value_type == Atspi.Relation:
             return self.value_to_string(Atspi.Relation.get_relation_type(value))

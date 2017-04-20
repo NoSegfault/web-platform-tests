@@ -301,6 +301,9 @@ class Atta:
             return False
 
         pred = lambda x: x == self._current_document
+        if pred(obj):
+            return True
+
         return self._find_ancestor(obj, pred, **kwargs) is not None
 
     def _find_ancestor(self, obj, pred, **kwargs):

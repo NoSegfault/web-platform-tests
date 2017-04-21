@@ -100,6 +100,12 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         response["error"] = "; ".join(errors)
         return response
 
+    def log_error(self, format, *args):
+        self._atta.log_message(format % args, self._atta.LOG_ERROR)
+
+    def log_message(self, format, *args):
+        self._atta.log_message(format % args, self._atta.LOG_DEBUG)
+
     def _send_response(self, response, status_code=200):
         if response.get("statusText") is None:
             response["statusText"] = ""
@@ -110,10 +116,8 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
         dump = self.dump_json(response)
         try:
             self.wfile.write(bytes(dump, "utf-8"))
-        except BrokenPipeError:
-            print("ERROR: Broken pipe")
-            self.wfile._wbuf = []
-            self.wfile._wbuf_len = 0
+        except Exception as error:
+            self._atta.log_message(error, self._atta.LOG_ERROR)
 
     def _wait(self, start_time, method, response={}):
         if method.__call__():
@@ -136,14 +140,14 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             def run(self):
                 while not AttaRequestHandler.is_running_tests():
                     if time.time() > self.timeout:
-                        print("ERROR: 'test' request not received from ATTAcomm.js.")
+                        msg = "'test' request not received from ATTAcomm.js."
+                        self._atta.log_message(msg, self._atta.LOG_ERROR)
                         return
 
         thread = Timer(self._timeout)
         thread.start()
 
     def start_test_run(self):
-        print("==================================")
         AttaRequestHandler._running_tests = False
         response = {}
         params = self.get_params("test", "url")
@@ -180,9 +184,7 @@ class AttaRequestHandler(BaseHTTPRequestHandler):
             self._send_response(response)
             return
 
-        if self._atta is None:
-            print("AUTOMATIC EVENT MONITORING NOT POSSIBLE WITHOUT RUNNING ATTA.")
-        else:
+        if self._atta is not None:
             self._atta.start_listen(params.get("events"))
 
         response["status"] = "READY"

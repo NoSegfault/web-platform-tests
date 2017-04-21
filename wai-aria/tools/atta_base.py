@@ -92,8 +92,16 @@ class Atta:
 
         return "EXCEPTION: %s" % traceback.format_exc(limit=1, chain=False)
 
+    def log_message(self, string, level=None):
+        """Logs string, typically printing it to stdout."""
+
+        if level is None:
+            level = self._log_level
+
+        self._print(level, string)
+
     def _print(self, level, string, label=None, formatting=None, **kwargs):
-        """Prints the string, typically to stdout."""
+        """Writes string to stdout if level is >= this ATTA's debug level."""
 
         if level < self._log_level:
             return
@@ -111,7 +119,7 @@ class Atta:
             else:
                 formatting = self.FORMAT_NORMAL
 
-        print(formatting % {"label": label, "msg": string})
+        sys.stdout.write("%s\n" % formatting % {"label": label, "msg": string})
 
     def start(self, **kwargs):
         """Starts this ATTA (i.e. before running a series of tests)."""
@@ -171,7 +179,7 @@ class Atta:
         """Sets the test details the ATTA should be looking for. The ATTA should
         update its "ready" status upon finding that file."""
 
-        self._print(self.LOG_INFO, "%s (%s)" % (name, url), "START TEST RUN: ")
+        self._print(self.LOG_INFO, "%s (%s)" % (name, url), "\nSTART TEST RUN: ")
         self._next_test = name, url
         self._ready = False
 

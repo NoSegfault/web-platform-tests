@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>grid rowheader readonly unspecified</title>
+    <title>listbox orientation unspecified</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,13 +21,25 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_ROW_HEADER"
+                  "ROLE_LIST_BOX"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "Selection"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_VERTICAL"
                ],
                [
                   "property",
                   "states",
                   "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "STATE_HORIZONTAL"
                ]
             ],
             "AXAPI" : [
@@ -35,13 +47,39 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXCell"
+                  "AXList"
                ],
                [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
+                  "property",
+                  "AXSubrole",
                   "is",
-                  "true"
+                  "<nil>"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "list"
+               ],
+               [
+                  "property",
+                  "AXOrientation",
+                  "is",
+                  "AXVerticalOrientation"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "IA2_STATE_VERTICAL"
+               ],
+               [
+                  "property",
+                  "states",
+                  "doesNotContain",
+                  "IA2_STATE_HORIZONTAL"
                ]
             ],
             "MSAA" : [
@@ -49,13 +87,7 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_ROWHEADER"
-               ],
-               [
-                  "property",
-                  "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_READONLY"
+                  "ROLE_SYSTEM_LIST"
                ]
             ],
             "UIA" : [
@@ -63,13 +95,13 @@
                   "property",
                   "Control Type",
                   "is",
-                  "HeaderItem"
+                  "List"
                ],
                [
                   "property",
-                  "Value.IsReadOnly",
+                  "IUIAutomationElement.Orientation",
                   "is",
-                  "false"
+                  "vertical"
                ]
             ],
             "WAIFAKE" : [
@@ -91,19 +123,17 @@
          "type" : "test"
       }
    ],
-   "title" : "grid rowheader readonly unspecified"
+   "title" : "listbox orientation unspecified"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for grid rowheader readonly unspecified.</p>
-    <div role="grid">
-    <div role="row">
-       <div id="test" role="rowheader">test cell</div>
-    </div>
-  </div>
+  <p>This test examines the ARIA properties for listbox orientation unspecified.</p>
+    <div id="test" tabindex="0" role="listbox" >
+    <div role="option">option 1</div>
+    <div role="option">option 2</div>
 
   <div id="manualMode"></div>
   <div id="log"></div>

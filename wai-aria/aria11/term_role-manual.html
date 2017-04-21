@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>grid rowheader readonly unspecified</title>
+    <title>term role</title>
     <link rel="stylesheet" href="/resources/testharness.css">
     <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
     <script src="/resources/testharness.js"></script>
@@ -21,13 +21,19 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_ROW_HEADER"
+                  "ROLE_DESCRIPTION_TERM"
                ],
                [
                   "property",
-                  "states",
-                  "doesNotContain",
-                  "STATE_READ_ONLY"
+                  "interfaces",
+                  "contains",
+                  "Text"
+               ],
+               [
+                  "property",
+                  "interfaces",
+                  "contains",
+                  "Hypertext"
                ]
             ],
             "AXAPI" : [
@@ -35,13 +41,19 @@
                   "property",
                   "AXRole",
                   "is",
-                  "AXCell"
+                  "AXGroup"
                ],
                [
-                  "result",
-                  "AXUIElementIsAttributeSettable(AXValue)",
+                  "property",
+                  "AXSubrole",
                   "is",
-                  "true"
+                  "AXTerm"
+               ],
+               [
+                  "property",
+                  "AXRoleDescription",
+                  "is",
+                  "term"
                ]
             ],
             "MSAA" : [
@@ -49,13 +61,13 @@
                   "property",
                   "role",
                   "is",
-                  "ROLE_SYSTEM_ROWHEADER"
+                  "ROLE_SYSTEM_TERM"
                ],
                [
                   "property",
                   "states",
-                  "doesNotContain",
-                  "STATE_SYSTEM_READONLY"
+                  "contains",
+                  "ROLE_SYSTEM_READONLY"
                ]
             ],
             "UIA" : [
@@ -63,13 +75,7 @@
                   "property",
                   "Control Type",
                   "is",
-                  "HeaderItem"
-               ],
-               [
-                  "property",
-                  "Value.IsReadOnly",
-                  "is",
-                  "false"
+                  "ListItem"
                ]
             ],
             "WAIFAKE" : [
@@ -91,19 +97,21 @@
          "type" : "test"
       }
    ],
-   "title" : "grid rowheader readonly unspecified"
+   "title" : "term role"
 }
 
     ) ;
     </script>
   </head>
   <body>
-  <p>This test examines the ARIA properties for grid rowheader readonly unspecified.</p>
-    <div role="grid">
-    <div role="row">
-       <div id="test" role="rowheader">test cell</div>
-    </div>
+  <p>This test examines the ARIA properties for term role.</p>
+    <div role="term" id='test' aria-describedby="dfn">
+  w3c
   </div>
+  <div role="definition" id="dfn">
+  World Wide Web Consortium
+  </div>
+
 
   <div id="manualMode"></div>
   <div id="log"></div>

@@ -34,6 +34,12 @@
                   "states",
                   "doesNotContain",
                   "STATE_CHECKED"
+               ],
+               [
+                  "property",
+                  "states",
+                  "contains",
+                  "STATE_CHECKABLE"
                ]
             ],
             "AXAPI" : [
@@ -74,19 +80,25 @@
                   "objectAttributes",
                   "contains",
                   "xml-roles:switch"
+               ],
+               [
+                  "property",
+                  "objectAttributes",
+                  "contains",
+                  "checkable:true"
                ]
             ],
             "UIA" : [
                [
                   "property",
                   "Control Type",
-                  "isNot",
+                  "is",
                   "Button"
                ],
                [
                   "property",
                   "Localized Control Type",
-                  "isNot",
+                  "is",
                   "toggleswitch"
                ],
                [
